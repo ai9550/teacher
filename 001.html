@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>數學直式減法練習</title>
+  <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 30px;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .problem-container {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 2px solid #e1e5f2;
+        }
+
+        .calculation {
+            font-size: 64px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .minuend-row, .subtrahend-row, .answer-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .digit-container {
+            position: relative;
+            margin: 0 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .borrow-indicator {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .borrow-arc {
+            position: absolute;
+            top: -30px;
+            left: -50px;
+            width: 150px;
+            height: 200px;
+            display: none;
+            z-index: 10;
+        }
+
+        .borrow-arc svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .borrow-arc path {
+            fill: none;
+            stroke: #ff6b6b;
+            stroke-width: 3;
+            stroke-dasharray: 5,5;
+            animation: dash 2s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        .minus-label {
+            position: absolute;
+            top: 40px;
+            right: -55px;
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .plus-label {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            background: #4caf50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .digit {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .digit:hover {
+            color: #4a90e2;
+            transform: scale(1.05);
+        }
+
+        .digit.borrowed {
+            color: #999;
+            position: relative;
+        }
+
+        .digit.borrowed::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: #ff6b6b;
+            transform: rotate(-15deg);
+        }
+
+        .borrowed-value {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4a90e2;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .answer-box {
+            width: 80px;
+            height: 80px;
+            border: 3px dashed #4a90e2;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #4a90e2;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .answer-box:hover {
+            background: #e8f2ff;
+            border-color: #2171b5;
+        }
+
+        .answer-box.filled {
+            background: #4a90e2;
+            color: white;
+            border-style: solid;
+        }
+
+        .minus-sign {
+            font-size: 64px;
+            color: #333;
+            margin-right: 20px;
+        }
+
+        .line {
+            width: 300px;
+            height: 4px;
+            background: #333;
+            margin: 20px auto;
+        }
+
+        .number-picker {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .number-btn {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #4a90e2;
+            border-radius: 10px;
+            background: white;
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a90e2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .number-btn:hover {
+            background: #4a90e2;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .close-btn {
+            width: 100%;
+            padding: 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #ff5252;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .new-problem-btn {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .new-problem-btn:hover {
+            background: #357abd;
+            transform: translateY(-2px);
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 25px;
+        }
+
+        .correct {
+            color: #4caf50;
+        }
+
+        .incorrect {
+            color: #f44336;
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="container">
+   <h1 class="title">二位數直式減法</h1>
+   <div class="problem-container">
+    <div class="calculation"><!-- 被減數 -->
+     <div class="minuend-row" style="margin-left: 100px;">
+      <div class="digit-container">
+       <div class="borrow-indicator" id="borrow-indicator-tens">
+        10
+       </div>
+       <div class="digit" id="minuend-tens" onclick="handleBorrow('tens')">
+        5
+       </div>
+      </div>
+      <div class="digit-container">
+       <div class="borrow-indicator" id="borrow-indicator-ones">
+        10
+       </div>
+       <div class="borrow-arc" id="borrow-arc">
+        <svg><path d="M 150 15 Q 150 100 150 155" /> <path d="M 100 15 L 150 15" /> <path d="M 100 155 L 150 155" />
+        </svg>
+       </div>
+       <div class="minus-label" id="minus-label">
+        −
+       </div>
+       <div class="plus-label" id="plus-label">
+        +
+       </div>
+       <div class="digit" id="minuend-ones" onclick="handleBorrow('ones')">
+        2
+       </div>
+      </div>
+     </div><!-- 減數 -->
+     <div class="subtrahend-row"><span class="minus-sign" style="margin-right: 40px;">−</span>
+      <div class="digit-container" style="margin-left: 30px;">
+       <div class="digit" id="subtrahend-tens">
+        1
+       </div>
+      </div>
+      <div class="digit-container" style="margin-left: 5px;">
+       <div class="digit" id="subtrahend-ones">
+        8
+       </div>
+      </div>
+     </div><!-- 分隔線 -->
+     <div class="line"></div><!-- 答案 -->
+     <div class="answer-row" style="margin-left: 100px;">
+      <div class="digit-container">
+       <div class="answer-box" id="answer-tens" onclick="openNumberPicker('tens')">
+        ?
+       </div>
+      </div>
+      <div class="digit-container">
+       <div class="answer-box" id="answer-ones" onclick="openNumberPicker('ones')">
+        ?
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="feedback" id="feedback"></div>
+   <div class="controls"><button class="new-problem-btn" onclick="generateNewProblem()">新題目</button>
+   </div>
+  </main><!-- 數字選擇器 -->
+  <div class="overlay" id="overlay" onclick="closeNumberPicker()"></div>
+  <div class="number-picker" id="number-picker">
+   <div class="number-grid"><button class="number-btn" onclick="selectNumber(0)">0</button> <button class="number-btn" onclick="selectNumber(1)">1</button> <button class="number-btn" onclick="selectNumber(2)">2</button> <button class="number-btn" onclick="selectNumber(3)">3</button> <button class="number-btn" onclick="selectNumber(4)">4</button> <button class="number-btn" onclick="selectNumber(5)">5</button> <button class="number-btn" onclick="selectNumber(6)">6</button> <button class="number-btn" onclick="selectNumber(7)">7</button> <button class="number-btn" onclick="selectNumber(8)">8</button> <button class="number-btn" onclick="selectNumber(9)">9</button>
+   </div><button class="close-btn" onclick="closeNumberPicker()">關閉</button>
+  </div>
+  <script>
+        let currentProblem = {};
+        let currentAnswerPosition = '';
+        let borrowState = {
+            tens: false,
+            ones: false
+        };
+
+        function generateNewProblem() {
+            // 重置狀態
+            borrowState = { tens: false, ones: false };
+            document.getElementById('feedback').textContent = '';
+            
+            // 生成被減數 (20-99)
+            const minuend = Math.floor(Math.random() * 80) + 20;
+            
+            // 生成減數 (確保結果為正數，且有機會需要退位)
+            let subtrahend;
+            if (Math.random() < 0.7) { // 70%機率產生需要退位的題目
+                const minuendOnes = minuend % 10;
+                const minuendTens = Math.floor(minuend / 10);
+                
+                if (minuendOnes < 5) {
+                    // 個位數小於5時，減數個位數要大於被減數個位數
+                    const subtrahendOnes = Math.floor(Math.random() * (10 - minuendOnes - 1)) + minuendOnes + 1;
+                    const subtrahendTens = Math.floor(Math.random() * minuendTens);
+                    subtrahend = subtrahendTens * 10 + subtrahendOnes;
+                } else {
+                    subtrahend = Math.floor(Math.random() * minuend) + 1;
+                }
+            } else {
+                subtrahend = Math.floor(Math.random() * minuend) + 1;
+            }
+            
+            currentProblem = {
+                minuend: minuend,
+                subtrahend: subtrahend,
+                answer: minuend - subtrahend
+            };
+            
+            // 更新顯示
+            updateDisplay();
+            resetAnswerBoxes();
+            resetBorrowDisplay();
+        }
+
+        function updateDisplay() {
+            const minuendTens = Math.floor(currentProblem.minuend / 10);
+            const minuendOnes = currentProblem.minuend % 10;
+            const subtrahendTens = Math.floor(currentProblem.subtrahend / 10);
+            const subtrahendOnes = currentProblem.subtrahend % 10;
+            
+            document.getElementById('minuend-tens').textContent = minuendTens;
+            document.getElementById('minuend-ones').textContent = minuendOnes;
+            document.getElementById('subtrahend-tens').textContent = subtrahendTens || '';
+            document.getElementById('subtrahend-ones').textContent = subtrahendOnes;
+        }
+
+        function resetAnswerBoxes() {
+            document.getElementById('answer-tens').textContent = '?';
+            document.getElementById('answer-tens').classList.remove('filled');
+            document.getElementById('answer-ones').textContent = '?';
+            document.getElementById('answer-ones').classList.remove('filled');
+        }
+
+        function resetBorrowDisplay() {
+            // 重置十位數顯示
+            const tensDigit = document.getElementById('minuend-tens');
+            tensDigit.classList.remove('borrowed');
+            const existingBorrowedValue = tensDigit.parentNode.querySelector('.borrowed-value');
+            if (existingBorrowedValue) {
+                existingBorrowedValue.remove();
+            }
+            
+            // 隱藏退位指示器
+            document.getElementById('borrow-indicator-tens').style.display = 'none';
+            document.getElementById('borrow-indicator-ones').style.display = 'none';
+            
+            // 隱藏圓弧線和減號
+            document.getElementById('borrow-arc').style.display = 'none';
+            document.getElementById('minus-label').style.display = 'none';
+            document.getElementById('plus-label').style.display = 'none';
+        }
+
+        function handleBorrow(position) {
+            if (position === 'tens') {
+                const minuendOnes = currentProblem.minuend % 10;
+                const subtrahendOnes = currentProblem.subtrahend % 10;
+                
+                // 只有當個位數不夠減時才能退位
+                if (minuendOnes < subtrahendOnes) {
+                    borrowState.tens = !borrowState.tens;
+                    
+                    const tensDigit = document.getElementById('minuend-tens');
+                    const borrowIndicator = document.getElementById('borrow-indicator-ones');
+                    
+                    if (borrowState.tens) {
+                        // 顯示退位效果
+                        tensDigit.classList.add('borrowed');
+                        
+                        // 顯示減1後的數字
+                        const originalValue = Math.floor(currentProblem.minuend / 10);
+                        const borrowedValue = document.createElement('div');
+                        borrowedValue.className = 'borrowed-value';
+                        borrowedValue.textContent = originalValue - 1;
+                        tensDigit.parentNode.appendChild(borrowedValue);
+                        
+                        // 顯示個位數上的10
+                        borrowIndicator.style.display = 'block';
+                        
+                        // 顯示圓弧線和減號
+                        document.getElementById('borrow-arc').style.display = 'block';
+                        document.getElementById('minus-label').style.display = 'block';
+                        document.getElementById('plus-label').style.display = 'block';
+                    } else {
+                        // 取消退位效果
+                        tensDigit.classList.remove('borrowed');
+                        const existingBorrowedValue = tensDigit.parentNode.querySelector('.borrowed-value');
+                        if (existingBorrowedValue) {
+                            existingBorrowedValue.remove();
+                        }
+                        borrowIndicator.style.display = 'none';
+                        
+                        // 隱藏圓弧線和減號
+                        document.getElementById('borrow-arc').style.display = 'none';
+                        document.getElementById('minus-label').style.display = 'none';
+                        document.getElementById('plus-label').style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function openNumberPicker(position) {
+            currentAnswerPosition = position;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('number-picker').style.display = 'block';
+        }
+
+        function closeNumberPicker() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('number-picker').style.display = 'none';
+        }
+
+        function selectNumber(number) {
+            const answerBox = document.getElementById(`answer-${currentAnswerPosition}`);
+            answerBox.textContent = number;
+            answerBox.classList.add('filled');
+            closeNumberPicker();
+            checkAnswer();
+        }
+
+        function checkAnswer() {
+            const answerTens = document.getElementById('answer-tens').textContent;
+            const answerOnes = document.getElementById('answer-ones').textContent;
+            
+            if (answerTens !== '?' && answerOnes !== '?') {
+                const userAnswer = parseInt(answerTens) * 10 + parseInt(answerOnes);
+                const correctAnswer = currentProblem.answer;
+                
+                const feedback = document.getElementById('feedback');
+                if (userAnswer === correctAnswer) {
+                    feedback.textContent = '答對了！太棒了！🎉';
+                    feedback.className = 'feedback correct';
+                } else {
+                    feedback.textContent = `答案不對喔，正確答案是 ${correctAnswer}`;
+                    feedback.className = 'feedback incorrect';
+                }
+            }
+        }
+
+        // 初始化第一題
+        generateNewProblem();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ca4c3e71344a09',t:'MTc2MjgyNzQ5NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
