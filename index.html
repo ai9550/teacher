@@ -145,6 +145,49 @@
             margin-top: 20px;
             font-size: 0.9em;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .pagination button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .pagination .page-info {
+            padding: 10px 20px;
+            color: #333;
+            font-weight: 600;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-width: 150px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -159,12 +202,22 @@
                 <strong>提示：</strong> 下表點選後可進入遊戲
             </div>
             <ul id="fileList" class="file-list"></ul>
+            <div id="pagination" class="pagination" style="display: none;">
+                <button id="prevBtn" onclick="changePage(-1)">◀ 上一頁</button>
+                <div id="pageInfo" class="page-info">第 1 頁 / 共 1 頁</div>
+                <button id="nextBtn" onclick="changePage(1)">下一頁 ▶</button>
+            </div>
             <div id="count" class="count"></div>
         </div>
         <div id="error" style="display: none;" class="error"></div>
     </div>
 
     <script>
+        // 分頁相關變量
+        let allFiles = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
         // 從當前 URL 獲取倉庫信息
         function getRepoInfo() {
             const hostname = window.location.hostname;
@@ -229,7 +282,10 @@
                     )
                     .sort((a, b) => a.name.localeCompare(b.name));
                 
-                displayFiles(htmlFiles, currentPath);
+                // 保存所有文件並重置到第一頁
+                allFiles = htmlFiles;
+                currentPage = 1;
+                displayFiles();
                 
             } catch (error) {
                 console.error('錯誤:', error);
@@ -237,23 +293,35 @@
             }
         }
 
-        // 顯示文件列表
-        function displayFiles(files, currentPath) {
+        // 顯示文件列表（分頁版本）
+        function displayFiles() {
             const loadingDiv = document.getElementById('loading');
             const contentDiv = document.getElementById('content');
             const fileList = document.getElementById('fileList');
             const countDiv = document.getElementById('count');
+            const paginationDiv = document.getElementById('pagination');
             
             loadingDiv.style.display = 'none';
             contentDiv.style.display = 'block';
             
-            if (files.length === 0) {
+            if (allFiles.length === 0) {
                 fileList.innerHTML = '<li class="file-item"><div class="file-link" style="background: #fff3cd; color: #856404;">目前沒有找到其他 HTML 檔案</div></li>';
                 countDiv.textContent = '找到 0 個 HTML 檔案';
+                paginationDiv.style.display = 'none';
                 return;
             }
             
-            files.forEach((file, index) => {
+            // 計算分頁
+            const totalPages = Math.ceil(allFiles.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, allFiles.length);
+            const currentPageFiles = allFiles.slice(startIndex, endIndex);
+            
+            // 清空列表
+            fileList.innerHTML = '';
+            
+            // 顯示當前頁的文件
+            currentPageFiles.forEach((file, index) => {
                 const li = document.createElement('li');
                 li.className = 'file-item';
                 li.style.animationDelay = `${index * 0.05}s`;
@@ -271,7 +339,44 @@
                 fileList.appendChild(li);
             });
             
-            countDiv.textContent = `共找到 ${files.length} 個 HTML 檔案`;
+            // 更新分頁控件
+            updatePagination(totalPages);
+            
+            // 更新計數信息
+            countDiv.textContent = `共找到 ${allFiles.length} 個 HTML 檔案（顯示第 ${startIndex + 1}-${endIndex} 個）`;
+        }
+
+        // 更新分頁控件
+        function updatePagination(totalPages) {
+            const paginationDiv = document.getElementById('pagination');
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (totalPages <= 1) {
+                paginationDiv.style.display = 'none';
+                return;
+            }
+            
+            paginationDiv.style.display = 'flex';
+            pageInfo.textContent = `第 ${currentPage} 頁 / 共 ${totalPages} 頁`;
+            
+            // 更新按鈕狀態
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
+
+        // 切換頁碼
+        function changePage(direction) {
+            const totalPages = Math.ceil(allFiles.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayFiles();
+                // 滾動到頂部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         // 顯示錯誤訊息
