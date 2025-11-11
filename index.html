@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 檔案目錄</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+            font-size: 1.1em;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .file-item {
+            margin: 10px 0;
+            animation: slideIn 0.3s ease-out;
+            animation-fill-mode: both;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .file-link {
+            display: block;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-link:hover {
+            transform: translateX(10px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #c33;
+            margin-top: 20px;
+        }
+
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1976d2;
+        }
+
+        .count {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 HTML 檔案目錄</h1>
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>正在載入檔案列表...</p>
+        </div>
+        <div id="content" style="display: none;">
+            <div class="info">
+                <strong>提示：</strong> 以下列出同目錄下的所有 HTML 檔案
+            </div>
+            <ul id="fileList" class="file-list"></ul>
+            <div id="count" class="count"></div>
+        </div>
+        <div id="error" style="display: none;" class="error"></div>
+    </div>
+
+    <script>
+        // 從當前 URL 獲取倉庫信息
+        function getRepoInfo() {
+            const hostname = window.location.hostname;
+            const pathname = window.location.pathname;
+            
+            // GitHub Pages 格式: username.github.io/repo-name/
+            if (hostname.includes('github.io')) {
+                const parts = pathname.split('/').filter(p => p);
+                if (parts.length > 0) {
+                    // 從 hostname 提取用戶名: username.github.io
+                    const username = hostname.split('.')[0];
+                    const repo = parts[0];
+                    return { username, repo, path: parts.slice(1).join('/') || '' };
+                }
+            }
+            
+            // 如果無法自動檢測，使用默認值
+            // 根據主頁網址 https://ai9550.github.io/teacher/
+            return {
+                username: 'ai9550',
+                repo: 'teacher',
+                path: ''
+            };
+        }
+
+        // 獲取當前目錄路徑
+        function getCurrentPath() {
+            const pathname = window.location.pathname;
+            const parts = pathname.split('/').filter(p => p);
+            // 移除倉庫名稱，獲取子目錄路徑
+            const repoInfo = getRepoInfo();
+            if (parts.length > 1) {
+                return parts.slice(1).join('/');
+            }
+            return '';
+        }
+
+        // 獲取文件列表
+        async function fetchFileList() {
+            const repoInfo = getRepoInfo();
+            const currentPath = getCurrentPath();
+            const apiPath = currentPath ? `${currentPath}/` : '';
+            
+            // GitHub API 端點
+            const apiUrl = `https://api.github.com/repos/${repoInfo.username}/${repoInfo.repo}/contents/${apiPath}`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP 錯誤: ${response.status}`);
+                }
+                
+                const files = await response.json();
+                
+                // 過濾出 HTML 文件（排除 index.html 本身）
+                const htmlFiles = files
+                    .filter(file => 
+                        file.type === 'file' && 
+                        file.name.endsWith('.html') && 
+                        file.name !== 'index.html'
+                    )
+                    .sort((a, b) => a.name.localeCompare(b.name));
+                
+                displayFiles(htmlFiles, currentPath);
+                
+            } catch (error) {
+                console.error('錯誤:', error);
+                showError(`無法載入檔案列表: ${error.message}<br><br>請確認：<br>1. 倉庫是公開的<br>2. GitHub API 可以正常訪問<br>3. 路徑設定正確`);
+            }
+        }
+
+        // 顯示文件列表
+        function displayFiles(files, currentPath) {
+            const loadingDiv = document.getElementById('loading');
+            const contentDiv = document.getElementById('content');
+            const fileList = document.getElementById('fileList');
+            const countDiv = document.getElementById('count');
+            
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<li class="file-item"><div class="file-link" style="background: #fff3cd; color: #856404;">目前沒有找到其他 HTML 檔案</div></li>';
+                countDiv.textContent = '找到 0 個 HTML 檔案';
+                return;
+            }
+            
+            files.forEach((file, index) => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.style.animationDelay = `${index * 0.05}s`;
+                
+                const link = document.createElement('a');
+                link.href = file.name;
+                link.className = 'file-link';
+                
+                const fileName = document.createElement('div');
+                fileName.className = 'file-name';
+                fileName.textContent = `📄 ${file.name}`;
+                
+                link.appendChild(fileName);
+                li.appendChild(link);
+                fileList.appendChild(li);
+            });
+            
+            countDiv.textContent = `共找到 ${files.length} 個 HTML 檔案`;
+        }
+
+        // 顯示錯誤訊息
+        function showError(message) {
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            
+            loadingDiv.style.display = 'none';
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `<strong>錯誤：</strong><br>${message}`;
+        }
+
+        // 頁面載入時執行
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchFileList();
+        });
+    </script>
+</body>
+</html>
+
