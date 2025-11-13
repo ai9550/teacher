@@ -1,0 +1,505 @@
+
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>猜國字遊戲</title>
+  <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 10px 20px;
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+            color: #333;
+        }
+        
+        html {
+            height: 100%;
+        }
+
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 20px 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #718096;
+            margin-bottom: 20px;
+        }
+
+        .stage-info {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+
+        .game-area {
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            min-height: 250px;
+            position: relative;
+            border: 3px dashed #cbd5e0;
+        }
+
+        .component {
+            display: inline-block;
+            font-size: 4rem;
+            font-weight: bold;
+            color: #2b6cb0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: absolute;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .component.rotating {
+            animation: rotate 3s linear infinite;
+        }
+
+        .component:hover {
+            transform: scale(1.1);
+            color: #1a365d;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .answer-display {
+            text-align: center;
+            font-size: 6rem;
+            font-weight: bold;
+            color: #38a169;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .next-btn {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .question-counter {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4a5568;
+            margin: 0 20px 20px 20px;
+            padding: 15px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .feedback {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .feedback.correct {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #38a169;
+        }
+
+        .feedback.incorrect {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+        }
+
+        .feedback.hint {
+            background: #fef5e7;
+            color: #744210;
+            border: 2px solid #ed8936;
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="game-container">
+   <header class="header">
+    <h1 class="title">🧩 康軒六上第七課生字轉轉轉</h1>
+    <div class="stage-info" id="stageInfo">
+     第一階段：觀察散落的部件，猜猜看是什麼字？
+    </div>
+   </header>
+   <div class="game-area" id="gameArea"><!-- 部件會在這裡顯示 -->
+   </div>
+   <div class="controls">
+    <div class="question-counter" id="questionCounter">
+     第 1 題 / 共 17 題
+    </div><button class="btn" id="prevBtn" onclick="prevQuestion()">上一題</button> <button class="btn" id="hintBtn" onclick="nextHint()">提示</button> <button class="btn next-btn" id="nextBtn" onclick="nextQuestion()">下一題</button>
+   </div>
+   <div class="feedback" id="feedback" style="display: none;"></div>
+  </main>
+  <script>
+        const originalQuestions = [
+            {
+                answer: '仰',
+                components: ['人', '卬', '印'],
+                stage3Components: ['人', '卬'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '緬',
+                components: ['糸', '面', '囟'],
+                stage3Components: ['糸', '面'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '甸',
+                components: ['田', '勹', '丶'],
+                stage3Components: ['田', '勹'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '踝',
+                components: ['足', '果', '木'],
+                stage3Components: ['足', '果'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '絨',
+                components: ['糸', '戎', '戈'],
+                stage3Components: ['糸', '戎'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '濺',
+                components: ['氵', '賤', '戔'],
+                stage3Components: ['氵', '賤'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '襬',
+                components: ['衤', '擺', '手'],
+                stage3Components: ['衤', '擺'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '弄',
+                components: ['廾', '玉', '王'],
+                stage3Components: ['廾', '玉'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '恣',
+                components: ['次', '心', '欠'],
+                stage3Components: ['次', '心'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '批',
+                components: ['扌', '比', '匕'],
+                stage3Components: ['扌', '比'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '徑',
+                components: ['彳', '巠', '工'],
+                stage3Components: ['彳', '巠'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '謹',
+                components: ['言', '堇', '廿'],
+                stage3Components: ['言', '堇'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '恰',
+                components: ['忄', '合', '口'],
+                stage3Components: ['忄', '合'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '乏',
+                components: ['之', '丿', '乀'],
+                stage3Components: ['之', '丿'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '皆',
+                components: ['比', '白', '匕'],
+                stage3Components: ['比', '白'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '嗤',
+                components: ['口', '蚩', '虫'],
+                stage3Components: ['口', '蚩'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            },
+            {
+                answer: '嗯',
+                components: ['口', '恩', '心'],
+                stage3Components: ['口', '恩'],
+                positions: [
+                    [{x: 120, y: 70}, {x: 300, y: 100}, {x: 450, y: 140}],
+                    [{x: 160, y: 90}, {x: 260, y: 110}, {x: 380, y: 130}],
+                    [{x: 200, y: 110}, {x: 320, y: 110}],
+                    'complete'
+                ]
+            }
+        ];
+
+        // 隨機排列題目順序
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        const questions = shuffleArray(originalQuestions);
+
+        let currentQuestion = 0;
+        let currentStage = 0;
+        let gameCompleted = false;
+
+        function initGame() {
+            currentStage = 0;
+            gameCompleted = false;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('hintBtn').disabled = false;
+            updateStageInfo();
+            updateQuestionCounter();
+            displayComponents();
+        }
+
+        function updateStageInfo() {
+            const stageTexts = [
+                '第一階段：觀察散落的部件，猜猜看是什麼字？',
+                '第二階段：部件稍微靠近了一些，再猜猜看！',
+                '第三階段：部分部件開始組合，你能看出來了嗎？',
+                '第四階段：完整答案揭曓！'
+            ];
+            document.getElementById('stageInfo').textContent = stageTexts[currentStage];
+        }
+
+        function updateQuestionCounter() {
+            document.getElementById('questionCounter').textContent = `第 ${currentQuestion + 1} 題 / 共 ${questions.length} 題`;
+        }
+
+        function displayComponents() {
+            const gameArea = document.getElementById('gameArea');
+            const question = questions[currentQuestion];
+            
+            gameArea.innerHTML = '';
+
+            if (currentStage === 3) {
+                // 顯示完整答案
+                gameArea.innerHTML = `<div class="answer-display">${question.answer}</div>`;
+                return;
+            }
+
+            const positions = question.positions[currentStage];
+            let componentsToShow;
+            
+            if (currentStage === 2) {
+                // 第三階段使用特定的兩個部件
+                componentsToShow = question.stage3Components;
+            } else {
+                // 其他階段使用原本的部件
+                componentsToShow = question.components;
+            }
+            
+            componentsToShow.forEach((component, index) => {
+                const componentDiv = document.createElement('div');
+                componentDiv.className = currentStage === 0 ? 'component rotating' : 'component';
+                componentDiv.textContent = component;
+                componentDiv.style.left = positions[index].x + 'px';
+                componentDiv.style.top = positions[index].y + 'px';
+                gameArea.appendChild(componentDiv);
+            });
+        }
+
+
+
+        function nextHint() {
+            if (gameCompleted) return;
+            
+            if (currentStage < 3) {
+                currentStage++;
+                updateStageInfo();
+                displayComponents();
+                
+                if (currentStage === 3) {
+                    showFeedback(`答案是：${questions[currentQuestion].answer}`, 'correct');
+                    gameCompleted = true;
+                    document.getElementById('hintBtn').disabled = true;
+                }
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestion = (currentQuestion + 1) % questions.length;
+            initGame();
+        }
+
+        function prevQuestion() {
+            currentQuestion = (currentQuestion - 1 + questions.length) % questions.length;
+            initGame();
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = `feedback ${type}`;
+            feedback.style.display = 'block';
+        }
+
+
+
+        // 初始化遊戲
+        initGame();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99dc7c4f564a4a3c',t:'MTc2MzAxODIwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
