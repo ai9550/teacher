@@ -205,6 +205,76 @@
             margin: 30px 0;
         }
 
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .ribbon {
+            position: fixed;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 400% 400%;
+            animation: ribbon-wave 2s ease-in-out, gradient-shift 3s ease-in-out;
+            z-index: 999;
+            opacity: 0;
+        }
+
+        .ribbon.left {
+            left: 0;
+            transform: translateX(-100%);
+        }
+
+        .ribbon.right {
+            right: 0;
+            transform: translateX(100%);
+        }
+
+        @keyframes ribbon-wave {
+            0% {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+            20% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            80% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
         @media (max-width: 768px) {
             .cards-container {
                 flex-direction: column;
@@ -432,8 +502,8 @@
             if (selectedChar === currentAnswer) {
                 // 答對了
                 score += 1;
-                document.getElementById('feedback').textContent = `正確！相同的生字是「${currentAnswer}」 +1分`;
-                document.getElementById('feedback').className = 'feedback correct';
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('feedback').className = 'feedback';
                 
                 // 標記所有正確的字符
                 document.querySelectorAll('.character').forEach(el => {
@@ -441,10 +511,13 @@
                         el.classList.add('correct');
                     }
                 });
+                
+                // 顯示彩帶慶祝效果
+                showCelebration();
             } else {
-                // 答錯了
-                document.getElementById('feedback').textContent = `錯誤！正確的生字是「${currentAnswer}」 +0分`;
-                document.getElementById('feedback').className = 'feedback wrong';
+                // 答錯了 - 不顯示錯誤訊息
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('feedback').className = 'feedback';
                 
                 // 標記錯誤的字符和正確答案
                 element.classList.add('wrong');
@@ -460,6 +533,55 @@
             
             // 啟用下一題按鈕
             document.getElementById('nextBtn').disabled = false;
+        }
+
+        // 顯示慶祝效果
+        function showCelebration() {
+            // 創建左側彩帶
+            const leftRibbon = document.createElement('div');
+            leftRibbon.className = 'ribbon left';
+            document.body.appendChild(leftRibbon);
+            
+            // 創建右側彩帶
+            const rightRibbon = document.createElement('div');
+            rightRibbon.className = 'ribbon right';
+            rightRibbon.style.animationDelay = '0.1s';
+            document.body.appendChild(rightRibbon);
+            
+            // 創建彩紙效果
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createConfetti();
+                }, i * 50);
+            }
+            
+            // 清理彩帶元素
+            setTimeout(() => {
+                leftRibbon.remove();
+                rightRibbon.remove();
+            }, 3000);
+        }
+
+        // 創建彩紙
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // 隨機顏色
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#a8e6cf', '#ffd93d'];
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 隨機位置
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            
+            document.body.appendChild(confetti);
+            
+            // 清理彩紙元素
+            setTimeout(() => {
+                confetti.remove();
+            }, 5000);
         }
 
         // 下一題
@@ -491,5 +613,5 @@
         generateQuestions();
         displayQuestion();
     </script>
- <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ea749e51584a87',t:'MTc2MzE2NDY5Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99ea850d05274a87',t:'MTc2MzE2NTM2NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
