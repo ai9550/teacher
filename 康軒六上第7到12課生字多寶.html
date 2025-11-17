@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語三上1-2課生字</title>
+  <style>
+        body {
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        .lesson-buttons {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .lesson-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            min-width: 100px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .lesson-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+        }
+
+        .lesson-btn.active {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+            transform: scale(1.05);
+        }
+
+        .title {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .game-info {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .question-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .instruction {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: white;
+            border: 8px solid white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+        }
+
+        .card.left {
+            background: white;
+        }
+
+        .card.right {
+            background: white;
+        }
+
+        .character {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            user-select: none;
+            min-width: 80px;
+            text-align: center;
+            position: absolute;
+        }
+
+        .character:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .character.selected {
+            background: #4CAF50;
+            color: white;
+            transform: scale(1.2);
+        }
+
+        .character.correct {
+            background: #4CAF50;
+            color: white;
+            animation: bounce 0.6s ease;
+        }
+
+        .character.wrong {
+            background: #f44336;
+            color: white;
+            animation: shake 0.6s ease;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            80% { transform: translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+
+        .controls {
+            margin: -65px 0 5px 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback {
+            margin: 20px 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            min-height: 30px;
+        }
+
+        .feedback.correct {
+            color: #4CAF50;
+        }
+
+        .feedback.wrong {
+            color: #f44336;
+        }
+
+        .score {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 25px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .game-complete {
+            background: rgba(76, 175, 80, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            margin: 30px 0;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .ribbon {
+            position: fixed;
+            top: 0;
+            width: 100px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 400% 400%;
+            animation: ribbon-wave 2s ease-in-out, gradient-shift 3s ease-in-out;
+            z-index: 999;
+            opacity: 0;
+        }
+
+        .ribbon.left {
+            left: 0;
+            transform: translateX(-100%);
+        }
+
+        .ribbon.right {
+            right: 0;
+            transform: translateX(100%);
+        }
+
+        @keyframes ribbon-wave {
+            0% {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+            20% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            80% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-100%);
+            }
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .lesson-buttons {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-bottom: 20px;
+                gap: 10px;
+            }
+            
+            .lesson-btn {
+                font-size: 0.9rem;
+                padding: 8px 15px;
+                min-width: 80px;
+            }
+            
+            .cards-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+            
+            .card {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .character {
+                font-size: 1.5rem;
+                min-width: 40px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="lesson-buttons"><button class="lesson-btn active" onclick="switchLesson(7)">第七課</button> <button class="lesson-btn" onclick="switchLesson(8)">第八課</button> <button class="lesson-btn" onclick="switchLesson(9)">第九課</button> <button class="lesson-btn" onclick="switchLesson(10)">第十課</button> <button class="lesson-btn" onclick="switchLesson(11)">第十一課</button> <button class="lesson-btn" onclick="switchLesson(12)">第十二課</button>
+  </div>
+  <div class="game-container">
+   <h1 class="title" id="gameTitle">康軒國語六上第七課生字</h1>
+   <div class="game-info">
+    <div class="question-number">
+     第 <span id="currentQuestion">1</span> 題 / 共 <span id="totalQuestions">17</span> 題　得分: <span id="score">0</span> 分
+    </div>
+   </div>
+   <div class="cards-container">
+    <div class="card left" id="leftCard"><!-- 左卡字符將在這裡生成 -->
+    </div>
+    <div class="card right" id="rightCard"><!-- 右卡字符將在這裡生成 -->
+    </div>
+   </div>
+   <div class="feedback" id="feedback"></div>
+   <div class="controls"><button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>下一題</button> <button class="btn" id="restartBtn" onclick="restartGame()">重新開始</button>
+   </div>
+   <div id="gameComplete" class="game-complete" style="display: none;">
+    <h2>🎉 遊戲完成！</h2>
+    <p>最終得分：<span id="finalScore"></span> 分 / <span id="maxScore">17</span> 分</p>
+    <p>表現很棒！繼續加油！</p>
+   </div>
+  </div>
+  <script>
+        // 各課生字資料
+        const lessonData = {
+            7: {
+                title: "康軒國語六上第七課生字",
+                characters: "仰緬甸踝絨濺襬弄恣批徑謹恰乏皆嗤嗯".split('')
+            },
+            8: {
+                title: "康軒國語六上第八課生字", 
+                characters: "隙竄旨悠寓鷸狡窟猾騙偽誇辨謊諷惕察蔽虛".split('')
+            },
+            9: {
+                title: "康軒國語六上第九課生字",
+                characters: "亭支誘縣懿魏旗幟崗姓倘僮薰撤諸葛慎丞".split('')
+            },
+            10: {
+                title: "康軒國語六上第十課生字",
+                characters: "耶郊慈祥劈啪零厭倦辯私貧係趁稍烘衷鋼".split('')
+            },
+            11: {
+                title: "康軒國語六上第十一課生字",
+                characters: "楓恢潑莓廳額灌醉釀替諒脣奔乞某煥橇鈴迴".split('')
+            },
+            12: {
+                title: "康軒國語六上第十二課生字",
+                characters: "異頰蓬勃逛庭肅薔薇瀰刮括螞蟻儘".split('')
+            }
+        };
+        
+        let currentLesson = 7;
+        let characters = lessonData[7].characters;
+        let currentQuestionNum = 1;
+        let score = 0;
+        let gameQuestions = [];
+        let currentAnswer = '';
+        let selectedChars = [];
+        let questionAnswered = false;
+
+        // 切換課程
+        function switchLesson(lessonNum) {
+            currentLesson = lessonNum;
+            characters = lessonData[lessonNum].characters;
+            
+            // 更新標題
+            document.getElementById('gameTitle').textContent = lessonData[lessonNum].title;
+            
+            // 更新總題數顯示
+            document.getElementById('totalQuestions').textContent = characters.length;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.lesson-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重新開始遊戲
+            restartGame();
+        }
+
+        // 生成遊戲題目
+        function generateQuestions() {
+            gameQuestions = [];
+            const totalQuestions = characters.length; // 根據字數決定題數
+            for (let i = 0; i < totalQuestions; i++) {
+                const question = generateQuestion();
+                gameQuestions.push(question);
+            }
+        }
+
+        // 生成單個題目
+        function generateQuestion() {
+            const shuffled = [...characters].sort(() => Math.random() - 0.5);
+            
+            // 選擇共同字符
+            const commonChar = shuffled[0];
+            
+            // 為左卡選擇7個其他字符
+            const leftOthers = shuffled.slice(1, 8);
+            const leftCard = [commonChar, ...leftOthers].sort(() => Math.random() - 0.5);
+            
+            // 為右卡選擇7個其他字符（不與左卡重複）
+            const rightOthers = shuffled.slice(8, 15);
+            const rightCard = [commonChar, ...rightOthers].sort(() => Math.random() - 0.5);
+            
+            return {
+                leftCard,
+                rightCard,
+                answer: commonChar
+            };
+        }
+
+        // 生成4x4格線位置（圓圈內）
+        function generateGridPositions(count, cardRadius) {
+            const positions = [];
+            const gridSize = 4;
+            const cellSize = (cardRadius * 2) / gridSize;
+            const startOffset = -cardRadius + cellSize / 2;
+            
+            // 生成所有可能的格子位置
+            const allGridPositions = [];
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const x = startOffset + col * cellSize;
+                    const y = startOffset + row * cellSize;
+                    
+                    // 檢查這個位置是否在圓圈內
+                    const distanceFromCenter = Math.sqrt(x * x + y * y);
+                    if (distanceFromCenter <= cardRadius * 0.85) { // 留一點邊距
+                        allGridPositions.push({ x, y });
+                    }
+                }
+            }
+            
+            // 隨機選擇8個位置放置文字
+            const shuffledPositions = [...allGridPositions].sort(() => Math.random() - 0.5);
+            return shuffledPositions.slice(0, count);
+        }
+
+        // 顯示當前題目
+        function displayQuestion() {
+            const question = gameQuestions[currentQuestionNum - 1];
+            currentAnswer = question.answer;
+            selectedChars = [];
+            questionAnswered = false;
+            
+            // 清空卡牌
+            document.getElementById('leftCard').innerHTML = '';
+            document.getElementById('rightCard').innerHTML = '';
+            
+            // 生成格線位置
+            const leftPositions = generateGridPositions(8, 150);
+            const rightPositions = generateGridPositions(8, 150);
+            
+            // 為這一題動態分配顏色，每個字符都有不同顏色（包括相同的答案字）
+            const allColors = ['#E53E3E', '#00B5D8', '#3182CE', '#38A169', '#D69E2E', '#9F7AEA', '#319795', '#DD6B20', '#805AD5', '#2D3748', '#C53030', '#0987A0'];
+            const usedColors = new Set();
+            const questionColors = {};
+            
+            // 為所有字符分配不同顏色（包括重複的答案字）
+            const allPositions = [...question.leftCard, ...question.rightCard];
+            allPositions.forEach((char, index) => {
+                const colorKey = `${char}_${index}`; // 使用字符+位置作為唯一鍵
+                let availableColors = allColors.filter(color => !usedColors.has(color));
+                if (availableColors.length === 0) {
+                    // 如果顏色用完了，重置可用顏色
+                    usedColors.clear();
+                    availableColors = [...allColors];
+                }
+                const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                questionColors[colorKey] = randomColor;
+                usedColors.add(randomColor);
+            });
+            
+            // 顯示左卡字符
+            question.leftCard.forEach((char, index) => {
+                const charElement = document.createElement('div');
+                charElement.className = 'character';
+                charElement.textContent = char;
+                charElement.style.left = `calc(50% + ${leftPositions[index].x}px)`;
+                charElement.style.top = `calc(50% + ${leftPositions[index].y}px)`;
+                
+                // 隨機旋轉角度 (-30度到30度)
+                const randomRotation = Math.random() * 60 - 30;
+                charElement.style.transform = `translate(-50%, -50%) rotate(${randomRotation}deg)`;
+                
+                const colorKey = `${char}_${index}`;
+                charElement.style.color = questionColors[colorKey] || '#333';
+                charElement.style.backgroundColor = 'transparent';
+                charElement.onclick = () => selectCharacter(char, charElement, 'left');
+                document.getElementById('leftCard').appendChild(charElement);
+            });
+            
+            // 顯示右卡字符
+            question.rightCard.forEach((char, index) => {
+                const charElement = document.createElement('div');
+                charElement.className = 'character';
+                charElement.textContent = char;
+                charElement.style.left = `calc(50% + ${rightPositions[index].x}px)`;
+                charElement.style.top = `calc(50% + ${rightPositions[index].y}px)`;
+                
+                // 隨機旋轉角度 (-30度到30度)
+                const randomRotation = Math.random() * 60 - 30;
+                charElement.style.transform = `translate(-50%, -50%) rotate(${randomRotation}deg)`;
+                
+                const colorKey = `${char}_${index + 8}`; // 右卡從第8個位置開始
+                charElement.style.color = questionColors[colorKey] || '#333';
+                charElement.style.backgroundColor = 'transparent';
+                charElement.onclick = () => selectCharacter(char, charElement, 'right');
+                document.getElementById('rightCard').appendChild(charElement);
+            });
+            
+            // 更新界面
+            document.getElementById('currentQuestion').textContent = currentQuestionNum;
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        // 選擇字符
+        function selectCharacter(char, element, side) {
+            if (questionAnswered) return;
+            
+            // 標記當前選擇
+            element.classList.add('selected');
+            
+            // 直接檢查答案
+            checkAnswer(char, element);
+        }
+
+        // 檢查答案
+        function checkAnswer(selectedChar, element) {
+            questionAnswered = true;
+            
+            if (selectedChar === currentAnswer) {
+                // 答對了
+                score += 1;
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('feedback').className = 'feedback';
+                
+                // 標記所有正確的字符
+                document.querySelectorAll('.character').forEach(el => {
+                    if (el.textContent === currentAnswer) {
+                        el.classList.add('correct');
+                    }
+                });
+                
+                // 顯示彩帶慶祝效果
+                showCelebration();
+            } else {
+                // 答錯了 - 不顯示錯誤訊息
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('feedback').className = 'feedback';
+                
+                // 標記錯誤的字符和正確答案
+                element.classList.add('wrong');
+                document.querySelectorAll('.character').forEach(el => {
+                    if (el.textContent === currentAnswer) {
+                        el.classList.add('correct');
+                    }
+                });
+            }
+            
+            // 更新分數
+            document.getElementById('score').textContent = score;
+            
+            // 啟用下一題按鈕
+            document.getElementById('nextBtn').disabled = false;
+        }
+
+        // 顯示慶祝效果
+        function showCelebration() {
+            // 創建左側彩帶
+            const leftRibbon = document.createElement('div');
+            leftRibbon.className = 'ribbon left';
+            document.body.appendChild(leftRibbon);
+            
+            // 創建右側彩帶
+            const rightRibbon = document.createElement('div');
+            rightRibbon.className = 'ribbon right';
+            rightRibbon.style.animationDelay = '0.1s';
+            document.body.appendChild(rightRibbon);
+            
+            // 創建彩紙效果
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createConfetti();
+                }, i * 50);
+            }
+            
+            // 清理彩帶元素
+            setTimeout(() => {
+                leftRibbon.remove();
+                rightRibbon.remove();
+            }, 3000);
+        }
+
+        // 創建彩紙
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            
+            // 隨機顏色
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#a8e6cf', '#ffd93d'];
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // 隨機位置
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            
+            document.body.appendChild(confetti);
+            
+            // 清理彩紙元素
+            setTimeout(() => {
+                confetti.remove();
+            }, 5000);
+        }
+
+        // 下一題
+        function nextQuestion() {
+            if (currentQuestionNum < characters.length) {
+                currentQuestionNum++;
+                displayQuestion();
+            } else {
+                // 遊戲結束
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('maxScore').textContent = characters.length;
+                document.getElementById('gameComplete').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'none';
+            }
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+            currentQuestionNum = 1;
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            document.getElementById('gameComplete').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            
+            generateQuestions();
+            displayQuestion();
+        }
+
+        // 初始化遊戲
+        document.getElementById('totalQuestions').textContent = characters.length;
+        generateQuestions();
+        displayQuestion();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99fc363e507d56e8',t:'MTc2MzM1MDg4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語六上語詞洞察先機</title>
+  <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 40px;
+            box-sizing: border-box;
+            gap: 20px;
+        }
+
+        .lesson-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .lesson-btn {
+            background: linear-gradient(45deg, #ffffff, #f7fafc);
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 100px;
+        }
+
+        .lesson-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+        }
+
+        .lesson-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .lesson-btn.active:hover {
+            background: linear-gradient(45deg, #5a67d8, #6b46c1);
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .main-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-info {
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .word-card {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 3px solid #e2e8f0;
+            overflow: hidden;
+            margin: 0 auto 30px;
+        }
+
+        .cover-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            z-index: 2;
+            -webkit-mask-image: 
+                radial-gradient(circle at 12.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 12.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 75%, transparent 30px, black 32px);
+            -webkit-mask-composite: intersect;
+            mask-image: 
+                radial-gradient(circle at 12.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 12.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 75%, transparent 30px, black 32px);
+            mask-composite: intersect;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+
+        .number-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 3;
+            width: 66px;
+            height: 66px;
+            font-size: 1.5rem;
+        }
+
+        .number-circle.pos-1 {
+            top: 32.5%;
+            left: 12.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-2 {
+            top: 25%;
+            left: 30.75%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-3 {
+            top: 32.5%;
+            left: 48.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-4 {
+            top: 25%;
+            left: 66.75%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-5 {
+            top: 32.5%;
+            left: 86.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-6 {
+            top: 75%;
+            left: 12.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-7 {
+            top: 62.5%;
+            left: 30.75%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-8 {
+            top: 75%;
+            left: 48.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-9 {
+            top: 62.5%;
+            left: 66.75%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle.pos-10 {
+            top: 75%;
+            left: 86.5%;
+            transform: translate(-50%, -50%);
+        }
+
+        .number-circle:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: #ffffff;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+
+        .number-circle.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        .cover-card.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .word {
+            font-size: 12rem;
+            font-weight: normal;
+            color: #2d3748;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif;
+            transition: opacity 0.3s ease;
+        }
+
+        .word.long-word {
+            font-size: 8rem;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .next-btn {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+        }
+
+        .prev-btn {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .prev-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(237, 137, 54, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .lesson-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-top: 0;
+            }
+
+            .lesson-btn {
+                min-width: 80px;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .word-card {
+                width: 300px;
+                height: 150px;
+            }
+            
+            .word {
+                font-size: 8rem;
+            }
+
+            .main-title {
+                font-size: 1.5rem;
+            }
+
+            .game-container {
+                padding: 20px;
+            }
+
+            .lesson-btn {
+                min-width: 70px;
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="lesson-buttons"><button class="lesson-btn active" onclick="switchLesson(7)">第七課</button> <button class="lesson-btn" onclick="switchLesson(8)">第八課</button> <button class="lesson-btn" onclick="switchLesson(9)">第九課</button> <button class="lesson-btn" onclick="switchLesson(10)">第十課</button> <button class="lesson-btn" onclick="switchLesson(11)">第十一課</button> <button class="lesson-btn" onclick="switchLesson(12)">第十二課</button>
+  </div>
+  <div class="game-container">
+   <h1 class="main-title" id="gameTitle">康軒國語六上第七課語詞洞察先機</h1>
+   <div class="progress-info">
+    第 <span id="currentQuestion">1</span> 題 / 共 <span id="totalQuestions">12</span> 題
+   </div>
+   <div class="word-card">
+    <div class="word" id="currentWord">
+     仰光
+    </div>
+    <div class="cover-card" onclick="revealWord()"></div>
+    <div class="number-circle pos-1" onclick="removeCircle(1)">
+     1
+    </div>
+    <div class="number-circle pos-2" onclick="removeCircle(2)">
+     2
+    </div>
+    <div class="number-circle pos-3" onclick="removeCircle(3)">
+     3
+    </div>
+    <div class="number-circle pos-4" onclick="removeCircle(4)">
+     4
+    </div>
+    <div class="number-circle pos-5" onclick="removeCircle(5)">
+     5
+    </div>
+    <div class="number-circle pos-6" onclick="removeCircle(6)">
+     6
+    </div>
+    <div class="number-circle pos-7" onclick="removeCircle(7)">
+     7
+    </div>
+    <div class="number-circle pos-8" onclick="removeCircle(8)">
+     8
+    </div>
+    <div class="number-circle pos-9" onclick="removeCircle(9)">
+     9
+    </div>
+    <div class="number-circle pos-10" onclick="removeCircle(10)">
+     10
+    </div>
+   </div>
+   <div class="game-controls"><button class="btn prev-btn" onclick="previousWord()" id="prevBtn">⬅️ 上一題</button> <button class="btn restart-btn" onclick="restartCurrentWord()">🔄 重新開始</button> <button class="btn next-btn" onclick="nextWord()" id="nextBtn">下一題 ➡️</button>
+   </div>
+  </div>
+  <script>
+        const lessonData = {
+            7: ['仰光', '緬甸', '腳踝', '呢絨', '下襬', '恣意', '批判', '行徑', '謹記', '恰恰', '乏人問津', '放之四海而皆準', '嗤之以鼻'],
+            8: ['縫隙', '旨意', '悠閒', '寓言', '鷸蚌相爭', '狡兔三窟', '狡猾', '招搖撞騙', '偽裝', '誇大', '分辨', '謊言', '諷刺', '警惕', '觀察', '蒙蔽', '虛張聲勢'],
+            9: ['街亭', '誘敵', '司馬懿', '旗幟', '崗位', '百姓', '倘若', '書僮', '撤退', '諸葛亮', '謹慎', '丞相'],
+            10: ['耶誕節', '郊外', '慈祥', '劈啪', '零用錢', '厭倦', '辯護', '自私自利', '貧窮', '關係', '稍微', '暖烘烘', '衷心', '鋼琴'],
+            11: ['恢復', '活潑', '草莓', '客廳', '前額', '灌醉', '原諒', '雙脣', '乞求', '雪橇', '迴盪'],
+            12: ['訝異', '臉頰', '蓬勃', '家庭醫師', '嚴肅', '薔薇', '瀰漫', '包括', '螞蟻', '儘管']
+        };
+        
+        let currentLesson = 7;
+        let words = [...lessonData[currentLesson]].sort(() => Math.random() - 0.5);
+        let currentWordIndex = 0;
+
+        function updateDisplay() {
+            const wordElement = document.getElementById('currentWord');
+            const currentWord = words[currentWordIndex];
+            
+            wordElement.textContent = currentWord;
+            
+            // 為三個字以上的語詞添加縮小樣式
+            if (currentWord.length >= 3) {
+                wordElement.classList.add('long-word');
+            } else {
+                wordElement.classList.remove('long-word');
+            }
+            
+            document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+            document.getElementById('totalQuestions').textContent = words.length;
+            
+            // 更新按鈕狀態
+            document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+            document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+        }
+
+        function revealWord() {
+            const coverCard = document.querySelector('.cover-card');
+            coverCard.classList.add('hidden');
+        }
+
+        function removeCircle(number) {
+            const circles = document.querySelectorAll('.number-circle');
+            circles[number - 1].classList.add('hidden');
+        }
+
+        function restartCurrentWord() {
+            const coverCard = document.querySelector('.cover-card');
+            const circles = document.querySelectorAll('.number-circle');
+            
+            coverCard.classList.remove('hidden');
+            circles.forEach(circle => {
+                circle.classList.remove('hidden');
+            });
+        }
+
+        function nextWord() {
+            if (currentWordIndex < words.length - 1) {
+                // 先隱藏當前語詞
+                const wordElement = document.getElementById('currentWord');
+                wordElement.style.opacity = '0';
+                
+                // 立即重置遮蓋層和數字圓圈
+                currentWordIndex++;
+                document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+                document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+                document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+                restartCurrentWord();
+                
+                // 1秒後顯示新語詞
+                setTimeout(() => {
+                    const currentWord = words[currentWordIndex];
+                    wordElement.textContent = currentWord;
+                    
+                    // 為三個字以上的語詞添加縮小樣式
+                    if (currentWord.length >= 3) {
+                        wordElement.classList.add('long-word');
+                    } else {
+                        wordElement.classList.remove('long-word');
+                    }
+                    
+                    wordElement.style.opacity = '1';
+                }, 1000);
+            }
+        }
+
+        function previousWord() {
+            if (currentWordIndex > 0) {
+                // 先隱藏當前語詞
+                const wordElement = document.getElementById('currentWord');
+                wordElement.style.opacity = '0';
+                
+                // 立即重置遮蓋層和數字圓圈
+                currentWordIndex--;
+                document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+                document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+                document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+                restartCurrentWord();
+                
+                // 1秒後顯示新語詞
+                setTimeout(() => {
+                    const currentWord = words[currentWordIndex];
+                    wordElement.textContent = currentWord;
+                    
+                    // 為三個字以上的語詞添加縮小樣式
+                    if (currentWord.length >= 3) {
+                        wordElement.classList.add('long-word');
+                    } else {
+                        wordElement.classList.remove('long-word');
+                    }
+                    
+                    wordElement.style.opacity = '1';
+                }, 1000);
+            }
+        }
+
+        function switchLesson(lessonNumber) {
+            // 更新當前課程
+            currentLesson = lessonNumber;
+            
+            // 更新標題
+            document.getElementById('gameTitle').textContent = `康軒國語六上第${lessonNumber}課語詞洞察先機`;
+            
+            // 更新語詞列表並隨機打亂
+            words = [...lessonData[lessonNumber]].sort(() => Math.random() - 0.5);
+            currentWordIndex = 0;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.lesson-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重置遊戲狀態
+            restartCurrentWord();
+            updateDisplay();
+        }
+
+        // 初始化顯示
+        updateDisplay();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99fc40e175f24a81',t:'MTc2MzM1MTMxNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
