@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三位數除以一位數的除法直式算式</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 使用 Inter 和 Noto Sans TC 作為主要字體 */
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f0f4f8; /* 柔和的背景色 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* 更大的圓角 */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            position: relative; /* 為了彈窗定位 */
+        }
+
+        h1 {
+            font-size: 1.75rem; /* 28px */
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        /* 新增：統計區塊 */
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background-color: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #334155;
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-box span {
+            display: block;
+        }
+
+        .stat-box .stat-value {
+            font-size: 1.125rem;
+            color: #1e293b;
+        }
+        /* 結束：新增 */
+
+
+        /* 除法結構網格 */
+        .division-problem {
+            display: grid;
+            /* 調整為 5 欄 (除數, ㄏ, 百, 十, 個) */
+            /* 讓第2欄(間隙)變窄, 數字欄(0.9fr)變窄 */
+            grid-template-columns: 0.8fr 0.2fr 0.9fr 0.9fr 0.9fr;
+            /* 增加到 11 行以容納 3 位數的計算步驟 */
+            grid-template-rows: repeat(11, auto);
+            font-size: 2rem; /* 32px */
+            font-weight: 700;
+            color: #334155;
+            margin: 2rem auto;
+            width: 75%; /* 讓版面更窄 */
+            position: relative;
+            line-height: 1.2;
+        }
+
+        /* "ㄏ" 除法符號 */
+        .division-symbol {
+            position: absolute;
+            top: calc((100% / 11) + 10px); /* 第 2 行 (1/11), 再往下 10px */
+            left: 20%; /* 0.8 / (0.8+0.2+0.9+0.9+0.9) = 0.8 / 3.7 */
+            width: 80%; /* (0.2+0.9+0.9+0.9) / 3.7 */
+            height: calc(100% / 11); /* 僅第 2 行的高度 */
+            border-left: 3px solid #334155;
+            border-top: 3px solid #334155;
+            border-top-left-radius: 0.5rem;
+            z-index: 0;
+        }
+
+        /* 網格中的儲存格 */
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+            padding: 0.25rem;
+            min-height: 3.5rem; /* 確保格子有最小高度 */
+        }
+
+        /* 數字框 (問號) */
+        .box {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed #94a3b8;
+            border-radius: 0.375rem; /* 6px */
+            cursor: pointer;
+            font-weight: 700;
+            color: #94a3b8;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* 靜態數字 (題目) */
+        .static-num {
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* 點選的方框 */
+        .box.selected {
+            border-color: #3b82f6;
+            background-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        /* 答錯的方框 */
+        .box.incorrect {
+            border-style: solid;
+            border-color: #ef4444;
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* 答對的方框 */
+        .box.correct {
+            border-style: solid;
+            border-color: #22c55e;
+            background-color: #dcfce7;
+            color: #15803d;
+        }
+
+        /* 橫線 */
+        .line {
+            /* 預設縮短，只跨越 2 欄 */
+            grid-column: 3 / span 2;
+            border-bottom: 3px solid #334155;
+            margin: 0.25rem 0;
+            z-index: 1;
+            height: 1px; /* 確保線條本身不占太多空間 */
+            min-height: auto; /* 覆蓋 cell 的 min-height */
+        }
+
+        /* 數字彈窗 */
+        #popup-number-pad {
+            display: none; /* 預設隱藏 */
+            position: absolute;
+            background-color: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem; /* 12px */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            z-index: 50;
+        }
+
+        #popup-number-pad .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+        }
+
+        #popup-number-pad .num-btn {
+            padding: 0.5rem; /* 8px */
+            font-size: 1.125rem; /* 18px */
+            font-weight: 700;
+            color: #334155;
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem; /* 8px */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        #popup-number-pad .num-btn:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+
+        /* 控制按鈕 */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem; /* 12px */
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem; /* 16px */
+            font-weight: 700;
+            border-radius: 0.5rem; /* 8px */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* 核對按鈕 */
+        .btn-check {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-check:hover {
+            background-color: #2563eb;
+        }
+
+        /* 下一題按鈕 */
+        .btn-next {
+            background-color: #6366f1;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background-color: #4f46e5;
+        }
+
+        /* 訊息區域 */
+        #message {
+            text-align: center;
+            font-size: 1rem; /* 16px */
+            font-weight: 700;
+            margin-top: 1rem;
+            height: 1.5rem; /* 保持高度穩定 */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>三位數除以一位數的除法直式算式</h1>
+
+        <!-- 新增：統計資訊 -->
+        <div class="stats-container">
+            <div class="stat-box">
+                <span>完成題數</span>
+                <span class="stat-value" id="completed-count">0</span>
+            </div>
+            <div class="stat-box">
+                <span>經過時間</span>
+                <span class="stat-value" id="timer">00:00</span>
+            </div>
+        </div>
+        <!-- 結束：新增 -->
+
+
+        <!-- 除法結構 (三位數版, 完整步驟) -->
+        <div class="division-problem">
+            <!-- 除法符號 -->
+            <div class="division-symbol"></div>
+
+            <!-- 第 1 行: 商 (恢復預設 min-height) -->
+            <div class="cell" style="grid-row: 1; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 1; grid-column: 3;"><div class="box" id="q1">?</div></div>
+            <div class="cell" style="grid-row: 1; grid-column: 4;"><div class="box" id="q2">?</div></div>
+            <div class="cell" style="grid-row: 1; grid-column: 5;"><div class="box" id="q3">?</div></div>
+
+            <!-- 第 2 行: 除數 & 被除數 -->
+            <div class="cell static-num" style="grid-row: 2; grid-column: 1;" id="divisor">8</div>
+            <div class="cell static-num" style="grid-row: 2; grid-column: 3;" id="d1">3</div>
+            <div class="cell static-num" style="grid-row: 2; grid-column: 4;" id="d2">7</div>
+            <div class="cell static-num" style="grid-row: 2; grid-column: 5;" id="d3">4</div>
+
+            <!-- 第 3 行: 計算 1 (e.g. 0) -->
+            <div class="cell" style="grid-row: 3; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 3; grid-column: 3;"><div class="box" id="s1_1">?</div></div>
+            <div class="cell" style="grid-row: 3; grid-column: 4;"></div>
+            <div class="cell" style="grid-row: 3; grid-column: 5;"></div>
+
+            <!-- 第 4 行: 分隔線 1 -->
+            <div class="cell line" style="grid-row: 4; grid-column: 3 / span 1;"></div>
+
+            <!-- 第 5 行: 計算 2 (e.g. 37) -->
+            <div class="cell" style="grid-row: 5; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 5; grid-column: 3;"><div class="box" id="s2_1">?</div></div>
+            <div class="cell" style="grid-row: 5; grid-column: 4;"><div class="box" id="s2_2">?</div></div>
+            <div class="cell" style="grid-row: 5; grid-column: 5;"></div>
+
+            <!-- 第 6 行: 計算 3 (e.g. 32) -->
+            <div class="cell" style="grid-row: 6; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 6; grid-column: 3;"><div class="box" id="s3_1">?</div></div>
+            <div class="cell" style="grid-row: 6; grid-column: 4;"><div class="box" id="s3_2">?</div></div>
+            <div class="cell" style="grid-row: 6; grid-column: 5;"></div>
+
+            <!-- 第 7 行: 分隔線 2 -->
+            <div class="cell line" style="grid-row: 7; grid-column: 3 / span 2;"></div>
+
+            <!-- 第 8 行: 計算 4 (e.g. 54) -->
+            <div class="cell" style="grid-row: 8; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 8; grid-column: 3;"></div>
+            <div class="cell" style="grid-row: 8; grid-column: 4;"><div class="box" id="s4_1">?</div></div>
+            <div class="cell" style="grid-row: 8; grid-column: 5;"><div class="box" id="s4_2">?</div></div>
+
+            <!-- 第 9 行: 計算 5 (e.g. 48) -->
+            <div class="cell" style="grid-row: 9; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 9; grid-column: 3;"></div>
+            <div class="cell" style="grid-row: 9; grid-column: 4;"><div class="box" id="s5_1">?</div></div>
+            <div class="cell" style="grid-row: 9; grid-column: 5;"><div class="box" id="s5_2">?</div></div>
+
+            <!-- 第 10 行: 分隔線 3 -->
+            <div class="cell line" style="grid-row: 10; grid-column: 4 / span 2;"></div>
+
+            <!-- 第 11 行: 餘數 -->
+            <div class="cell" style="grid-row: 11; grid-column: 2;"></div>
+            <div class="cell" style="grid-row: 11; grid-column: 3;"></div>
+            <div class="cell" style="grid-row: 11; grid-column: 4;"></div>
+            <div class="cell" style="grid-row: 11; grid-column: 5;"><div class="box" id="rem">?</div></div>
+        </div>
+        
+        <!-- 訊息區域 -->
+        <div id="message"></div>
+
+        <!-- 數字彈窗 (Pop-up Number Pad) -->
+        <div id="popup-number-pad">
+            <div class="grid">
+                <button class="num-btn">1</button>
+                <button class="num-btn">2</button>
+                <button class="num-btn">3</button>
+                <button class="num-btn">4</button>
+                <button class="num-btn">5</button>
+                <button class="num-btn">6</button>
+                <button class="num-btn">7</button>
+                <button class="num-btn">8</button>
+                <button class="num-btn">9</button>
+                <button class="num-btn">0</button>
+            </div>
+        </div>
+
+        <!-- 控制按鈕 -->
+        <div class="controls">
+            <button class="btn btn-check" id="check-btn">核對答案</button>
+            <button class="btn btn-next" id="next-btn">下一題</button>
+        </div>
+    </div>
+
+    <script>
+        // 獲取 DOM 元素
+        const container = document.querySelector('.container');
+        const problemGrid = document.querySelector('.division-problem');
+        const boxes = document.querySelectorAll('.box');
+        const numberPad = document.getElementById('popup-number-pad'); // 改成彈窗 ID
+        const numButtons = numberPad.querySelectorAll('.num-btn'); // 從彈窗選取
+        const checkBtn = document.getElementById('check-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const messageEl = document.getElementById('message');
+        const divisorEl = document.getElementById('divisor');
+        const d1El = document.getElementById('d1');
+        const d2El = document.getElementById('d2');
+        const d3El = document.getElementById('d3'); // 新增 d3
+        // 新增：統計元素
+        const timerEl = document.getElementById('timer');
+        const completedCountEl = document.getElementById('completed-count');
+
+        let currentProblem = {}; // 儲存當前問題
+        let userAnswers = {}; // 儲存用戶答案
+        let selectedBoxId = null; // 儲存當前選擇的方框 ID
+
+        // 新增：計時器和計數
+        let completedCount = 0;
+        let startTime = Date.now();
+        let timerInterval = null;
+        let currentProblemSolved = false; // 追蹤當前題目是否已算對過
+
+        // 產生新問題
+        function generateProblem() {
+            // 產生 3 位數除以 1 位數
+            // 除數 (Divisor): 2-9
+            const divisor = Math.floor(Math.random() * 8) + 2;
+            // 被除數 (Dividend): 100-999
+            let dividend = Math.floor(Math.random() * 900) + 100;
+            
+            // (移除舊的 while 迴圈，允許 3 / 8 這樣的情況)
+
+            // 計算正確答案
+            const dStr = String(dividend);
+            const d1 = Number(dStr[0]);
+            const d2 = Number(dStr[1]);
+            const d3 = Number(dStr[2]);
+
+            // 第 1 步 (e.g. 3 / 8 = 0)
+            const d_step1 = d1;
+            const q1 = Math.floor(d_step1 / divisor);
+            const s1 = q1 * divisor;
+            const s1_1 = s1; // 只有一位
+            const sub1 = d_step1 - s1; // (e.g. 3)
+
+            // 第 2 步 (e.g. 37 / 8 = 4)
+            const d_step2 = sub1 * 10 + d2; // (e.g. 37)
+            const q2 = Math.floor(d_step2 / divisor);
+            const s3 = q2 * divisor; // (e.g. 32)
+            const s3_1 = Math.floor(s3 / 10);
+            const s3_2 = s3 % 10;
+            const sub2 = d_step2 - s3; // (e.g. 5)
+
+            // 第 3 步 (e.g. 54 / 8 = 6)
+            const d_step3 = sub2 * 10 + d3; // (e.g. 54)
+            const q3 = Math.floor(d_step3 / divisor);
+            const s5 = q3 * divisor; // (e.g. 48)
+            const s5_1 = Math.floor(s5 / 10);
+            const s5_2 = s5 % 10;
+
+            // 餘數
+            const rem = d_step3 - s5; // (e.g. 6)
+
+            // 儲存問題
+            currentProblem = {
+                divisor: divisor,
+                d1: d1,
+                d2: d2,
+                d3: d3,
+                solution: {
+                    q1: q1,     // e.g. 0
+                    q2: q2,     // e.g. 4
+                    q3: q3,     // e.g. 6
+                    s1_1: s1_1, // e.g. 0
+                    s2_1: sub1, // e.g. 3
+                    s2_2: d2,   // e.g. 7 (帶下來)
+                    s3_1: s3_1, // e.g. 3
+                    s3_2: s3_2, // e.g. 2
+                    s4_1: sub2, // e.g. 5
+                    s4_2: d3,   // e.g. 4 (帶下來)
+                    s5_1: s5_1, // e.g. 4
+                    s5_2: s5_2, // e.g. 8
+                    rem: rem    // e.g. 6
+                }
+            };
+
+            // 初始化介面
+            setupUI();
+            
+            // 新增：啟動/重置計時器 (從 loadFirstProblem 複製過來)
+            startTime = Date.now();
+            clearInterval(timerInterval); // 清除舊的（如果存在）
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer(); // 立即更新一次
+        }
+
+        // 根據 currentProblem 設定介面
+        function setupUI() {
+            // 設定題目數字
+            divisorEl.textContent = currentProblem.divisor;
+            d1El.textContent = currentProblem.d1;
+            d2El.textContent = currentProblem.d2;
+            d3El.textContent = currentProblem.d3;
+
+            // 重置所有方框
+            boxes.forEach(box => {
+                box.textContent = '?';
+                box.classList.remove('selected', 'correct', 'incorrect');
+            });
+
+            // 清空用戶答案和訊息
+            userAnswers = {};
+            messageEl.textContent = '';
+            selectedBoxId = null;
+            numberPad.classList.remove('visible');
+            currentProblemSolved = false; // 重置“已解決”狀態
+        }
+
+        // 方框點擊事件處理
+        function handleBoxClick(e) {
+            e.stopPropagation(); // 防止觸發 document 點擊
+            const clickedBox = e.target;
+            
+            // 移除所有 'selected'
+            boxes.forEach(box => box.classList.remove('selected'));
+
+            // 如果點擊的是已經選中的，取消選中並隱藏鍵盤
+            if (selectedBoxId === clickedBox.id) {
+                selectedBoxId = null;
+                numberPad.style.display = 'none';
+            } else {
+                // 否則，選中新的方框並顯示鍵盤
+                selectedBoxId = clickedBox.id;
+                clickedBox.classList.add('selected');
+                
+                // 計算彈窗位置
+                const containerRect = container.getBoundingClientRect();
+                const boxRect = clickedBox.getBoundingClientRect();
+                
+                // 顯示在方框右側
+                let top = boxRect.top - containerRect.top + (boxRect.height / 2);
+                let left = boxRect.left - containerRect.left + boxRect.width + 10; // 往右 10px
+
+                numberPad.style.top = `${top}px`;
+                numberPad.style.left = `${left}px`;
+                numberPad.style.display = 'block';
+
+                // 調整彈窗 transform-origin 讓它從中心點偏上的位置打開
+                numberPad.style.transformOrigin = 'center 25%'; 
+                
+                // 確保彈窗不會超出容器右邊界
+                if (left + numberPad.offsetWidth > container.offsetWidth - 20) { // 20px 緩衝
+                     left = boxRect.left - containerRect.left - numberPad.offsetWidth - 10; // 改到左側
+                }
+
+                // 確保彈窗不會超出容器下邊界
+                if (top + numberPad.offsetHeight > container.offsetHeight - 20) {
+                    top = boxRect.top - containerRect.top - numberPad.offsetHeight; // 改到上側
+                }
+
+                numberPad.style.top = `${top}px`;
+                numberPad.style.left = `${left}px`;
+            }
+        }
+
+        // 數字鍵盤點擊事件處理
+        function handleNumClick(e) {
+            e.stopPropagation(); // 防止觸發 document 點擊
+            if (selectedBoxId) {
+                const selectedBox = document.getElementById(selectedBoxId);
+                const num = e.target.textContent;
+                
+                // 填入數字
+                selectedBox.textContent = num;
+                userAnswers[selectedBoxId] = Number(num);
+
+                // --- 自動填入邏輯 ---
+                const solution = currentProblem.solution;
+                const userNum = Number(num);
+
+                // 檢查 Q1 (商的第一位)
+                if (selectedBoxId === 'q1' && userNum === solution.q1) {
+                    // 自動填入 S1 (e.g., 0)
+                    const s1_1_box = document.getElementById('s1_1');
+                    s1_1_box.textContent = solution.s1_1;
+                    userAnswers['s1_1'] = solution.s1_1;
+                    s1_1_box.classList.add('correct');
+                }
+                
+                // 檢查 Q2 (商的第二位)
+                if (selectedBoxId === 'q2' && userNum === solution.q2) {
+                    // 自動填入 S3 (e.g., 32)
+                    const s3_1_box = document.getElementById('s3_1');
+                    const s3_2_box = document.getElementById('s3_2');
+                    
+                    s3_1_box.textContent = solution.s3_1;
+                    s3_2_box.textContent = solution.s3_2;
+                    
+                    userAnswers['s3_1'] = solution.s3_1;
+                    userAnswers['s3_2'] = solution.s3_2;
+                    
+                    s3_1_box.classList.add('correct');
+                    s3_2_box.classList.add('correct');
+                }
+
+                // 檢查 Q3 (商的第三位)
+                if (selectedBoxId === 'q3' && userNum === solution.q3) {
+                    // 自動填入 S5 (e.g., 48)
+                    const s5_1_box = document.getElementById('s5_1');
+                    const s5_2_box = document.getElementById('s5_2');
+                    
+                    s5_1_box.textContent = solution.s5_1;
+                    s5_2_box.textContent = solution.s5_2;
+                    
+                    userAnswers['s5_1'] = solution.s5_1;
+                    userAnswers['s5_2'] = solution.s5_2;
+                    
+                    s5_1_box.classList.add('correct');
+                    s5_2_box.classList.add('correct');
+                }
+                // --- 自動填入結束 ---
+                
+                // T填完後自動取消選中並隱藏鍵盤
+                selectedBox.classList.remove('selected');
+                selectedBoxId = null;
+                numberPad.style.display = 'none';
+            }
+        }
+
+        // 核對答案
+        function checkAnswers() {
+            let allCorrect = true;
+            const solution = currentProblem.solution;
+
+            // 隱藏數字鍵盤
+            numberPad.style.display = 'none';
+            if (selectedBoxId) {
+                document.getElementById(selectedBoxId).classList.remove('selected');
+                selectedBoxId = null;
+            }
+
+            // 遍歷所有答案方框
+            boxes.forEach(box => {
+                const id = box.id;
+                const correctAns = solution[id];
+                const userAns = userAnswers[id];
+
+                // 移除舊的樣式
+                box.classList.remove('correct', 'incorrect');
+
+                if (userAns === undefined || userAns === null) {
+                    // 沒填
+                    box.classList.add('incorrect');
+                    allCorrect = false;
+                } else if (userAns === correctAns) {
+                    // 答對
+                    box.classList.add('correct');
+                } else {
+                    // 答錯
+                    box.classList.add('incorrect');
+                    allCorrect = false;
+                }
+            });
+
+            // 顯示訊息
+            if (allCorrect) {
+                messageEl.textContent = '恭喜！全部答對了！';
+                messageEl.style.color = '#15803d'; // 綠色
+                
+                // 新增：停止計時器
+                clearInterval(timerInterval);
+                
+                // 新增：如果這題是第一次答對，才增加計數
+                if (!currentProblemSolved) {
+                    currentProblemSolved = true;
+                    completedCount++;
+                    completedCountEl.textContent = completedCount;
+                }
+
+            } else {
+                messageEl.textContent = '有錯誤喔！請修改紅色方框的數字。';
+                messageEl.style.color = '#b91c1c'; // 紅色
+            }
+        }
+
+        // 新增：更新計時器函式
+        function updateTimer() {
+            const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // 綁定事件監聽器
+        boxes.forEach(box => box.addEventListener('click', handleBoxClick));
+        numButtons.forEach(btn => btn.addEventListener('click', handleNumClick));
+        checkBtn.addEventListener('click', checkAnswers);
+        nextBtn.addEventListener('click', generateProblem);
+
+        // 點擊頁面其他地方隱藏彈窗
+        document.addEventListener('click', (e) => {
+            if (selectedBoxId) {
+                document.getElementById(selectedBoxId)?.classList.remove('selected');
+            }
+            selectedBoxId = null;
+            numberPad.style.display = 'none';
+        });
+
+        // 頁面載入時，先用 374 / 8 作為第一題
+        function loadFirstProblem() {
+            currentProblem = {
+                divisor: 8,
+                d1: 3,
+                d2: 7,
+                d3: 4,
+                solution: {
+                    q1: 0,  // 3/8 = 0
+                    q2: 4,  // 37/8 = 4
+                    q3: 6,  // 54/8 = 6
+                    s1_1: 0, // 0 * 8 = 0
+                    s2_1: 3,  // 3 - 0 = 3
+                    s2_2: 7,  // 帶下來 7
+                    s3_1: 3,  // 4 * 8 = 32
+                    s3_2: 2,
+                    s4_1: 5,  // 37 - 32 = 5
+                    s4_2: 4,  // 帶下來 4
+                    s5_1: 4,  // 6 * 8 = 48
+                    s5_2: 8,
+                    rem: 6    // 54 - 48 = 6
+                }
+            };
+            setupUI();
+            
+            // 新增：啟動計時器
+            startTime = Date.now();
+            clearInterval(timerInterval); // 清除舊的（如果存在）
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer(); // 立即更新一次
+        }
+
+        // 初始化
+        loadFirstProblem();
+
+    </script>
+</body>
+</html>
