@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>打地鼠遊戲</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+
+
+        .title-board {
+            background: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .score-board {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .pause-button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            margin-left: 10px;
+        }
+
+        .pause-button:hover {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .pause-button.paused {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .pause-button.paused:hover {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+        }
+
+        .game-area {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            background: #8B4513;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 20px;
+            padding: 40px;
+        }
+
+        .hole {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            background: #654321;
+            border-radius: 50%;
+            border: 8px solid #5D4037;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .mole {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            bottom: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: bottom 0.3s ease-out;
+            background: #D2691E;
+            border-radius: 50%;
+            border: 4px solid #8B4513;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .mole.active {
+            bottom: 15px;
+        }
+
+        .mole:hover {
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .hit-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            color: #27ae60;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            animation: hitAnimation 0.6s ease-out;
+        }
+
+        .hit-effect.wrong {
+            color: #e74c3c;
+        }
+
+        @keyframes hitAnimation {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .restart-button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .restart-button:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+        }
+
+        .lesson-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .lesson-button {
+            background: white;
+            color: #2c3e50;
+            border: 3px solid #3498db;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .lesson-button:hover {
+            background: #3498db;
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .lesson-button.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #2980b9;
+            transform: translateX(5px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 10px;
+            }
+
+            .lesson-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 0;
+                margin-bottom: 20px;
+            }
+
+            .lesson-button {
+                padding: 10px 15px;
+                font-size: 1rem;
+                min-width: 80px;
+            }
+
+            .title-board {
+                font-size: 1.3rem;
+                padding: 15px 20px;
+            }
+
+            .score-board {
+                font-size: 1.1rem;
+                padding: 10px 15px;
+            }
+
+            .game-info {
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .game-area {
+                width: 90vw;
+                height: 60vw;
+                padding: 20px;
+                gap: 15px;
+            }
+            
+            .hole {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .mole {
+                width: 70px;
+                height: 70px;
+                bottom: -90px;
+                font-size: 1.8rem;
+            }
+            
+            .mole.active {
+                bottom: 8px;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div style="display: flex; gap: 30px; align-items: flex-start; width: 100%; max-width: 900px; justify-content: center;">
+   <div class="lesson-buttons">
+    <div class="lesson-button" data-lesson="7">
+     第七課
+    </div>
+    <div class="lesson-button" data-lesson="8">
+     第八課
+    </div>
+    <div class="lesson-button active" data-lesson="9">
+     第九課
+    </div>
+    <div class="lesson-button" data-lesson="10">
+     第十課
+    </div>
+    <div class="lesson-button" data-lesson="11">
+     第十一課
+    </div>
+    <div class="lesson-button" data-lesson="12">
+     第十二課
+    </div>
+   </div>
+   <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+    <div class="title-board"><span id="lessonTitle">康軒國語六上第九課生字打地鼠</span>
+    </div>
+    <div class="score-board">
+     <div class="game-info">
+      <div id="question">
+       涼「ㄊㄧㄥˊ」
+      </div>
+      <div>
+       題目: <span id="questionNumber">1/18</span>
+      </div>
+      <div>
+       分數: <span id="score">0</span>
+      </div>
+      <div>
+       時間: <span id="timer">00:00</span> <button id="pauseButton" class="pause-button">暫停</button>
+      </div>
+     </div>
+    </div>
+    <div class="game-area">
+     <div class="hole" data-hole="0">
+      <div class="mole"></div>
+     </div>
+     <div class="hole" data-hole="1">
+      <div class="mole"></div>
+     </div>
+     <div class="hole" data-hole="2">
+      <div class="mole"></div>
+     </div>
+     <div class="hole" data-hole="3">
+      <div class="mole"></div>
+     </div>
+     <div class="hole" data-hole="4">
+      <div class="mole"></div>
+     </div>
+     <div class="hole" data-hole="5">
+      <div class="mole"></div>
+     </div>
+    </div>
+    <div id="restartButton" class="restart-button" style="display: none;">
+     再玩一次
+    </div>
+   </div>
+  </div>
+  <script>
+        class WhackAMoleGame {
+            constructor() {
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.pausedTime = 0;
+                this.currentLesson = 9;
+                
+                // 所有課程的題目資料
+                this.lessonData = {
+                    7: {
+                        title: '康軒國語六上第七課生字打地鼠',
+                        questions: [
+                            { question: '「ㄧㄤˇ」望', answer: '仰' },
+                            { question: '「ㄇㄧㄢˇ」懷', answer: '緬' },
+                            { question: '緬「ㄉㄧㄢˋ」', answer: '甸' },
+                            { question: '「ㄏㄨㄞˊ」踝', answer: '踝' },
+                            { question: '「ㄖㄨㄥˊ」毛', answer: '絨' },
+                            { question: '「ㄐㄧㄢˋ」起', answer: '濺' },
+                            { question: '下「ㄅㄞˇ」', answer: '襬' },
+                            { question: '「ㄋㄨㄥˋ」髒', answer: '弄' },
+                            { question: '「ㄗˋ」意', answer: '恣' },
+                            { question: '「ㄆㄧ」評', answer: '批' },
+                            { question: '路「ㄐㄧㄥˋ」', answer: '徑' },
+                            { question: '「ㄐㄧㄣˇ」慎', answer: '謹' },
+                            { question: '「ㄑㄧㄚˋ」好', answer: '恰' },
+                            { question: '缺「ㄈㄚˊ」', answer: '乏' },
+                            { question: '「ㄐㄧㄝ」皆', answer: '皆' },
+                            { question: '「ㄔ」笑', answer: '嗤' },
+                            { question: '「ㄣˊ」', answer: '嗯' }
+                        ],
+                        answers: ['仰', '緬', '甸', '踝', '絨', '濺', '襬', '弄', '恣', '批', '徑', '謹', '恰', '乏', '皆', '嗤', '嗯'],
+                        distractors: ['養', '面', '電', '懷', '容', '賤', '百', '農', '資', '坡', '經', '緊', '給', '法', '接', '吃', '恩']
+                    },
+                    8: {
+                        title: '康軒國語六上第八課生字打地鼠',
+                        questions: [
+                            { question: '縫「ㄒㄧˋ」', answer: '隙' },
+                            { question: '「ㄘㄨㄢˋ」逃', answer: '竄' },
+                            { question: '宗「ㄓˇ」', answer: '旨' },
+                            { question: '「ㄧㄡ」閒', answer: '悠' },
+                            { question: '「ㄩˋ」言', answer: '寓' },
+                            { question: '「ㄩˋ」蚌相爭', answer: '鷸' },
+                            { question: '「ㄐㄧㄠˇ」猾', answer: '狡' },
+                            { question: '巢「ㄎㄨ」', answer: '窟' },
+                            { question: '狡「ㄏㄨㄚˊ」', answer: '猾' },
+                            { question: '欺「ㄆㄧㄢˋ」', answer: '騙' },
+                            { question: '虛「ㄨㄟˇ」', answer: '偽' },
+                            { question: '「ㄎㄨㄚ」大', answer: '誇' },
+                            { question: '「ㄅㄧㄢˋ」別', answer: '辨' },
+                            { question: '說「ㄏㄨㄤˇ」', answer: '謊' },
+                            { question: '「ㄈㄥˇ」刺', answer: '諷' },
+                            { question: '警「ㄊㄧˋ」', answer: '惕' },
+                            { question: '觀「ㄔㄚˊ」', answer: '察' },
+                            { question: '遮「ㄅㄧˋ」', answer: '蔽' },
+                            { question: '「ㄒㄩ」假', answer: '虛' }
+                        ],
+                        answers: ['隙', '竄', '旨', '悠', '寓', '鷸', '狡', '窟', '猾', '騙', '偽', '誇', '辨', '謊', '諷', '惕', '察', '蔽', '虛'],
+                        distractors: ['細', '竄', '指', '優', '語', '鳥', '校', '哭', '滑', '片', '偉', '跨', '辯', '慌', '風', '踢', '查', '弊', '需']
+                    },
+                    9: {
+                        title: '康軒國語六上第九課生字打地鼠',
+                        questions: [
+                            { question: '涼「ㄊㄧㄥˊ」', answer: '亭' },
+                            { question: '「ㄓ」撐', answer: '支' },
+                            { question: '「ㄧㄡˋ」惑', answer: '誘' },
+                            { question: '「ㄒㄧㄢˋ」市', answer: '縣' },
+                            { question: '德「ㄧˋ」', answer: '懿' },
+                            { question: '曹「ㄨㄟˋ」', answer: '魏' },
+                            { question: '「ㄑㄧˊ」幟', answer: '旗' },
+                            { question: '旗「ㄓˋ」', answer: '幟' },
+                            { question: '「ㄍㄤ」哨', answer: '崗' },
+                            { question: '「ㄒㄧㄥˋ」氏', answer: '姓' },
+                            { question: '「ㄊㄤˇ」若', answer: '倘' },
+                            { question: '書「ㄊㄨㄥˊ」', answer: '僮' },
+                            { question: '「ㄒㄩㄣ」陶', answer: '薰' },
+                            { question: '「ㄔㄜˋ」退', answer: '撤' },
+                            { question: '「ㄓㄨ」位', answer: '諸' },
+                            { question: '諸「ㄍㄜˇ」', answer: '葛' },
+                            { question: '「ㄕㄣˋ」重', answer: '慎' },
+                            { question: '「ㄔㄥˊ」相', answer: '丞' }
+                        ],
+                        answers: ['亭', '支', '誘', '縣', '懿', '魏', '旗', '幟', '崗', '姓', '倘', '僮', '薰', '撤', '諸', '葛', '慎', '丞'],
+                        distractors: ['停', '枝', '油', '線', '意', '威', '棋', '織', '剛', '性', '糖', '童', '尋', '澈', '豬', '各', '真', '承']
+                    },
+                    10: {
+                        title: '康軒國語六上第十課生字打地鼠',
+                        questions: [
+                            { question: '「ㄧㄝ」穌', answer: '耶' },
+                            { question: '市「ㄐㄧㄠ」', answer: '郊' },
+                            { question: '「ㄘˊ」祥', answer: '慈' },
+                            { question: '慈「ㄒㄧㄤˊ」', answer: '祥' },
+                            { question: '「ㄆㄧ」開', answer: '劈' },
+                            { question: '「ㄆㄚ」啪', answer: '啪' },
+                            { question: '「ㄌㄧㄥˊ」星', answer: '零' },
+                            { question: '「ㄧㄢˋ」倦', answer: '厭' },
+                            { question: '厭「ㄐㄩㄢˋ」', answer: '倦' },
+                            { question: '「ㄅㄧㄢˋ」解', answer: '辯' },
+                            { question: '「ㄙ」心', answer: '私' },
+                            { question: '「ㄆㄧㄣˊ」窮', answer: '貧' },
+                            { question: '關「ㄒㄧˋ」', answer: '係' },
+                            { question: '「ㄔㄣˋ」機', answer: '趁' },
+                            { question: '「ㄕㄠ」微', answer: '稍' },
+                            { question: '「ㄏㄨㄥ」烤', answer: '烘' },
+                            { question: '「ㄓㄨㄥ」心', answer: '衷' },
+                            { question: '「ㄍㄤ」鐵', answer: '鋼' }
+                        ],
+                        answers: ['耶', '郊', '慈', '祥', '劈', '啪', '零', '厭', '倦', '辯', '私', '貧', '係', '趁', '稍', '烘', '衷', '鋼'],
+                        distractors: ['也', '交', '詞', '詳', '批', '拍', '令', '壓', '卷', '辨', '思', '貪', '系', '襯', '梢', '哄', '中', '鍋']
+                    },
+                    11: {
+                        title: '康軒國語六上第十一課生字打地鼠',
+                        questions: [
+                            { question: '「ㄈㄥ」葉', answer: '楓' },
+                            { question: '「ㄏㄨㄟ」復', answer: '恢' },
+                            { question: '活「ㄆㄛ」', answer: '潑' },
+                            { question: '草「ㄇㄟˊ」', answer: '莓' },
+                            { question: '客「ㄊㄧㄥ」', answer: '廳' },
+                            { question: '「ㄜˊ」頭', answer: '額' },
+                            { question: '「ㄍㄨㄢˋ」溉', answer: '灌' },
+                            { question: '「ㄗㄨㄟˋ」人', answer: '醉' },
+                            { question: '釀「ㄋㄧㄤˋ」', answer: '釀' },
+                            { question: '代「ㄊㄧˋ」', answer: '替' },
+                            { question: '「ㄌㄧㄤˋ」解', answer: '諒' },
+                            { question: '嘴「ㄔㄨㄣˊ」', answer: '脣' },
+                            { question: '「ㄅㄣ」跑', answer: '奔' },
+                            { question: '「ㄑㄧˇ」討', answer: '乞' },
+                            { question: '「ㄇㄡˇ」人', answer: '某' },
+                            { question: '「ㄏㄨㄢˋ」然一新', answer: '煥' },
+                            { question: '滑「ㄑㄧㄠ」', answer: '橇' },
+                            { question: '門「ㄌㄧㄥˊ」', answer: '鈴' },
+                            { question: '「ㄏㄨㄟˊ」音', answer: '迴' }
+                        ],
+                        answers: ['楓', '恢', '潑', '莓', '廳', '額', '灌', '醉', '釀', '替', '諒', '脣', '奔', '乞', '某', '煥', '橇', '鈴', '迴'],
+                        distractors: ['風', '灰', '破', '苺', '庭', '鵝', '罐', '碎', '讓', '提', '量', '唇', '本', '起', '謀', '換', '橋', '玲', '回']
+                    },
+                    12: {
+                        title: '康軒國語六上第十二課生字打地鼠',
+                        questions: [
+                            { question: '「ㄧˋ」國', answer: '異' },
+                            { question: '雙「ㄐㄧㄚˊ」', answer: '頰' },
+                            { question: '「ㄆㄥˊ」勃', answer: '蓬' },
+                            { question: '蓬「ㄅㄛˊ」', answer: '勃' },
+                            { question: '「ㄍㄨㄤˋ」街', answer: '逛' },
+                            { question: '庭「ㄊㄧㄥˊ」', answer: '庭' },
+                            { question: '「ㄙㄨˋ」穆', answer: '肅' },
+                            { question: '「ㄑㄧㄤˊ」薇', answer: '薔' },
+                            { question: '薔「ㄨㄟˊ」', answer: '薇' },
+                            { question: '「ㄇㄧˊ」漫', answer: '瀰' },
+                            { question: '「ㄍㄨㄚ」風', answer: '刮' },
+                            { question: '「ㄎㄨㄛˋ」號', answer: '括' },
+                            { question: '「ㄇㄚˇ」蟻', answer: '螞' },
+                            { question: '螞「ㄧˇ」', answer: '蟻' },
+                            { question: '「ㄐㄧㄣˇ」管', answer: '儘' }
+                        ],
+                        answers: ['異', '頰', '蓬', '勃', '逛', '庭', '肅', '薔', '薇', '瀰', '刮', '括', '螞', '蟻', '儘'],
+                        distractors: ['易', '夾', '篷', '博', '光', '停', '肅', '薔', '微', '迷', '瓜', '擴', '馬', '義', '盡']
+                    }
+                };
+                
+                this.allQuestions = this.lessonData[this.currentLesson].questions;
+                this.questions = this.shuffleArray([...this.allQuestions]);
+                this.answerCharacters = this.lessonData[this.currentLesson].answers;
+                this.distractorCharacters = this.lessonData[this.currentLesson].distractors;
+                
+                this.holes = document.querySelectorAll('.hole');
+                this.moles = document.querySelectorAll('.mole');
+                this.scoreElement = document.getElementById('score');
+                this.questionElement = document.getElementById('question');
+                this.questionNumberElement = document.getElementById('questionNumber');
+                this.timerElement = document.getElementById('timer');
+                this.pauseButton = document.getElementById('pauseButton');
+                this.restartButton = document.getElementById('restartButton');
+                this.lessonTitle = document.getElementById('lessonTitle');
+                this.activeMoles = new Set();
+                this.gameInterval = null;
+                this.gameEnded = false;
+                
+                this.init();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            init() {
+                // 為每個洞添加點擊事件
+                this.holes.forEach((hole, index) => {
+                    hole.addEventListener('click', () => this.hitMole(index));
+                });
+
+                // 為暫停按鈕添加點擊事件
+                this.pauseButton.addEventListener('click', () => {
+                    this.togglePause();
+                });
+
+                // 為重新開始按鈕添加點擊事件
+                this.restartButton.addEventListener('click', () => {
+                    this.restartGame();
+                });
+
+                // 為課程按鈕添加點擊事件
+                document.querySelectorAll('.lesson-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const lesson = parseInt(button.dataset.lesson);
+                        this.changeLesson(lesson);
+                    });
+                });
+
+                // 開始遊戲
+                this.startGame();
+            }
+
+            changeLesson(lesson) {
+                // 結束當前遊戲
+                this.gameEnded = true;
+                clearInterval(this.gameInterval);
+                clearInterval(this.timerInterval);
+                
+                // 隱藏所有地鼠
+                this.moles.forEach(mole => {
+                    mole.classList.remove('active');
+                });
+                this.activeMoles.clear();
+                
+                // 更新課程按鈕狀態
+                document.querySelectorAll('.lesson-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.lesson) === lesson) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // 更新課程資料
+                this.currentLesson = lesson;
+                this.allQuestions = this.lessonData[lesson].questions;
+                this.questions = this.shuffleArray([...this.allQuestions]);
+                this.answerCharacters = this.lessonData[lesson].answers;
+                this.distractorCharacters = this.lessonData[lesson].distractors;
+                
+                // 重置遊戲狀態
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.gameEnded = false;
+                this.isPaused = false;
+                this.pausedTime = 0;
+                this.startTime = null;
+                
+                // 更新顯示
+                this.lessonTitle.textContent = this.lessonData[lesson].title;
+                this.scoreElement.textContent = '0';
+                this.questionElement.textContent = this.questions[0].question;
+                this.questionNumberElement.textContent = '1/' + this.questions.length;
+                this.timerElement.textContent = '00:00';
+                this.pauseButton.textContent = '暫停';
+                this.pauseButton.classList.remove('paused');
+                this.restartButton.style.display = 'none';
+                
+                // 開始新遊戲
+                this.startGame();
+            }
+
+            startGame() {
+                // 開始計時
+                this.startTime = Date.now();
+                this.timerInterval = setInterval(() => {
+                    this.updateTimer();
+                }, 100);
+
+                // 每800毫秒到1500毫秒隨機讓地鼠出現
+                this.gameInterval = setInterval(() => {
+                    this.showRandomMole();
+                }, this.getRandomTime(800, 1500));
+
+                // 初始顯示
+                setTimeout(() => this.showRandomMole(), 300);
+            }
+
+            togglePause() {
+                if (this.gameEnded) return;
+                
+                this.isPaused = !this.isPaused;
+                
+                if (this.isPaused) {
+                    // 暫停遊戲
+                    this.pausedTime += Date.now() - this.startTime;
+                    clearInterval(this.gameInterval);
+                    this.pauseButton.textContent = '繼續';
+                    this.pauseButton.classList.add('paused');
+                    
+                    // 隱藏所有地鼠
+                    this.moles.forEach(mole => {
+                        mole.classList.remove('active');
+                    });
+                    this.activeMoles.clear();
+                } else {
+                    // 繼續遊戲
+                    this.startTime = Date.now();
+                    this.gameInterval = setInterval(() => {
+                        this.showRandomMole();
+                    }, this.getRandomTime(800, 1500));
+                    this.pauseButton.textContent = '暫停';
+                    this.pauseButton.classList.remove('paused');
+                }
+            }
+
+            updateTimer() {
+                if (this.startTime && !this.gameEnded && !this.isPaused) {
+                    const elapsed = (Date.now() - this.startTime) + this.pausedTime;
+                    const seconds = Math.floor(elapsed / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    
+                    const formattedTime = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                    this.timerElement.textContent = formattedTime;
+                }
+            }
+
+            showRandomMole() {
+                // 找出未活躍的地鼠
+                const inactiveHoles = Array.from(this.holes).filter((hole, index) => 
+                    !this.activeMoles.has(index)
+                );
+
+                if (inactiveHoles.length === 0) return;
+
+                // 隨機選擇一個洞
+                const randomHole = inactiveHoles[Math.floor(Math.random() * inactiveHoles.length)];
+                const holeIndex = parseInt(randomHole.dataset.hole);
+                const mole = this.moles[holeIndex];
+                
+                // 選擇文字：優先顯示當前題目的正確答案
+                let randomCharacter;
+                const currentAnswer = this.questions[this.currentQuestionIndex].answer;
+                
+                if (Math.random() < 0.6) {
+                    // 60%機率顯示當前題目的正確答案
+                    randomCharacter = currentAnswer;
+                } else if (Math.random() < 0.8) {
+                    // 20%機率顯示其他答案字
+                    const otherAnswers = this.answerCharacters.filter(char => char !== currentAnswer);
+                    randomCharacter = otherAnswers[Math.floor(Math.random() * otherAnswers.length)];
+                } else {
+                    // 20%機率顯示干擾字
+                    randomCharacter = this.distractorCharacters[Math.floor(Math.random() * this.distractorCharacters.length)];
+                }
+                
+                mole.textContent = randomCharacter;
+                
+                // 顯示地鼠
+                mole.classList.add('active');
+                this.activeMoles.add(holeIndex);
+
+                // 1.5到2.5秒後隱藏地鼠
+                const hideTime = this.getRandomTime(1500, 2500);
+                setTimeout(() => {
+                    mole.classList.remove('active');
+                    this.activeMoles.delete(holeIndex);
+                }, hideTime);
+            }
+
+            hitMole(holeIndex) {
+                const mole = this.moles[holeIndex];
+                const hole = this.holes[holeIndex];
+                
+                // 如果地鼠是活躍狀態且遊戲未結束且未暫停
+                if (this.activeMoles.has(holeIndex) && !this.gameEnded && !this.isPaused) {
+                    const clickedCharacter = mole.textContent;
+                    const correctAnswer = this.questions[this.currentQuestionIndex].answer;
+                    
+                    // 立即隱藏地鼠
+                    mole.classList.remove('active');
+                    this.activeMoles.delete(holeIndex);
+                    
+                    if (clickedCharacter === correctAnswer) {
+                        // 答對了
+                        this.score += 10;
+                        this.scoreElement.textContent = this.score;
+                        this.showHitEffect(hole, true);
+                        
+                        // 進入下一題
+                        setTimeout(() => {
+                            this.nextQuestion();
+                        }, 1000);
+                    } else {
+                        // 答錯了
+                        this.showHitEffect(hole, false);
+                    }
+                }
+            }
+
+            showHitEffect(hole, isCorrect) {
+                const effect = document.createElement('div');
+                effect.className = isCorrect ? 'hit-effect' : 'hit-effect wrong';
+                effect.textContent = isCorrect ? '✓' : '✗';
+                hole.appendChild(effect);
+                
+                // 600毫秒後移除效果
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 600);
+            }
+
+            nextQuestion() {
+                this.currentQuestionIndex++;
+                
+                if (this.currentQuestionIndex >= this.questions.length) {
+                    // 遊戲結束
+                    this.endGame();
+                } else {
+                    // 更新題目顯示
+                    this.questionElement.textContent = this.questions[this.currentQuestionIndex].question;
+                    this.questionNumberElement.textContent = (this.currentQuestionIndex + 1) + '/' + this.questions.length;
+                }
+            }
+
+            endGame() {
+                this.gameEnded = true;
+                clearInterval(this.gameInterval);
+                clearInterval(this.timerInterval);
+                
+                // 隱藏所有地鼠
+                this.moles.forEach(mole => {
+                    mole.classList.remove('active');
+                });
+                this.activeMoles.clear();
+                
+                // 計算最終時間
+                const finalTime = this.timerElement.textContent;
+                
+                // 顯示結束訊息和重新開始按鈕
+                this.questionElement.innerHTML = `遊戲結束！<br>總分: ${this.score}分<br>完成時間: ${finalTime}`;
+                this.restartButton.style.display = 'block';
+            }
+
+            restartGame() {
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.gameEnded = false;
+                this.isPaused = false;
+                this.pausedTime = 0;
+                this.startTime = null;
+                clearInterval(this.timerInterval);
+                
+                // 重新隨機排列題目
+                this.questions = this.shuffleArray([...this.allQuestions]);
+                
+                this.scoreElement.textContent = '0';
+                this.questionElement.textContent = this.questions[0].question;
+                this.questionNumberElement.textContent = '1/' + this.questions.length;
+                this.timerElement.textContent = '00:00';
+                this.pauseButton.textContent = '暫停';
+                this.pauseButton.classList.remove('paused');
+                this.restartButton.style.display = 'none';
+                this.startGame();
+            }
+
+            getRandomTime(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+        }
+
+        // 啟動遊戲
+        document.addEventListener('DOMContentLoaded', () => {
+            new WhackAMoleGame();
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a03e56a70f30734',t:'MTc2MzQzMTQ1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
