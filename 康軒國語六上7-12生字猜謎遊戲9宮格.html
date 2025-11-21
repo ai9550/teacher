@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語六上生字猜謎遊戲</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            gap: 30px;
+            box-sizing: border-box;
+        }
+
+        .lesson-sidebar {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            color: #ffeaa7;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            writing-mode: horizontal-tb;
+        }
+
+        .lesson-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            writing-mode: horizontal-tb;
+            text-align: center;
+        }
+
+        .lesson-btn:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        }
+
+        .lesson-btn.active {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+            border: 2px solid #fdcb6e;
+            box-shadow: 0 4px 15px rgba(253, 203, 110, 0.4);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .question-counter {
+            color: #ffeaa7;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 10px auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .character-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18rem;
+            font-weight: normal;
+            color: #2d3436;
+            font-family: '標楷體', 'DFKai-SB', serif;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .overlay-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 0;
+        }
+
+        .overlay-block {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .overlay-block:hover {
+            transform: scale(0.95);
+            filter: brightness(1.1);
+        }
+
+        .overlay-block.clicked {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .block-1 {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+
+        .block-2 {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        }
+
+        .block-3 {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+        }
+
+        .block-4 {
+            background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+        }
+
+        .block-5 {
+            background: linear-gradient(135deg, #fd79a8, #e84393);
+        }
+
+        .block-6 {
+            background: linear-gradient(135deg, #fab1a0, #e17055);
+        }
+
+        .block-7 {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+        }
+
+        .block-8 {
+            background: linear-gradient(135deg, #fdcb6e, #e17055);
+        }
+
+        .block-9 {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(253, 203, 110, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .completion-message {
+            background: rgba(46, 213, 115, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            display: none;
+            max-width: 400px;
+        }
+
+        .completion-message.show {
+            display: block;
+            animation: celebration 0.8s ease-out;
+        }
+
+        @keyframes celebration {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            50% {
+                transform: scale(1.05) translateY(-5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .block-number {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .lesson-sidebar {
+                flex-direction: row;
+                overflow-x: auto;
+                width: 100%;
+                padding: 15px;
+            }
+
+            .sidebar-title {
+                display: none;
+            }
+
+            .lesson-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+
+            .game-container {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .character-card {
+                font-size: 15rem;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .overlay-block {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="lesson-sidebar">
+   <div class="sidebar-title">
+    📚 選擇課程
+   </div><button class="lesson-btn" onclick="switchLesson(7)">第七課</button> <button class="lesson-btn active" onclick="switchLesson(8)">第八課</button> <button class="lesson-btn" onclick="switchLesson(9)">第九課</button> <button class="lesson-btn" onclick="switchLesson(10)">第十課</button> <button class="lesson-btn" onclick="switchLesson(11)">第十一課</button> <button class="lesson-btn" onclick="switchLesson(12)">第十二課</button>
+  </div>
+  <div class="main-content">
+   <div class="header">
+    <h1 id="mainTitle">🎯 康軒國語六上第八課生字猜謎</h1>
+    <p>點擊彩色區塊，逐步揭示隱藏的中文字！<span id="questionCounter" class="question-counter">(第 1 題 / 共 19 題)</span></p>
+   </div>
+   <div class="game-container">
+    <div class="character-card">
+     隙
+    </div>
+    <div class="overlay-grid">
+     <div class="overlay-block block-1" onclick="revealBlock(1)">
+      <div class="block-number">
+       1
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-2" onclick="revealBlock(2)">
+      <div class="block-number">
+       2
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-3" onclick="revealBlock(3)">
+      <div class="block-number">
+       3
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-4" onclick="revealBlock(4)">
+      <div class="block-number">
+       4
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-5" onclick="revealBlock(5)">
+      <div class="block-number">
+       5
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-6" onclick="revealBlock(6)">
+      <div class="block-number">
+       6
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-7" onclick="revealBlock(7)">
+      <div class="block-number">
+       7
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-8" onclick="revealBlock(8)">
+      <div class="block-number">
+       8
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+     <div class="overlay-block block-9" onclick="revealBlock(9)">
+      <div class="block-number">
+       9
+      </div>
+      <div>
+       點我
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="controls"><button class="btn btn-secondary" onclick="resetGame()">🔄 重新開始</button> <button class="btn btn-primary" onclick="revealAll()">👁️ 全部顯示</button> <button class="btn btn-secondary" onclick="newCharacter()">🎲 下一題</button>
+   </div>
+   <div class="completion-message" id="completionMessage">
+    <h2>🎉 恭喜完成！</h2>
+    <p>你成功揭示了完整的字：<strong style="font-size: 2rem; color: #ffeaa7;">隙</strong></p>
+    <p>這個字的意思是「縫隙、空隙」</p>
+    <div style="margin-top: 15px;"><button class="btn btn-primary" onclick="resetGame()" style="margin: 5px;">再玩一次</button> <button class="btn btn-secondary" onclick="newCharacter()" style="margin: 5px;">下一題</button>
+    </div>
+   </div>
+  </div>
+  <script>
+        let revealedBlocks = new Set();
+        let totalBlocks = 9;
+        let currentLesson = 8;
+        
+        // 所有課程的字庫
+        const lessonData = {
+            7: [
+                { char: '仰', meaning: '向上看、敬慕' },
+                { char: '緬', meaning: '懷念、緬懷' },
+                { char: '甸', meaning: '緬甸、地名' },
+                { char: '踝', meaning: '腳踝' },
+                { char: '絨', meaning: '絨毛、柔軟' },
+                { char: '����', meaning: '濺起、飛濺' },
+                { char: '襬', meaning: '裙襬、擺動' },
+                { char: '弄', meaning: '玩弄、戲弄' },
+                { char: '恣', meaning: '放縱、任意' },
+                { char: '批', meaning: '批評、批改' },
+                { char: '徑', meaning: '小路、直接' },
+                { char: '謹', meaning: '謹慎、小心' },
+                { char: '恰', meaning: '恰好、正好' },
+                { char: '乏', meaning: '缺乏、疲乏' },
+                { char: '皆', meaning: '都、全部' },
+                { char: '嗤', meaning: '嗤笑、譏笑' },
+                { char: '嗯', meaning: '表示應答' }
+            ],
+            8: [
+                { char: '隙', meaning: '縫隙、空隙' },
+                { char: '竄', meaning: '逃跑、亂跑' },
+                { char: '旨', meaning: '意思、宗旨' },
+                { char: '悠', meaning: '悠閒、長久' },
+                { char: '寓', meaning: '寄居、寓言' },
+                { char: '鷸', meaning: '水鳥、鷸蚌相爭' },
+                { char: '狡', meaning: '狡猾、詭詐' },
+                { char: '窟', meaning: '洞穴、窟窿' },
+                { char: '猾', meaning: '狡猾、圓滑' },
+                { char: '騙', meaning: '欺騙、詐騙' },
+                { char: '偽', meaning: '虛假、偽裝' },
+                { char: '誇', meaning: '誇張、誇大' },
+                { char: '辨', meaning: '辨別、分辨' },
+                { char: '謊', meaning: '說謊、謊言' },
+                { char: '諷', meaning: '諷刺、諷喻' },
+                { char: '惕', meaning: '警惕、警戒' },
+                { char: '察', meaning: '觀察、察覺' },
+                { char: '蔽', meaning: '遮蔽、隱蔽' },
+                { char: '虛', meaning: '空虛、虛假' }
+            ],
+            9: [
+                { char: '亭', meaning: '亭子、涼亭' },
+                { char: '支', meaning: '支持、支撐' },
+                { char: '誘', meaning: '誘惑、引誘' },
+                { char: '縣', meaning: '縣市、行政區' },
+                { char: '懿', meaning: '美好、德行' },
+                { char: '魏', meaning: '國名、姓氏' },
+                { char: '旗', meaning: '旗幟、旗子' },
+                { char: '幟', meaning: '旗幟、標誌' },
+                { char: '崗', meaning: '崗位、山崗' },
+                { char: '姓', meaning: '姓氏、姓名' },
+                { char: '倘', meaning: '倘若、假如' },
+                { char: '僮', meaning: '僕人、童僕' },
+                { char: '薰', meaning: '薰香、薰陶' },
+                { char: '撤', meaning: '撤退、撤回' },
+                { char: '諸', meaning: '眾多、各個' },
+                { char: '葛', meaning: '諸��、植物' },
+                { char: '慎', meaning: '謹慎、小心' },
+                { char: '丞', meaning: '丞相、輔佐' }
+            ],
+            10: [
+                { char: '耶', meaning: '語助詞、疑問' },
+                { char: '郊', meaning: '郊外、郊區' },
+                { char: '慈', meaning: '慈愛、仁慈' },
+                { char: '祥', meaning: '祥和、吉祥' },
+                { char: '劈', meaning: '劈開、分開' },
+                { char: '啪', meaning: '啪的一聲' },
+                { char: '零', meaning: '零碎、數字零' },
+                { char: '厭', meaning: '厭惡、討厭' },
+                { char: '倦', meaning: '疲倦、厭倦' },
+                { char: '辯', meaning: '辯論、辯解' },
+                { char: '私', meaning: '私人、自私' },
+                { char: '貧', meaning: '貧窮、缺乏' },
+                { char: '係', meaning: '關係、是' },
+                { char: '趁', meaning: '趁機、�����' },
+                { char: '稍', meaning: '稍微、略微' },
+                { char: '烘', meaning: '烘烤、烘焙' },
+                { char: '衷', meaning: '內心、由衷' },
+                { char: '鋼', meaning: '鋼鐵、堅硬' }
+            ],
+            11: [
+                { char: '楓', meaning: '楓樹、楓葉' },
+                { char: '恢', meaning: '恢復、廣大' },
+                { char: '潑', meaning: '潑水、活潑' },
+                { char: '莓', meaning: '草莓、莓果' },
+                { char: '廳', meaning: '客廳、大廳' },
+                { char: '額', meaning: '額頭、數額' },
+                { char: '灌', meaning: '灌溉、灌輸' },
+                { char: '醉', meaning: '醉酒、陶醉' },
+                { char: '釀', meaning: '釀造、釀酒' },
+                { char: '替', meaning: '替代、代替' },
+                { char: '諒', meaning: '諒解、原諒' },
+                { char: '脣', meaning: '嘴��、脣齒' },
+                { char: '奔', meaning: '奔跑、奔馳' },
+                { char: '乞', meaning: '乞求、乞討' },
+                { char: '某', meaning: '某人、某個' },
+                { char: '煥', meaning: '煥發、光煥' },
+                { char: '橇', meaning: '雪橇、滑橇' },
+                { char: '鈴', meaning: '鈴鐺、鈴聲' },
+                { char: '迴', meaning: '迴轉、迴旋' }
+            ],
+            12: [
+                { char: '異', meaning: '奇異、不同' },
+                { char: '頰', meaning: '臉頰、面頰' },
+                { char: '蓬', meaning: '蓬鬆、蓬勃' },
+                { char: '勃', meaning: '勃發、旺盛' },
+                { char: '逛', meaning: '逛街、閒逛' },
+                { char: '庭', meaning: '庭院、庭園' },
+                { char: '肅', meaning: '嚴肅、肅靜' },
+                { char: '薔', meaning: '���薇、花名' },
+                { char: '薇', meaning: '薔薇、植物' },
+                { char: '瀰', meaning: '瀰漫、充滿' },
+                { char: '刮', meaning: '刮風、刮削' },
+                { char: '括', meaning: '包括、括號' },
+                { char: '螞', meaning: '螞蟻、昆蟲' },
+                { char: '蟻', meaning: '螞蟻、昆蟲' },
+                { char: '儘', meaning: '儘管、儘量' }
+            ]
+        };
+        
+        let characters = lessonData[8];
+        let currentCharacterIndex = 0;
+        let shuffledIndices = [];
+        let currentQuestionNumber = 0;
+
+        // 初始化隨機順序
+        function initializeRandomOrder() {
+            shuffledIndices = [];
+            for (let i = 0; i < characters.length; i++) {
+                shuffledIndices.push(i);
+            }
+            // Fisher-Yates 洗牌算法
+            for (let i = shuffledIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+            }
+            currentQuestionNumber = 0;
+            currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+            updateDisplay();
+        }
+
+        function switchLesson(lessonNumber) {
+            currentLesson = lessonNumber;
+            characters = lessonData[lessonNumber];
+            
+            // 更新標題
+            document.getElementById('mainTitle').textContent = `🎯 康軒國語六上第${convertNumberToChinese(lessonNumber)}課生字猜謎`;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.lesson-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 重置遊戲並初始化新課程
+            resetGame();
+            initializeRandomOrder();
+        }
+
+        function convertNumberToChinese(num) {
+            const chinese = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
+            return chinese[num];
+        }
+
+        function revealBlock(blockNumber) {
+            if (revealedBlocks.has(blockNumber)) return;
+            
+            const block = document.querySelector(`.block-${blockNumber}`);
+            block.classList.add('clicked');
+            revealedBlocks.add(blockNumber);
+            
+            if (revealedBlocks.size === totalBlocks) {
+                setTimeout(showCompletion, 500);
+            }
+        }
+
+        function showCompletion() {
+            document.getElementById('completionMessage').classList.add('show');
+        }
+
+        function resetGame() {
+            revealedBlocks.clear();
+            
+            // 重置所有區塊
+            for (let i = 1; i <= totalBlocks; i++) {
+                const block = document.querySelector(`.block-${i}`);
+                block.classList.remove('clicked');
+            }
+            
+            document.getElementById('completionMessage').classList.remove('show');
+        }
+
+        function revealAll() {
+            // 直接移除所有區塊，立即顯示答案
+            for (let i = 1; i <= totalBlocks; i++) {
+                const block = document.querySelector(`.block-${i}`);
+                block.classList.add('clicked');
+                revealedBlocks.add(i);
+            }
+            setTimeout(showCompletion, 300);
+        }
+
+        function updateDisplay() {
+            const newChar = characters[currentCharacterIndex];
+            
+            // 更���字符顯示
+            document.querySelector('.character-card').textContent = newChar.char;
+            
+            // 更新題目計數器
+            document.getElementById('questionCounter').textContent = `(第 ${currentQuestionNumber + 1} 題 / 共 ${characters.length} 題)`;
+            
+            // 更新完成訊息中的字符和意思
+            const completionMsg = document.getElementById('completionMessage');
+            completionMsg.innerHTML = `
+                <h2>🎉 恭喜完成！</h2>
+                <p>你成功揭示了完整的字：<strong style="font-size: 2rem; color: #ffeaa7;">${newChar.char}</strong></p>
+                <p>這個字的意思是「${newChar.meaning}」</p>
+                <div style="margin-top: 15px;">
+                    <button class="btn btn-primary" onclick="resetGame()" style="margin: 5px;">再玩一次</button>
+                    <button class="btn btn-secondary" onclick="newCharacter()" style="margin: 5px;">下一題</button>
+                </div>
+            `;
+        }
+
+        function newCharacter() {
+            // 先重置所有區塊，確保遮蔽住字符
+            revealedBlocks.clear();
+            document.getElementById('completionMessage').classList.remove('show');
+            
+            for (let i = 1; i <= totalBlocks; i++) {
+                const block = document.querySelector(`.block-${i}`);
+                block.classList.remove('clicked');
+            }
+            
+            // 延遲0.5秒後再更新字符，確保區塊先完全顯示
+            setTimeout(() => {
+                // 切換到下一個字符（隨機順序）
+                currentQuestionNumber++;
+                if (currentQuestionNumber >= characters.length) {
+                    // 如果所有題目都做完了，重新洗牌
+                    initializeRandomOrder();
+                } else {
+                    currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+                    updateDisplay();
+                }
+            }, 500);
+        }
+
+        // 鍵盤快捷鍵
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case '1':
+                    revealBlock(1);
+                    break;
+                case '2':
+                    revealBlock(2);
+                    break;
+                case '3':
+                    revealBlock(3);
+                    break;
+                case '4':
+                    revealBlock(4);
+                    break;
+                case '5':
+                    revealBlock(5);
+                    break;
+                case '6':
+                    revealBlock(6);
+                    break;
+                case '7':
+                    revealBlock(7);
+                    break;
+                case '8':
+                    revealBlock(8);
+                    break;
+                case '9':
+                    revealBlock(9);
+                    break;
+                case 'r':
+                case 'R':
+                    resetGame();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    revealAll();
+                    break;
+                case 'n':
+                case 'N':
+                    newCharacter();
+                    break;
+            }
+        });
+
+        // 初始化
+        initializeRandomOrder();
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a1c16c705874a40',t:'MTc2MzY4NTEzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
