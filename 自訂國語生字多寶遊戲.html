@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自訂生字多寶遊戲</title>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+  <style>
+        /* 頁面基礎設定 */
+        body {
+            box-sizing: border-box;
+            font-family: 'Microsoft JhengHei', 'Heiti TC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* 固定高度 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; 
+            overflow: hidden; /* 隱藏捲軸 */
+        }
+
+        /* 遊戲包裹層 */
+        .game-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center; /* 垂直置中 */
+            justify-content: center;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .game-container {
+            width: 100%;
+            text-align: center;
+            position: relative;
+            display: flex; /* 預設隱藏，由 JS 控制顯示 */
+            flex-direction: column;
+            align-items: center;
+            transform-origin: center center;
+        }
+
+        /* 設定面板 (輸入生字畫面) */
+        .setup-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            z-index: 2000;
+        }
+
+        .setup-title {
+            font-size: 2rem;
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .input-area {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            resize: none;
+        }
+
+        .input-hint {
+            color: #718096;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        /* 遊戲資訊 (題號、分數) */
+        .game-info {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 5px 20px; 
+            margin-top: 5px;   
+            margin-bottom: 5px; 
+            color: white;
+            display: inline-block;
+            position: relative;
+            z-index: 20; 
+        }
+
+        .question-number {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        /* 控制區 (按鈕) */
+        .controls {
+            margin: 0; 
+            position: relative;
+            z-index: 20; 
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 8px 25px; 
+            font-size: 1.1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* 為重新出題按鈕設計不同顏色 */
+        .btn-setup {
+            background: linear-gradient(45deg, #FF9966, #FF5E62);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 卡片容器 */
+        .cards-container {
+            display: flex;
+            justify-content: center;
+            gap: 120px; 
+            /* 修正這裡：改為 -30px，讓圓圈往下移動，不擋住上方文字 */
+            margin: -30px 0 0 0; 
+            flex-wrap: nowrap;
+            width: 100%;
+            align-items: center;
+            padding-bottom: 10px;
+            z-index: 1; 
+        }
+
+        /* 圓形卡片樣式 */
+        .card {
+            width: 520px;
+            height: 520px;
+            border-radius: 50%;
+            background: white;
+            border: 8px solid white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            position: relative;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+        }
+
+        /* 字元容器 */
+        .character {
+            font-size: 5rem; 
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            border-radius: 8px;
+            user-select: none;
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character span {
+            display: block;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .character.correct span {
+            transform: scale(1.5);
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        
+        .character.correct {
+            z-index: 50;
+        }
+
+        .feedback {
+            margin: 0;
+            height: 1px;
+            visibility: hidden;
+        }
+
+        .game-complete {
+            background: rgba(76, 175, 80, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 200;
+            text-align: center;
+        }
+
+        /* 慶祝動畫特效 */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: #f0f;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .ribbon {
+            position: fixed;
+            top: 0;
+            width: 120px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+            background-size: 400% 400%;
+            animation: ribbon-wave 2s ease-in-out, gradient-shift 3s ease-in-out;
+            z-index: 999;
+            opacity: 0;
+        }
+
+        .ribbon.left { left: 0; transform: translateX(-100%); }
+        .ribbon.right { right: 0; transform: translateX(100%); }
+
+        @keyframes ribbon-wave {
+            0% { opacity: 0; transform: translateX(-100%); }
+            20% { opacity: 1; transform: translateX(0); }
+            80% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(-100%); }
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* 響應式與自動縮放邏輯 */
+        @media (max-height: 900px) {
+            .game-container {
+                transform: scale(0.85); 
+            }
+        }
+        @media (max-height: 750px) {
+            .game-container {
+                transform: scale(0.7);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .cards-container {
+                gap: 50px;
+                transform: scale(0.9);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-wrapper {
+                padding-top: 10px;
+            }
+            .cards-container {
+                transform: scale(0.55);
+                margin-top: -30px; 
+                margin-bottom: -150px;
+                gap: 20px;
+            }
+            .setup-panel {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+  </style>
+ </head>
+ <body>
+
+  <div class="game-wrapper">
+    <!-- 設定面板 (初始顯示) -->
+    <div id="setupPanel" class="setup-panel">
+        <h2 class="setup-title">自訂生字多寶遊戲</h2>
+        <p class="input-hint">請輸入想要練習的生字 (至少 6 個字，建議 15 個字以上以達到最佳 8 字/卡效果)</p>
+        <textarea id="wordInput" class="input-area" placeholder="請在此輸入生字，例如：
+天高地厚風和日麗..."></textarea>
+        <div>
+            <button class="btn" onclick="initializeGame()">確定 (開始遊戲)</button>
+        </div>
+    </div>
+
+    <!-- 遊戲主畫面 (初始隱藏) -->
+    <div id="gameContainer" class="game-container" style="display: none;">
+        
+        <!-- 第一行：資訊列 -->
+        <div class="game-info">
+            <div class="question-number">
+            第 <span id="currentQuestion">1</span> 題 / 共 <span id="totalQuestions">0</span> 題　得分: <span id="score">0</span> 分
+            </div>
+        </div>
+
+        <!-- 第二行：按鈕區 -->
+        <div class="controls">
+            <button class="btn btn-setup" onclick="returnToSetup()">重新出題</button>
+            <button class="btn" id="restartBtn" onclick="restartLevel()">重新開始</button>
+            <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>下一題</button>
+        </div>
+
+        <!-- 第三行：卡片區 -->
+        <div class="cards-container">
+            <div class="card left" id="leftCard"></div>
+            <div class="card right" id="rightCard"></div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div id="gameComplete" class="game-complete" style="display: none;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 20px;">🎉 遊戲完成！</h2>
+            <p style="font-size: 1.5rem;">最終得分：<span id="finalScore"></span> 分 / <span id="maxScore">17</span> 分</p>
+            <p style="font-size: 1.2rem; margin-top: 10px;">表現很棒！繼續加油！</p>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="restartLevel()" style="background: white; color: #4CAF50; margin-right: 10px;">再玩一次</button>
+                <button class="btn" onclick="returnToSetup()" style="background: white; color: #667eea;">修改生字</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script>
+        let characters = []; // 儲存使用者輸入的生字
+        let currentQuestionNum = 1;
+        let score = 0;
+        let gameQuestions = [];
+        let currentAnswer = '';
+        let questionAnswered = false;
+        let symbolsPerCard = 8; // 預設每張卡片字數
+
+        // 初始化遊戲 (按下確定後)
+        function initializeGame() {
+            const input = document.getElementById('wordInput').value;
+            const uniqueChars = [...new Set(input.split('').filter(c => c.trim() !== ''))];
+            
+            if (uniqueChars.length < 6) {
+                alert("生字數量太少囉！請至少輸入 6 個不同的國字。");
+                return;
+            }
+
+            characters = uniqueChars;
+            
+            // 計算每張卡片可以放幾個字
+            const maxPossibleSymbols = Math.floor((characters.length + 1) / 2);
+            // 上限設為 8
+            symbolsPerCard = Math.min(8, maxPossibleSymbols);
+
+            // 切換介面
+            document.getElementById('setupPanel').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'flex';
+            
+            document.getElementById('totalQuestions').textContent = characters.length;
+            restartLevel();
+        }
+
+        // 回到設定頁面 (重新出題)
+        function returnToSetup() {
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('setupPanel').style.display = 'block';
+            document.getElementById('gameComplete').style.display = 'none';
+        }
+
+        // 重新開始本局 (不換字)
+        function restartLevel() {
+            currentQuestionNum = 1;
+            score = 0;
+            document.getElementById('score').textContent = '0';
+            document.getElementById('gameComplete').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').disabled = true;
+            
+            generateQuestions();
+            displayQuestion();
+        }
+
+        function generateQuestions() {
+            gameQuestions = [];
+            const totalQuestions = characters.length;
+            for (let i = 0; i < totalQuestions; i++) {
+                gameQuestions.push(generateQuestion());
+            }
+        }
+
+        function generateQuestion() {
+            const shuffled = [...characters].sort(() => Math.random() - 0.5);
+            
+            const commonChar = shuffled[0];
+            const leftOthers = shuffled.slice(1, symbolsPerCard);
+            
+            const rightStartIndex = symbolsPerCard;
+            const rightEndIndex = rightStartIndex + (symbolsPerCard - 1);
+            const rightOthers = shuffled.slice(rightStartIndex, rightEndIndex);
+            
+            if (rightOthers.length < symbolsPerCard - 1) {
+                const used = new Set([commonChar, ...leftOthers, ...rightOthers]);
+                while (rightOthers.length < symbolsPerCard - 1) {
+                    const randomChar = characters[Math.floor(Math.random() * characters.length)];
+                    if (!used.has(randomChar)) {
+                        rightOthers.push(randomChar);
+                        used.add(randomChar);
+                    } else if (characters.length <= (symbolsPerCard * 2 - 1)) {
+                         if (randomChar !== commonChar && !leftOthers.includes(randomChar)) { 
+                             rightOthers.push(randomChar);
+                         }
+                    }
+                }
+            }
+
+            const leftCard = [commonChar, ...leftOthers].sort(() => Math.random() - 0.5);
+            const rightCard = [commonChar, ...rightOthers].sort(() => Math.random() - 0.5);
+            
+            return {
+                leftCard,
+                rightCard,
+                answer: commonChar
+            };
+        }
+
+        function generateGridPositions(count, cardRadius) {
+            const safeRadius = cardRadius * 0.78; 
+            const positions = [];
+            const maxAttempts = 3000;
+            const minDistance = 110; 
+
+            for (let i = 0; i < count; i++) {
+                let placed = false;
+                let attempts = 0;
+                
+                while (!placed && attempts < maxAttempts) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = Math.sqrt(Math.random()) * safeRadius;
+                    const x = Math.cos(angle) * r;
+                    const y = Math.sin(angle) * r;
+                    
+                    let overlap = false;
+                    for (const pos of positions) {
+                        const dist = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2);
+                        if (dist < minDistance) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!overlap) {
+                        positions.push({ x, y });
+                        placed = true;
+                    }
+                    attempts++;
+                }
+                
+                if (!placed) {
+                     const fallbackRadius = 150;
+                     const angle = (i / count) * Math.PI * 2;
+                     positions.push({
+                         x: Math.cos(angle) * fallbackRadius,
+                         y: Math.sin(angle) * fallbackRadius
+                     });
+                }
+            }
+            return positions;
+        }
+
+        function displayQuestion() {
+            const question = gameQuestions[currentQuestionNum - 1];
+            currentAnswer = question.answer;
+            questionAnswered = false;
+            
+            document.getElementById('leftCard').innerHTML = '';
+            document.getElementById('rightCard').innerHTML = '';
+            
+            const cardRadius = 260;
+            const currentSymbolCount = question.leftCard.length; 
+            
+            const leftPositions = generateGridPositions(currentSymbolCount, cardRadius);
+            const rightPositions = generateGridPositions(currentSymbolCount, cardRadius);
+            
+            const allColors = [
+                '#E53E3E', '#F56565', '#C53030', 
+                '#DD6B20', '#ED8936', '#C05621', 
+                '#D69E2E', '#ECC94B', '#B7791F', 
+                '#38A169', '#48BB78', '#2F855A', 
+                '#3182CE', '#4299E1', '#2B6CB0', 
+                '#805AD5', '#9F7AEA', '#6B46C1', 
+                '#D53F8C', '#ED64A6', '#B83280', 
+                '#00B5D8', '#319795'              
+            ];
+            const usedColors = new Set();
+            const questionColors = {};
+            
+            const allPositions = [...question.leftCard, ...question.rightCard];
+            allPositions.forEach((char, index) => {
+                const colorKey = `${char}_${index}`;
+                let availableColors = allColors.filter(color => !usedColors.has(color));
+                if (availableColors.length === 0) {
+                    usedColors.clear();
+                    availableColors = [...allColors];
+                }
+                const randomColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                questionColors[colorKey] = randomColor;
+                usedColors.add(randomColor);
+            });
+            
+            // 修正這裡：右卡片的 offset 必須是左卡片的長度
+            renderCard(question.leftCard, 'leftCard', leftPositions, questionColors, 0);
+            renderCard(question.rightCard, 'rightCard', rightPositions, questionColors, question.leftCard.length);
+            
+            document.getElementById('currentQuestion').textContent = currentQuestionNum;
+            document.getElementById('nextBtn').disabled = true;
+        }
+
+        function renderCard(cardChars, elementId, positions, colors, colorIndexOffset) {
+            const container = document.getElementById(elementId);
+            cardChars.forEach((char, index) => {
+                const charElement = document.createElement('div');
+                charElement.className = 'character';
+                
+                const spanElement = document.createElement('span');
+                spanElement.textContent = char;
+                charElement.appendChild(spanElement);
+                
+                charElement.style.left = `50%`;
+                charElement.style.top = `50%`;
+                
+                const posX = positions[index] ? positions[index].x : 0;
+                const posY = positions[index] ? positions[index].y : 0;
+
+                const randomRotation = Math.random() * 60 - 30;
+                
+                charElement.style.transform = `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) rotate(${randomRotation}deg)`;
+
+                const colorKey = `${char}_${index + colorIndexOffset}`;
+                
+                spanElement.style.color = colors[colorKey];
+                
+                charElement.onclick = () => selectCharacter(char, charElement);
+                container.appendChild(charElement);
+            });
+        }
+
+        function selectCharacter(char, element) {
+            if (questionAnswered) return;
+            checkAnswer(char, element);
+        }
+
+        function checkAnswer(selectedChar, element) {
+            if (selectedChar === currentAnswer) {
+                questionAnswered = true; 
+                score += 1;
+                
+                document.querySelectorAll('.character').forEach(el => {
+                    if (el.innerText === currentAnswer) {
+                        el.classList.add('correct'); 
+                    }
+                });
+                
+                showCelebration();
+                
+                document.getElementById('nextBtn').disabled = false;
+                document.getElementById('score').textContent = score;
+            } 
+        }
+
+        function showCelebration() {
+            const leftRibbon = document.createElement('div');
+            leftRibbon.className = 'ribbon left';
+            document.body.appendChild(leftRibbon);
+            
+            const rightRibbon = document.createElement('div');
+            rightRibbon.className = 'ribbon right';
+            rightRibbon.style.animationDelay = '0.1s';
+            document.body.appendChild(rightRibbon);
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => createConfetti(), i * 50);
+            }
+            setTimeout(() => {
+                leftRibbon.remove();
+                rightRibbon.remove();
+            }, 3000);
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#a8e6cf', '#ffd93d'];
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = Math.random() * 100 + '%';
+            confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 5000);
+        }
+
+        function nextQuestion() {
+            if (currentQuestionNum < characters.length) {
+                currentQuestionNum++;
+                displayQuestion();
+            } else {
+                document.getElementById('finalScore').textContent = score;
+                document.getElementById('maxScore').textContent = characters.length;
+                document.getElementById('gameComplete').style.display = 'block';
+                document.getElementById('nextBtn').style.display = 'none';
+            }
+        }
+    </script>
+ </body>
+</html>
