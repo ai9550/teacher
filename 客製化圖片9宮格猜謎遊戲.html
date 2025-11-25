@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自訂圖片9宮格猜謎遊戲</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            gap: 30px;
+            box-sizing: border-box;
+        }
+
+        /* 左側控制區 */
+        .control-panel {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            width: 300px;
+            max-height: 90vh;
+            transition: all 0.3s ease;
+            z-index: 10;
+            position: relative;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            color: #ffeaa7;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin-bottom: 5px;
+        }
+
+        /* 上傳區塊容器 - 用於定位 */
+        .upload-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        /* 實際捲動區域 */
+        .upload-area {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            /* 預留底部空間給浮動按鈕，避免內容被擋住 */
+            padding-bottom: 60px; 
+            border: 2px dashed #b2bec3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto; /* 只有這裡捲動 */
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .upload-placeholder {
+            margin-top: 60px;
+            text-align: center;
+            color: #636e72;
+            pointer-events: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* 檔案列表樣式 */
+        .file-list {
+            width: 100%;
+            list-style: none;
+            width: 100%;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            background: #f1f2f6;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #2d3436;
+        }
+
+        .file-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .file-count-badge {
+            background: #6c5ce7;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        /* 隱藏原生 input */
+        #imageInput {
+            display: none;
+        }
+
+        /* 遊戲進行中，遮罩樣式 */
+        .upload-area.masked {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255,255,255,0.8);
+            justify-content: center;
+            pointer-events: none;
+            border-style: solid;
+        }
+        
+        .masked .file-list, .masked .btn-upload-trigger {
+            display: none;
+        }
+
+        .instruction {
+            font-size: 0.9rem;
+            color: #dfe6e9;
+            line-height: 1.4;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-upload-trigger {
+            background: #ffeaa7;
+            color: #2d3436;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-upload-trigger:hover {
+            background: #fdcb6e;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+            box-shadow: 0 4px 10px rgba(253, 203, 110, 0.3);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(253, 203, 110, 0.5);
+        }
+
+        .btn-edit {
+            background: #ff7675;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(214, 48, 49, 0.3);
+        }
+
+        .btn-edit:hover {
+            background: #d63031;
+            transform: translateY(-2px);
+        }
+        
+        /* 清空按鈕 - 獨立定位 */
+        .btn-clear {
+            position: absolute; /* 相對於 upload-container 定位 */
+            bottom: 15px;
+            right: 15px;
+            background: #dfe6e9;
+            border: 1px solid #b2bec3;
+            color: #636e72;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            z-index: 9999; /* 給予極高層級確保可點擊 */
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: none; /* 預設隱藏 */
+        }
+        .btn-clear:hover {
+            background: #d63031;
+            color: white;
+            border-color: #d63031;
+            transform: translateY(-1px);
+        }
+        .btn-clear:active {
+            transform: translateY(1px);
+        }
+
+        /* 右側遊戲區 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            max-width: 600px;
+            transition: opacity 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .question-counter {
+            color: #ffeaa7;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .game-container {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            margin: 10px auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 圖片顯示區 */
+        .game-image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f6fa;
+        }
+
+        #gameImage {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* 確保整張圖片都看得到 */
+            display: none; /* 載入後才顯示 */
+        }
+
+        .overlay-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+            gap: 0;
+            z-index: 5;
+        }
+
+        .overlay-block {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .overlay-block:hover {
+            filter: brightness(1.1);
+            z-index: 2;
+        }
+
+        .overlay-block:active {
+            transform: scale(0.95);
+        }
+
+        .overlay-block.clicked {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+        }
+
+        /* 九宮格顏色 */
+        .block-1 { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .block-2 { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+        .block-3 { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); }
+        .block-4 { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+        .block-5 { background: linear-gradient(135deg, #fd79a8, #e84393); }
+        .block-6 { background: linear-gradient(135deg, #fab1a0, #e17055); }
+        .block-7 { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .block-8 { background: linear-gradient(135deg, #fdcb6e, #e17055); }
+        .block-9 { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+
+        .block-number {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+        .btn-primary:hover { background: #fdcb6e; transform: translateY(-2px); }
+
+        .btn-secondary {
+            background: white;
+            color: #6c5ce7;
+        }
+        .btn-secondary:hover { background: #f1f2f6; transform: translateY(-2px); }
+
+        .btn-danger {
+            background: #ff7675;
+            color: white;
+        }
+        .btn-danger:hover { background: #d63031; transform: translateY(-2px); }
+
+
+        .completion-message {
+            background: rgba(46, 213, 115, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+            backdrop-filter: blur(5px);
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+
+        .completion-message.show {
+            display: block;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .preview-img-small {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 狀態切換類別 */
+        .hidden {
+            display: none !important;
+        }
+
+        .disabled-area {
+            pointer-events: none;
+            opacity: 0.6;
+            background: rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                padding: 10px;
+                gap: 15px;
+            }
+
+            .control-panel {
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .upload-container {
+                height: 200px;
+            }
+
+            .game-container {
+                width: 280px;
+                height: 280px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+        }
+    </style>
+ </head>
+ <body>
+  
+  <!-- 左側設定面板 -->
+  <div class="control-panel" id="controlPanel">
+    <div class="panel-title">📝 題目設定</div>
+    
+    <div class="instruction">
+        <strong>使用說明：</strong>請上傳圖片作為題目，檔名即為答案提示 (例："蘋果.jpg")
+    </div>
+
+    <!-- 隱藏的檔案輸入框 -->
+    <input type="file" id="imageInput" multiple accept="image/*">
+
+    <!-- 上傳區塊容器 -->
+    <div class="upload-container">
+        <!-- 實際捲動內容區 -->
+        <div id="uploadArea" class="upload-area">
+            <button class="btn-upload-trigger" id="uploadTriggerBtn">
+                📸 選擇/拍照上傳
+            </button>
+            
+            <div id="uploadPlaceholder" class="upload-placeholder">
+                <span class="upload-icon">🖼️</span><br>
+                尚未選擇圖片
+            </div>
+
+            <ul id="fileList" class="file-list">
+                <!-- 檔案列表會顯示在這裡 -->
+            </ul>
+            
+            <div id="maskedMessage" class="hidden" style="margin-top: 80px; font-style: italic;">
+                🙈 遊戲進行中<br>圖片列表已隱藏
+            </div>
+        </div>
+
+        <!-- 清空按鈕 -->
+        <button type="button" id="clearBtn" class="btn-clear">🗑️ 清空重置</button>
+    </div>
+
+    <button id="startBtn" class="action-btn btn-start">
+        <span>▶️ 開始遊戲</span>
+    </button>
+
+    <div id="gameStatus" class="instruction hidden" style="text-align: center; background: rgba(0,0,0,0.4);">
+        遊戲進行中...
+    </div>
+
+    <button id="editBtn" class="action-btn btn-edit hidden">
+        <span>✏️ 修改題目 / 重新設定</span>
+    </button>
+  </div>
+
+  <!-- 右側遊戲區 -->
+  <div class="main-content hidden" id="gameArea">
+   <div class="header">
+    <h1>🎲 圖片九宮格猜謎</h1>
+    <span id="questionCounter" class="question-counter">(第 1 題 / 共 ? 題)</span>
+   </div>
+   
+   <div class="game-container">
+    <div class="game-image-container">
+        <img id="gameImage" src="" alt="題目圖片">
+    </div>
+    <div class="overlay-grid" id="grid">
+     <!-- 網格由 JS 生成 -->
+    </div>
+   </div>
+
+   <div class="game-controls">
+    <button class="btn btn-danger" id="resetRoundBtn">🔄 重置本題</button>
+    <button class="btn btn-primary" id="revealBtn">👁️ 看答案</button>
+    <button class="btn btn-secondary" id="btnNext">🎲 下一題</button>
+   </div>
+
+   <div class="completion-message" id="completionMessage">
+    <!-- 完成訊息由 JS 生成 -->
+   </div>
+  </div>
+
+  <script>
+        // 遊戲狀態
+        let gameData = []; 
+        let currentIndex = 0;
+        let shuffledIndices = [];
+        let revealedBlocks = new Set();
+        let isTransitioning = false;
+        const totalBlocks = 9;
+
+        // DOM 元素選取 (確保 DOM 載入後可存取)
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const fileList = document.getElementById('fileList');
+        const maskedMessage = document.getElementById('maskedMessage');
+        const imageInput = document.getElementById('imageInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const uploadTriggerBtn = document.getElementById('uploadTriggerBtn');
+        
+        const gameArea = document.getElementById('gameArea');
+        const controlPanel = document.getElementById('controlPanel');
+        const editBtn = document.getElementById('editBtn');
+        const startBtn = document.getElementById('startBtn');
+        const gameStatus = document.getElementById('gameStatus');
+        
+        const grid = document.getElementById('grid');
+        const gameImage = document.getElementById('gameImage');
+        const msgBox = document.getElementById('completionMessage');
+        
+        const resetRoundBtn = document.getElementById('resetRoundBtn');
+        const revealBtn = document.getElementById('revealBtn');
+        const btnNext = document.getElementById('btnNext');
+
+        // ----- 事件綁定區 -----
+
+        // 1. 上傳按鈕觸發
+        uploadTriggerBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        // 2. 檔案選擇變更
+        imageInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // 3. 開始遊戲
+        startBtn.addEventListener('click', startGame);
+
+        // 4. 修改題目 (編輯模式)
+        editBtn.addEventListener('click', enableEditing);
+
+        // 5. 遊戲內按鈕
+        resetRoundBtn.addEventListener('click', resetCurrentRound);
+        revealBtn.addEventListener('click', revealAll);
+        btnNext.addEventListener('click', nextQuestion);
+
+        // 6. 清空重置按鈕 (最關鍵的功能)
+        clearBtn.addEventListener('click', () => {
+            if (confirm("確定要清空所有內容並回到初始畫面嗎？")) {
+                fullReset();
+            }
+        });
+
+        // ----- 功能函式區 -----
+
+        // 強制重置回到初始畫面
+        function fullReset() {
+            // 清空數據
+            gameData = [];
+            imageInput.value = '';
+            
+            // 重置 UI
+            fileList.innerHTML = '';
+            uploadPlaceholder.style.display = 'block';
+            clearBtn.style.display = 'none'; // 隱藏清空按鈕
+            
+            // 確保回到設定模式
+            uploadArea.classList.remove('masked');
+            maskedMessage.classList.add('hidden');
+            uploadTriggerBtn.style.display = 'inline-block';
+            
+            // 重置右側按鈕狀態
+            startBtn.classList.remove('hidden');
+            gameStatus.classList.add('hidden');
+            editBtn.classList.add('hidden');
+            
+            // 隱藏遊戲區域
+            gameArea.classList.add('hidden');
+            
+            // 重置遊戲變數
+            currentIndex = 0;
+            shuffledIndices = [];
+            revealedBlocks.clear();
+        }
+
+        // 處理檔案上傳
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const name = file.name.replace(/\.[^/.]+$/, "");
+                        gameData.push({
+                            src: e.target.result,
+                            name: name
+                        });
+                        updateFileListUI();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            imageInput.value = '';
+        }
+
+        // 更新檔案列表 UI
+        function updateFileListUI() {
+            fileList.innerHTML = '';
+            
+            if (gameData.length === 0) {
+                uploadPlaceholder.style.display = 'block';
+                clearBtn.style.display = 'none';
+            } else {
+                uploadPlaceholder.style.display = 'none';
+                clearBtn.style.display = 'block'; // 顯示清空按鈕
+                
+                gameData.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <span class="file-count-badge">${index + 1}</span>
+                        <span>${item.name}</span>
+                    `;
+                    fileList.appendChild(li);
+                });
+            }
+        }
+
+        // 初始化網格
+        function initGrid() {
+            grid.innerHTML = '';
+            for(let i=1; i<=9; i++) {
+                const div = document.createElement('div');
+                div.className = `overlay-block block-${i}`;
+                div.onclick = () => revealBlock(i);
+                div.innerHTML = `<div class="block-number">${i}</div><div>點我</div>`;
+                grid.appendChild(div);
+            }
+        }
+
+        // 開始遊戲
+        function startGame() {
+            if (gameData.length === 0) {
+                alert("請先上傳至少一張圖片！");
+                return;
+            }
+
+            uploadArea.classList.add('masked');
+            uploadPlaceholder.style.display = 'none';
+            fileList.style.display = 'none'; 
+            maskedMessage.classList.remove('hidden');
+            uploadTriggerBtn.style.display = 'none'; 
+
+            startBtn.classList.add('hidden');
+            gameStatus.classList.remove('hidden');
+            editBtn.classList.remove('hidden');
+            clearBtn.style.display = 'none'; // 遊戲中隱藏清空按鈕
+
+            gameArea.classList.remove('hidden');
+            
+            if(window.innerWidth <= 768) {
+                gameArea.scrollIntoView({behavior: 'smooth'});
+            }
+
+            initGrid();
+            initializeRandomOrder();
+        }
+
+        // 啟用編輯模式
+        function enableEditing() {
+            gameArea.classList.add('hidden');
+            
+            uploadArea.classList.remove('masked');
+            fileList.style.display = 'block';
+            maskedMessage.classList.add('hidden');
+            uploadTriggerBtn.style.display = 'inline-block';
+
+            if (gameData.length === 0) {
+                uploadPlaceholder.style.display = 'block';
+            }
+
+            startBtn.classList.remove('hidden');
+            gameStatus.classList.add('hidden');
+            editBtn.classList.add('hidden');
+            
+            if (gameData.length > 0) {
+                clearBtn.style.display = 'block';
+            }
+            
+            if(window.innerWidth <= 768) {
+                controlPanel.scrollIntoView({behavior: 'smooth'});
+            }
+        }
+
+        function initializeRandomOrder() {
+            shuffledIndices = Array.from({length: gameData.length}, (_, i) => i);
+            for (let i = shuffledIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+            }
+            currentIndex = 0;
+            loadQuestion(false);
+        }
+
+        function loadQuestion(delayed = false) {
+            resetCurrentRound();
+            msgBox.classList.remove('show');
+            isTransitioning = true;
+
+            if (gameData.length === 0) return;
+
+            if (delayed) {
+                btnNext.disabled = true;
+                btnNext.innerText = "準備中...";
+                setTimeout(() => {
+                    updateImage();
+                    btnNext.disabled = false;
+                    btnNext.innerText = "🎲 下一題";
+                    isTransitioning = false;
+                }, 1000);
+            } else {
+                updateImage();
+                isTransitioning = false;
+            }
+        }
+
+        function updateImage() {
+            const data = gameData[shuffledIndices[currentIndex]];
+            gameImage.src = data.src;
+            gameImage.style.display = 'block';
+
+            document.getElementById('questionCounter').textContent = 
+                `(第 ${currentIndex + 1} 題 / 共 ${gameData.length} 題)`;
+        }
+
+        function revealBlock(n) {
+            if (isTransitioning) return;
+            
+            const block = document.querySelector(`.block-${n}`);
+            if (block && !block.classList.contains('clicked')) {
+                block.classList.add('clicked');
+                revealedBlocks.add(n);
+
+                if (revealedBlocks.size === totalBlocks) {
+                    setTimeout(showCompletion, 500);
+                }
+            }
+        }
+
+        function revealAll() {
+            for(let i=1; i<=9; i++) {
+                const block = document.querySelector(`.block-${i}`);
+                if(block) block.classList.add('clicked');
+                revealedBlocks.add(i);
+            }
+            setTimeout(showCompletion, 300);
+        }
+
+        function resetCurrentRound() {
+            revealedBlocks.clear();
+            const blocks = document.querySelectorAll('.overlay-block');
+            blocks.forEach(b => b.classList.remove('clicked'));
+            msgBox.classList.remove('show');
+        }
+
+        function nextQuestion() {
+            if (isTransitioning) return;
+
+            currentIndex++;
+            if (currentIndex >= gameData.length) {
+                if(confirm("題目已全部完成！要重新開始嗎？")) {
+                    initializeRandomOrder();
+                } else {
+                    currentIndex = gameData.length - 1;
+                }
+            } else {
+                loadQuestion(true);
+            }
+        }
+
+        function showCompletion() {
+            const data = gameData[shuffledIndices[currentIndex]];
+            msgBox.innerHTML = `
+                <h2>🎉 答對了！</h2>
+                <div style="margin: 10px 0;">
+                    <img src="${data.src}" class="preview-img-small">
+                    <div style="font-size: 1.5rem; color: #2d3436; font-weight: bold;">${data.name}</div>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="resetCurrentRound()">再玩一次</button>
+                    <button class="btn btn-secondary" onclick="nextQuestion()">下一題 ➡️</button>
+                </div>
+            `;
+            msgBox.classList.add('show');
+        }
+
+        // 鍵盤支援
+        document.addEventListener('keydown', (e) => {
+            if (gameArea.classList.contains('hidden')) return;
+            if (isTransitioning) return;
+
+            const key = e.key;
+            if (key >= '1' && key <= '9') revealBlock(parseInt(key));
+            if (key === ' ' || key === 'Enter') {
+                e.preventDefault();
+                revealAll();
+            }
+            if (key === 'n' || key === 'N') nextQuestion();
+            if (key === 'r' || key === 'R') resetCurrentRound();
+        });
+  </script>
+ </body>
+</html>
