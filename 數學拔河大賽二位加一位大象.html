@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>數學拔河比賽</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Heiti TC', 'Arial', sans-serif;
+      overflow: hidden;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 50%, #90EE90 50%, #7BC87B 100%);
+      position: relative;
+    }
+
+    .header {
+      padding: 12px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .game-title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .reset-button {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.3s;
+    }
+
+    .reset-button:hover {
+      background: #2980b9;
+    }
+
+    .playground {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 10px 20px;
+    }
+
+    .rope-area {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .rope {
+      position: absolute;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        #8B4513 0px,
+        #A0522D 10px,
+        #8B4513 20px
+      );
+      border-radius: 6px;
+      width: 60%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .center-flag {
+      position: absolute;
+      width: 3px;
+      height: 50px;
+      background: #e74c3c;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+
+    .flag-triangle {
+      position: absolute;
+      top: 0;
+      left: 3px;
+      width: 0;
+      height: 0;
+      border-left: 15px solid #e74c3c;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
+
+    .tug-circle {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #27ae60;
+      border: 4px solid #1e8449;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 8;
+      transition: transform 0.5s ease-out;
+      box-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
+    }
+
+    .tug-circle.no-transition {
+      transition: none;
+    }
+
+    .elephant {
+      position: absolute;
+      font-size: 48px;
+      top: 50%;
+      left: 50%;
+      transition: transform 0.5s ease-out;
+      z-index: 5;
+    }
+
+    .elephant.no-transition {
+      transition: none;
+    }
+
+    .elephant-left {
+      transform: translate(calc(-50% - 160px), -50%);
+    }
+
+    .elephant-right {
+      transform: translate(calc(-50% + 160px), -50%) scaleX(-1);
+    }
+
+    .problems-container {
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 20px 20px 20px;
+      gap: 20px;
+    }
+
+    .problem-box {
+      flex: 1;
+      max-width: 350px;
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .team-name {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 12px;
+      color: #2c3e50;
+    }
+
+    .problem {
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 16px;
+      color: #34495e;
+    }
+
+    .answer-inputs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .answer-input {
+      width: 50px;
+      height: 60px;
+      font-size: 32px;
+      text-align: center;
+      border: 3px solid #bdc3c7;
+      border-radius: 10px;
+      cursor: pointer;
+      background: white;
+      transition: all 0.3s;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .answer-input:hover {
+      border-color: #3498db;
+      box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+    }
+
+    .answer-input.active {
+      border-color: #3498db;
+      background: #ebf5fb;
+      box-shadow: 0 0 12px rgba(52, 152, 219, 0.5);
+    }
+
+    .answer-input.correct {
+      border-color: #27ae60;
+      background: #d5f4e6;
+      color: #27ae60;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .key-button {
+      padding: 8px;
+      font-size: 16px;
+      background: #ecf0f1;
+      border: 2px solid #bdc3c7;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .key-button:hover {
+      background: #3498db;
+      color: white;
+      border-color: #2980b9;
+      transform: scale(1.05);
+    }
+
+    .key-button:active {
+      transform: scale(0.95);
+    }
+
+    .winner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .winner-card {
+      background: white;
+      padding: 48px;
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .trophy-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+    }
+
+    .winner-text {
+      font-size: 48px;
+      font-weight: bold;
+      color: #f39c12;
+      margin-bottom: 16px;
+    }
+
+    .winner-message {
+      font-size: 24px;
+      color: #34495e;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 768px) {
+      .problems-container {
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .game-title {
+        font-size: 28px;
+      }
+
+      .elephant {
+        font-size: 48px;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="game-container">
+   <div class="header">
+    <h1 class="game-title" id="gameTitle">數學拔河比賽</h1><button class="reset-button" onclick="resetGame()">
+     <svg width="20" height="20" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+     </svg> 重���開始 </button>
+   </div>
+   <div class="playground">
+    <div class="rope-area">
+     <div class="rope"></div>
+     <div class="tug-circle" id="tugCircle"></div>
+     <div class="center-flag">
+      <div class="flag-triangle"></div>
+     </div>
+     <div class="elephant" id="elephantLeft">
+      🐘
+     </div>
+     <div class="elephant" id="elephantRight">
+      🐘
+     </div>
+    </div>
+   </div>
+   <div class="problems-container">
+    <div class="problem-box">
+     <div class="team-name" id="leftTeamName">
+      左邊������
+     </div>
+     <div class="problem" id="leftProblem">
+      10 + 5 = ?
+     </div>
+     <div class="answer-inputs"><input type="text" class="answer-input" id="leftTen" readonly onclick="openKeypad('left', 'ten')"> <input type="text" class="answer-input" id="leftUnit" readonly onclick="openKeypad('left', 'unit')">
+     </div>
+     <div class="keypad" id="leftKeypad"><button class="key-button" onclick="handleNumClick('left', 1)">1</button> <button class="key-button" onclick="handleNumClick('left', 2)">2</button> <button class="key-button" onclick="handleNumClick('left', 3)">3</button> <button class="key-button" onclick="handleNumClick('left', 4)">4</button> <button class="key-button" onclick="handleNumClick('left', 5)">5</button> <button class="key-button" onclick="handleNumClick('left', 6)">6</button> <button class="key-button" onclick="handleNumClick('left', 7)">7</button> <button class="key-button" onclick="handleNumClick('left', 8)">8</button> <button class="key-button" onclick="handleNumClick('left', 9)">9</button> <button class="key-button" onclick="handleNumClick('left', 0)">0</button>
+     </div>
+    </div>
+    <div class="problem-box">
+     <div class="team-name" id="rightTeamName">
+      右邊隊伍
+     </div>
+     <div class="problem" id="rightProblem">
+      10 + 5 = ?
+     </div>
+     <div class="answer-inputs"><input type="text" class="answer-input" id="rightTen" readonly onclick="openKeypad('right', 'ten')"> <input type="text" class="answer-input" id="rightUnit" readonly onclick="openKeypad('right', 'unit')">
+     </div>
+     <div class="keypad" id="rightKeypad"><button class="key-button" onclick="handleNumClick('right', 1)">1</button> <button class="key-button" onclick="handleNumClick('right', 2)">2</button> <button class="key-button" onclick="handleNumClick('right', 3)">3</button> <button class="key-button" onclick="handleNumClick('right', 4)">4</button> <button class="key-button" onclick="handleNumClick('right', 5)">5</button> <button class="key-button" onclick="handleNumClick('right', 6)">6</button> <button class="key-button" onclick="handleNumClick('right', 7)">7</button> <button class="key-button" onclick="handleNumClick('right', 8)">8</button> <button class="key-button" onclick="handleNumClick('right', 9)">9</button> <button class="key-button" onclick="handleNumClick('right', 0)">0</button>
+     </div>
+    </div>
+   </div>
+   <div class="winner-overlay" id="winnerOverlay" style="display: none;">
+    <div class="winner-card">
+     <div class="trophy-icon">
+      🏆
+     </div>
+     <div class="winner-text" id="winnerText">
+      隊伍獲勝！
+     </div>
+     <div class="winner-message" id="winnerMessage">
+      恭喜獲������
+     </div><button class="reset-button" onclick="resetGame()">再玩一次</button>
+    </div>
+   </div>
+  </div>
+  <script>
+    // 遊戲常數
+    const GOAL_DIFFERENCE = 6;
+    const ELEPHANT_OFFSET = 160;
+    const DELAY_MS = 2000;
+
+    // 遊戲狀態
+    let score = 0;
+    let winner = null;
+    let isResetting = false;
+    let leftProblem = { n1: 0, n2: 0, ans: 0, inputTen: '', inputUnit: '', isCorrect: false };
+    let rightProblem = { n1: 0, n2: 0, ans: 0, inputTen: '', inputUnit: '', isCorrect: false };
+    let activeKeypad = null;
+    let leftTimer = null;
+    let rightTimer = null;
+
+    // 預設設定
+    const defaultConfig = {
+      game_title: '數學拔河比賽',
+      left_team_name: '左邊隊伍',
+      right_team_name: '右邊隊伍',
+      victory_message: '恭喜獲勝！'
+    };
+
+    // 產生隨機數學題目
+    function generateProblem() {
+      const n1 = Math.floor(Math.random() * 80) + 10;
+      const n2 = Math.floor(Math.random() * 9) + 1;
+      return {
+        n1,
+        n2,
+        ans: n1 + n2,
+        inputTen: '',
+        inputUnit: '',
+        isCorrect: false
+      };
+    }
+
+    // 重置遊戲
+    function resetGame() {
+      isResetting = true;
+
+      if (leftTimer) clearTimeout(leftTimer);
+      if (rightTimer) clearTimeout(rightTimer);
+
+      score = 0;
+      winner = null;
+      leftProblem = generateProblem();
+      rightProblem = generateProblem();
+      activeKeypad = null;
+
+      updateUI();
+
+      document.getElementById('elephantLeft').classList.add('no-transition');
+      document.getElementById('elephantRight').classList.add('no-transition');
+      document.getElementById('tugCircle').classList.add('no-transition');
+
+      setTimeout(() => {
+        document.getElementById('elephantLeft').classList.remove('no-transition');
+        document.getElementById('elephantRight').classList.remove('no-transition');
+        document.getElementById('tugCircle').classList.remove('no-transition');
+        isResetting = false;
+      }, 50);
+
+      document.getElementById('winnerOverlay').style.display = 'none';
+    }
+
+    // 更新介面
+    function updateUI() {
+      // 更新題目
+      document.getElementById('leftProblem').textContent = `${leftProblem.n1} + ${leftProblem.n2} = ?`;
+      document.getElementById('rightProblem').textContent = `${rightProblem.n1} + ${rightProblem.n2} = ?`;
+
+      // 更新輸入框
+      const leftTenInput = document.getElementById('leftTen');
+      const leftUnitInput = document.getElementById('leftUnit');
+      const rightTenInput = document.getElementById('rightTen');
+      const rightUnitInput = document.getElementById('rightUnit');
+
+      leftTenInput.value = leftProblem.inputTen;
+      leftUnitInput.value = leftProblem.inputUnit;
+      rightTenInput.value = rightProblem.inputTen;
+      rightUnitInput.value = rightProblem.inputUnit;
+
+      // 更新正確狀態
+      leftTenInput.classList.toggle('correct', leftProblem.isCorrect);
+      leftUnitInput.classList.toggle('correct', leftProblem.isCorrect);
+      rightTenInput.classList.toggle('correct', rightProblem.isCorrect);
+      rightUnitInput.classList.toggle('correct', rightProblem.isCorrect);
+
+      // 更新大象位置
+      updateElephantPositions();
+    }
+
+    // 根據分數更新大象位置
+    function updateElephantPositions() {
+      const leftElephant = document.getElementById('elephantLeft');
+      const rightElephant = document.getElementById('elephantRight');
+      const tugCircle = document.getElementById('tugCircle');
+
+      const offset = score * 20;
+
+      leftElephant.style.transform = `translate(calc(-50% - ${ELEPHANT_OFFSET - offset}px), -50%)`;
+      rightElephant.style.transform = `translate(calc(-50% + ${ELEPHANT_OFFSET - offset}px), -50%) scaleX(-1)`;
+      tugCircle.style.transform = `translate(calc(-50% + ${offset}px), -50%)`;
+    }
+
+    // 開啟鍵盤（標記選中的輸入框）
+    function openKeypad(side, digit) {
+      if (winner) return;
+      if (side === 'left' && leftProblem.isCorrect) return;
+      if (side === 'right' && rightProblem.isCorrect) return;
+
+      activeKeypad = { side, digit };
+
+      // 更新輸入框的選取狀態
+      document.querySelectorAll('.answer-input').forEach(input => {
+        input.classList.remove('active');
+      });
+
+      document.getElementById(`${side}${digit === 'ten' ? 'Ten' : 'Unit'}`).classList.add('active');
+    }
+
+    // 處理數字點擊
+    function handleNumClick(side, num) {
+      if (winner) return;
+      if (side === 'left' && leftProblem.isCorrect) return;
+      if (side === 'right' && rightProblem.isCorrect) return;
+
+      if (!activeKeypad || activeKeypad.side !== side) return;
+
+      const { digit } = activeKeypad;
+
+      if (side === 'left') {
+        if (digit === 'ten') leftProblem.inputTen = num.toString();
+        else leftProblem.inputUnit = num.toString();
+        checkAnswer('left');
+      } else {
+        if (digit === 'ten') rightProblem.inputTen = num.toString();
+        else rightProblem.inputUnit = num.toString();
+        checkAnswer('right');
+      }
+
+      // 清除選取狀態
+      document.querySelectorAll('.answer-input').forEach(input => {
+        input.classList.remove('active');
+      });
+      activeKeypad = null;
+
+      updateUI();
+    }
+
+    // 檢查答案
+    function checkAnswer(side) {
+      const problem = side === 'left' ? leftProblem : rightProblem;
+      const { inputTen, inputUnit, ans } = problem;
+
+      if (inputTen === '' || inputUnit === '') return;
+
+      const userAnswer = parseInt(`${inputTen}${inputUnit}`);
+
+      if (userAnswer === ans) {
+        handleCorrectAnswer(side);
+      }
+    }
+
+    // 處理答對
+    function handleCorrectAnswer(side) {
+      let newScore = score;
+      let isGameOver = false;
+
+      if (side === 'right') {
+        newScore += 1;
+      } else {
+        newScore -= 1;
+      }
+      score = newScore;
+
+      if (newScore >= GOAL_DIFFERENCE) {
+        winner = 'right';
+        isGameOver = true;
+      } else if (newScore <= -GOAL_DIFFERENCE) {
+        winner = 'left';
+        isGameOver = true;
+      }
+
+      if (side === 'right') {
+        rightProblem.isCorrect = true;
+      } else {
+        leftProblem.isCorrect = true;
+      }
+
+      updateUI();
+
+      if (isGameOver) {
+        showWinner();
+      } else {
+        if (side === 'right') {
+          if (rightTimer) clearTimeout(rightTimer);
+          rightTimer = setTimeout(() => {
+            rightProblem = generateProblem();
+            updateUI();
+          }, DELAY_MS);
+        } else {
+          if (leftTimer) clearTimeout(leftTimer);
+          leftTimer = setTimeout(() => {
+            leftProblem = generateProblem();
+            updateUI();
+          }, DELAY_MS);
+        }
+      }
+    }
+
+    // 顯示勝利者
+    function showWinner() {
+      const config = window.elementSdk?.config || defaultConfig;
+      const winnerTeam = winner === 'left' ? config.left_team_name : config.right_team_name;
+      document.getElementById('winnerText').textContent = `${winnerTeam} 獲勝！`;
+      document.getElementById('winnerMessage').textContent = config.victory_message;
+      document.getElementById('winnerOverlay').style.display = 'flex';
+    }
+
+    // 初始化 Element SDK
+    async function onConfigChange(config) {
+      document.getElementById('gameTitle').textContent = config.game_title || defaultConfig.game_title;
+      document.getElementById('leftTeamName').textContent = config.left_team_name || defaultConfig.left_team_name;
+      document.getElementById('rightTeamName').textContent = config.right_team_name || defaultConfig.right_team_name;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['game_title', config.game_title || defaultConfig.game_title],
+        ['left_team_name', config.left_team_name || defaultConfig.left_team_name],
+        ['right_team_name', config.right_team_name || defaultConfig.right_team_name],
+        ['victory_message', config.victory_message || defaultConfig.victory_message]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // 開始遊戲
+    resetGame();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a702cd803a5b846',t:'MTc2NDU2Njg0NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
