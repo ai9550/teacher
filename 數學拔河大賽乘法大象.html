@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學拔河大賽 - 乘法挑戰</title>
+    <!-- 引入 Tailwind CSS 用於樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用於解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* 自定義動畫樣式 */
+        .animate-bounce-slow {
+          animation: bounce 2s infinite;
+        }
+        /* 修正 Bounce 動畫，確保 transform 疊加正確 */
+        @keyframes bounce {
+          0%, 100% {
+            transform: translate(-50%, -50%) scaleX(var(--scale-x, 1)) translateY(0);
+            animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+          }
+          50% {
+            transform: translate(-50%, -50%) scaleX(var(--scale-x, 1)) translateY(-15%);
+            animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+          }
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out forwards;
+        }
+        @keyframes pop-in {
+          0% { transform: scale(0.8); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in {
+          animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 圖示元件 ---
+        const Trophy = (props) => (
+            <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 21" />
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 21" />
+                <path d="M12 2a7 7 0 0 0-7 7v1h14v-1a7 7 0 0 0-7-7z" />
+            </svg>
+        );
+
+        const RefreshCcw = (props) => (
+            <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                <path d="M16 16h5v5" />
+            </svg>
+        );
+
+        // --- 數字鍵盤元件 ---
+        const MiniKeypad = ({ onNumClick, color }) => {
+            const btnColorClass = color === 'blue' 
+                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-b-4 border-blue-300 active:border-b-0 active:translate-y-1' 
+                : 'bg-pink-100 text-pink-700 hover:bg-pink-200 border-b-4 border-pink-300 active:border-b-0 active:translate-y-1';
+
+            return (
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 z-30 bg-white p-3 rounded-xl shadow-2xl border border-gray-100 w-64 animate-fade-in">
+                    <div className="grid grid-cols-5 gap-2">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+                            <button
+                                key={num}
+                                onClick={(e) => { e.stopPropagation(); onNumClick(num); }}
+                                className={`h-10 text-xl font-bold rounded-lg shadow-sm transition-all ${btnColorClass}`}
+                            >
+                                {num}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 主程式元件 ---
+        const TugOfWarMath = () => {
+          // 遊戲常數
+          const GOAL_DIFFERENCE = 5; // 淨勝 5 題獲勝
+          const BEAR_OFFSET = 160; // 大象距離中心的像素距離 (絕對距離)
+          const DELAY_MS = 2000; // 答對後停留豪秒數
+          
+          // 狀態管理
+          const [score, setScore] = useState(0); 
+          const [winner, setWinner] = useState(null); 
+          const [isResetting, setIsResetting] = useState(false); 
+          
+          // 題目狀態
+          const [leftProblem, setLeftProblem] = useState({ n1: 0, n2: 0, ans: 0, inputTen: '', inputUnit: '', isCorrect: false });
+          const [rightProblem, setRightProblem] = useState({ n1: 0, n2: 0, ans: 0, inputTen: '', inputUnit: '', isCorrect: false });
+
+          // 鍵盤控制狀態
+          const [leftFocus, setLeftFocus] = useState(null);
+          const [rightFocus, setRightFocus] = useState(null);
+
+          // Timer Ref
+          const leftTimerRef = useRef(null);
+          const rightTimerRef = useRef(null);
+
+          // 初始化題目：一位數乘以一位數 (1x1)
+          const generateProblem = () => {
+            // 生成 1 到 9 之間的亂數 (避免 0 乘法)
+            const n1 = Math.floor(Math.random() * 9) + 1; 
+            const n2 = Math.floor(Math.random() * 9) + 1; 
+
+            return {
+              n1,
+              n2,
+              ans: n1 * n2, // 乘法
+              inputTen: '', 
+              inputUnit: '',
+              isCorrect: false
+            };
+          };
+
+          // 遊戲開始/重置
+          useEffect(() => {
+            resetGame();
+            return () => {
+              if (leftTimerRef.current) clearTimeout(leftTimerRef.current);
+              if (rightTimerRef.current) clearTimeout(rightTimerRef.current);
+            };
+          }, []);
+
+          // 點擊背景關閉鍵盤
+          const handleBackgroundClick = () => {
+            setLeftFocus(null);
+            setRightFocus(null);
+          };
+
+          const resetGame = () => {
+            setIsResetting(true);
+
+            if (leftTimerRef.current) clearTimeout(leftTimerRef.current);
+            if (rightTimerRef.current) clearTimeout(rightTimerRef.current);
+
+            setScore(0);
+            setWinner(null);
+            setLeftProblem(generateProblem());
+            setRightProblem(generateProblem());
+            setLeftFocus(null);
+            setRightFocus(null);
+
+            setTimeout(() => {
+              setIsResetting(false);
+            }, 50);
+          };
+
+          // 處理數字輸入 (左邊)
+          const handleLeftNumClick = (num) => {
+            if (!leftFocus || winner || leftProblem.isCorrect) return;
+            
+            const newProb = { ...leftProblem };
+            if (leftFocus.digit === 'ten') newProb.inputTen = num;
+            else newProb.inputUnit = num;
+            
+            setLeftProblem(newProb);
+            setLeftFocus(null); 
+            checkAnswer('left', newProb);
+          };
+
+          // 處理數字輸入 (右邊)
+          const handleRightNumClick = (num) => {
+            if (!rightFocus || winner || rightProblem.isCorrect) return;
+
+            const newProb = { ...rightProblem };
+            if (rightFocus.digit === 'ten') newProb.inputTen = num;
+            else newProb.inputUnit = num;
+
+            setRightProblem(newProb);
+            setRightFocus(null); 
+            checkAnswer('right', newProb);
+          };
+
+          // 檢查答案
+          const checkAnswer = (side, problem) => {
+            const { inputTen, inputUnit, ans } = problem;
+            if (inputTen === '' && inputUnit === '') return; 
+            
+            const userInputString = `${inputTen}${inputUnit}`;
+            if (userInputString === '') return;
+            
+            const userAnswer = parseInt(userInputString);
+            
+            if (userAnswer === ans) {
+              handleCorrectAnswer(side);
+            }
+          };
+
+          const handleCorrectAnswer = (side) => {
+            let newScore = score;
+            let isGameOver = false;
+
+            if (side === 'right') {
+              newScore += 1;
+            } else {
+              newScore -= 1;
+            }
+            setScore(newScore);
+
+            if (newScore >= GOAL_DIFFERENCE) {
+              setWinner('right');
+              isGameOver = true;
+            } else if (newScore <= -GOAL_DIFFERENCE) {
+              setWinner('left');
+              isGameOver = true;
+            }
+
+            if (side === 'right') {
+              setRightProblem(prev => ({ ...prev, isCorrect: true }));
+              setRightFocus(null); 
+            } else {
+              setLeftProblem(prev => ({ ...prev, isCorrect: true }));
+              setLeftFocus(null); 
+            }
+
+            if (!isGameOver) {
+              if (side === 'right') {
+                if (rightTimerRef.current) clearTimeout(rightTimerRef.current);
+                rightTimerRef.current = setTimeout(() => {
+                  setRightProblem(generateProblem());
+                }, DELAY_MS);
+              } else {
+                if (leftTimerRef.current) clearTimeout(leftTimerRef.current);
+                leftTimerRef.current = setTimeout(() => {
+                  setLeftProblem(generateProblem());
+                }, DELAY_MS);
+              }
+            }
+          };
+
+          return (
+            <div 
+                className="min-h-screen bg-amber-50 font-sans select-none flex flex-col overflow-y-auto pb-40"
+                onClick={handleBackgroundClick} 
+            >
+              
+              {/* 標題列 */}
+              <div className="bg-white shadow-sm p-3 text-center relative z-20 shrink-0">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-700 flex items-center justify-center gap-2">
+                  <span>🏋️</span> 數學拔河大賽 (乘法篇) <span>🏋️</span>
+                </h1>
+                <div className="text-xs md:text-sm text-gray-500 mt-1">誰先領先 {GOAL_DIFFERENCE} 題就獲勝！</div>
+              </div>
+
+              {/* 獨立的拔河動畫區 */}
+              <div className="h-40 relative w-full bg-sky-100/30 border-b-4 border-amber-200/50 overflow-hidden shrink-0 z-10">
+                  <div className="w-full h-2 bg-amber-800/20 absolute bottom-4 left-0"></div>
+                  <div className="absolute top-0 bottom-4 left-1/2 w-0.5 bg-red-400/50 transform -translate-x-1/2 z-0"></div>
+                  <div className="absolute bottom-4 left-1/2 w-2 h-6 bg-red-300 transform -translate-x-1/2 z-0"></div>
+                  
+                  {/* 繩子與大力士容器 */}
+                  <div 
+                    className={`absolute bottom-8 left-1/2 w-0 h-24 ${isResetting ? '' : 'transition-all duration-700 ease-in-out'}`}
+                    style={{ 
+                      transform: `translateX(calc(-50% + ${(score * (BEAR_OFFSET / GOAL_DIFFERENCE))}px))` 
+                    }} 
+                  >
+                    <div className="absolute top-1/2 left-[-400px] right-[-400px] h-3 bg-amber-700 rounded-full shadow-sm w-[800px]"></div>
+                    <div className="absolute top-1/2 left-1/2 w-8 h-8 bg-red-500 rounded-full border-4 border-white transform -translate-x-1/2 -translate-y-1/2 shadow-md z-10"></div>
+
+                    {/* 左邊大象 */}
+                    <div 
+                      className="absolute top-1/2 flex items-center justify-center text-6xl filter drop-shadow-lg animate-bounce-slow"
+                      style={{ 
+                        width: '80px', 
+                        height: '80px',
+                        left: '50%', 
+                        marginLeft: `-${BEAR_OFFSET}px`, 
+                        transform: 'translate(-50%, -50%) scaleX(1)', 
+                        '--scale-x': '1'
+                      }}
+                    >
+                      🐘
+                    </div>
+
+                    {/* 右邊大象 */}
+                    <div 
+                      className="absolute top-1/2 flex items-center justify-center text-6xl filter drop-shadow-lg animate-bounce-slow"
+                      style={{ 
+                        width: '80px', 
+                        height: '80px',
+                        left: '50%', 
+                        marginLeft: `${BEAR_OFFSET}px`, 
+                        transform: 'translate(-50%, -50%) scaleX(-1)', 
+                        '--scale-x': '-1'
+                      }}
+                    >
+                      🐘
+                    </div>
+                  </div>
+              </div>
+
+              {/* 主要遊戲區 */}
+              <div className="flex-1 flex flex-row relative items-stretch">
+                
+                {/* 左邊玩家區塊 */}
+                <div className={`flex-1 p-4 flex flex-col items-center justify-start pt-10 transition-colors duration-300 ${winner === 'left' ? 'bg-blue-100' : 'bg-blue-50'}`}>
+                  <div className={`relative bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm border-4 transition-all duration-300 ${leftProblem.isCorrect ? 'border-green-400 ring-4 ring-green-200' : 'border-blue-200'}`}>
+                    <h2 className="text-xl font-bold text-blue-500 mb-6 text-center">左邊大象隊</h2>
+                    <div className="flex items-center justify-center gap-2 text-4xl md:text-5xl font-bold text-gray-700 mb-8">
+                      <span>{leftProblem.n1}</span>
+                      <span>×</span> {/* 符號改為乘號 */}
+                      <span>{leftProblem.n2}</span>
+                      <span>=</span>
+                    </div>
+                    
+                    <div className="flex gap-3 justify-center relative">
+                      <AnswerBox 
+                        val={leftProblem.inputTen} 
+                        onClick={(e) => { e.stopPropagation(); !leftProblem.isCorrect && setLeftFocus({ digit: 'ten' }); }}
+                        active={leftFocus?.digit === 'ten'}
+                        color="blue"
+                        isCorrect={leftProblem.isCorrect}
+                      />
+                      <AnswerBox 
+                        val={leftProblem.inputUnit} 
+                        onClick={(e) => { e.stopPropagation(); !leftProblem.isCorrect && setLeftFocus({ digit: 'unit' }); }}
+                        active={leftFocus?.digit === 'unit'}
+                        color="blue"
+                        isCorrect={leftProblem.isCorrect}
+                      />
+                    </div>
+
+                    {/* 左邊鍵盤 */}
+                    {leftFocus && (
+                        <MiniKeypad onNumClick={handleLeftNumClick} color="blue" />
+                    )}
+                  </div>
+                </div>
+
+                {/* 分隔線 */}
+                <div className="w-1 bg-gray-200 z-0"></div>
+
+                {/* 右邊玩家區塊 */}
+                <div className={`flex-1 p-4 flex flex-col items-center justify-start pt-10 transition-colors duration-300 ${winner === 'right' ? 'bg-pink-100' : 'bg-pink-50'}`}>
+                  <div className={`relative bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm border-4 transition-all duration-300 ${rightProblem.isCorrect ? 'border-green-400 ring-4 ring-green-200' : 'border-pink-200 relative z-10'}`}>
+                    <h2 className="text-xl font-bold text-pink-500 mb-6 text-center">右邊大象隊</h2>
+                    <div className="flex items-center justify-center gap-2 text-4xl md:text-5xl font-bold text-gray-700 mb-8">
+                      <span>{rightProblem.n1}</span>
+                      <span>×</span> {/* 符號改為乘號 */}
+                      <span>{rightProblem.n2}</span>
+                      <span>=</span>
+                    </div>
+                    
+                    <div className="flex gap-3 justify-center relative">
+                      <AnswerBox 
+                        val={rightProblem.inputTen} 
+                        onClick={(e) => { e.stopPropagation(); !rightProblem.isCorrect && setRightFocus({ digit: 'ten' }); }}
+                        active={rightFocus?.digit === 'ten'}
+                        color="pink"
+                        isCorrect={rightProblem.isCorrect}
+                      />
+                      <AnswerBox 
+                        val={rightProblem.inputUnit} 
+                        onClick={(e) => { e.stopPropagation(); !rightProblem.isCorrect && setRightFocus({ digit: 'unit' }); }}
+                        active={rightFocus?.digit === 'unit'}
+                        color="pink"
+                        isCorrect={rightProblem.isCorrect}
+                      />
+                    </div>
+
+                    {/* 右邊鍵盤 */}
+                    {rightFocus && (
+                        <MiniKeypad onNumClick={handleRightNumClick} color="pink" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 獲勝畫面 */}
+              {winner && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+                  <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-100 animate-pop-in">
+                    <div className="text-6xl mb-4 animate-bounce">
+                      🐘
+                    </div>
+                    <h2 className={`text-4xl font-black mb-2 ${winner === 'left' ? 'text-blue-500' : 'text-pink-500'}`}>
+                      {winner === 'left' ? '左邊大象' : '右邊大象'} 獲勝！
+                    </h2>
+                    <div className="flex justify-center mb-6">
+                       <Trophy className="w-16 h-16 text-yellow-400" />
+                    </div>
+                    <p className="text-gray-600 mb-8 text-lg">太厲害了！要把對方拉過來可不容易呢！</p>
+                    <button 
+                      onClick={resetGame}
+                      className="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-xl shadow-lg text-xl hover:from-yellow-500 hover:to-orange-600 transition-all flex items-center justify-center gap-2"
+                    >
+                      <RefreshCcw className="w-6 h-6" /> 再玩一次
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        // 輔助組件：輸入方塊
+        const AnswerBox = ({ val, onClick, active, color, isCorrect }) => {
+          let baseClass = "w-16 h-20 border-4 rounded-xl flex items-center justify-center text-3xl font-bold cursor-pointer transition-all";
+          
+          if (isCorrect) {
+            return (
+              <div className={`${baseClass} border-green-500 bg-green-100 text-green-700`}>
+                {val}
+              </div>
+            );
+          }
+
+          const colorClass = color === 'blue' 
+            ? (active ? "border-blue-500 bg-blue-100 ring-4 ring-blue-200" : "border-blue-300 bg-white hover:bg-blue-50")
+            : (active ? "border-pink-500 bg-pink-100 ring-4 ring-pink-200" : "border-pink-300 bg-white hover:bg-pink-50");
+          
+          return (
+            <div className={`${baseClass} ${colorClass}`} onClick={onClick}>
+              {val !== '' ? val : <span className="text-gray-300 text-2xl">?</span>}
+            </div>
+          );
+        };
+
+        // 渲染 App
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TugOfWarMath />);
+    </script>
+</body>
+</html>
