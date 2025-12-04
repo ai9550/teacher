@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>康軒國語六上7-8課語詞解釋賓果遊戲</title>
+    <!-- 載入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 Icon for the Heart symbol -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* 自定義 Tailwind 設定 */
+        :root {
+            --bingo-grid-size: min(90vw, 500px);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+        /* Bingo Card Custom Styling */
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: var(--bingo-grid-size);
+            height: var(--bingo-grid-size);
+            max-width: 500px;
+            max-height: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 1rem;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .bingo-cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.3s ease-in-out, background-color 0.3s;
+            padding: 5px;
+            font-weight: bold;
+            overflow: hidden;
+            /* 讓文字保持在中間，flex-shrink-0 避免內容被擠壓 */
+            flex-shrink: 0; 
+        }
+        .cell-content {
+            padding: 5px;
+            word-break: break-all; /* 避免長解釋溢出 */
+            max-height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .word {
+            font-size: clamp(1rem, 4vw, 1.8rem); /* 語詞字體較大 */
+            color: #1e40af; /* 藍色 */
+        }
+        .definition {
+            font-size: clamp(0.7rem, 2.5vw, 1rem); /* 解釋字體較小 */
+            color: #4b5563; /* 灰色 */
+        }
+        .center-cell {
+            background-color: #fef3c7; /* 中心格特別色 */
+            color: #d97706; /* 橘色 */
+            font-size: clamp(1.2rem, 5vw, 2rem);
+        }
+        .marked {
+            background-color: #fee2e2; /* 標記後的背景 */
+        }
+        .heart {
+            color: #ef4444; /* 愛心紅色 */
+            font-size: clamp(2rem, 8vw, 3rem);
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+        .bingo-line {
+            position: absolute;
+            background-color: rgba(239, 68, 68, 0.7); /* 紅色連線 */
+            z-index: 10;
+            pointer-events: none; /* 讓線不會擋住點擊事件 */
+            border-radius: 9999px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .row-line { height: 8px; width: 100%; }
+        .col-line { width: 8px; height: 100%; }
+        /* 對角線需要複雜的旋轉 */
+        .diag-down-line { height: 8px; width: 141.42%; transform: rotate(45deg); }
+        .diag-up-line { height: 8px; width: 141.42%; transform: rotate(-45deg); }
+
+        /* Host Screen Styling */
+        .host-screen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 50;
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+        }
+        .host-card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 1.5rem;
+            max-width: 90%;
+            min-height: 50vh;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-700 mb-6 text-center w-full max-w-lg">
+        康軒國語六上7-8課語詞解釋賓果遊戲
+    </h1>
+
+    <!-- 賓果連線計數顯示區 -->
+    <div id="scoreDisplay" class="mb-4 p-3 text-2xl font-extrabold text-red-600 bg-white rounded-xl shadow-lg transition duration-300 transform scale-100">
+        目前連成 0 條線
+    </div>
+
+    <!-- 賓果遊戲卡區 -->
+    <div id="bingoGridContainer" class="relative">
+        <div id="bingoGrid" class="bingo-grid">
+            <!-- 賓果格子將由 JavaScript 渲染 -->
+        </div>
+    </div>
+
+    <!-- 控制按鈕區 -->
+    <div class="mt-8 flex flex-wrap justify-center gap-4 w-full max-w-md">
+        <button id="btnRandomize" class="px-6 py-3 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition duration-150">
+            重新配置
+        </button>
+        <button id="btnStartGame" class="px-6 py-3 bg-green-500 hover:bg-green-700 text-white font-bold rounded-lg shadow-md transition duration-150">
+            固定配置
+        </button>
+        <button id="btnHost" class="px-6 py-3 bg-purple-500 hover:bg-purple-700 text-white font-bold rounded-lg shadow-md transition duration-150">
+            主持人
+        </button>
+    </div>
+
+    <!-- 主持人畫面 (Overlay) -->
+    <div id="hostScreen" class="host-screen-overlay">
+        <div class="host-card flex flex-col items-center">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800">主持人語詞抽籤機</h2>
+            
+            <div id="hostStatus" class="mb-6 p-3 text-xl font-semibold text-gray-600 bg-gray-100 rounded-lg w-full max-w-sm">
+                點擊「抽取語詞解釋」開始
+            </div>
+
+            <!-- 抽取的內容顯示區 -->
+            <div id="drawnContent" class="min-h-24 mb-8 flex flex-col justify-center items-center">
+                <p id="currentDef" class="definition text-2xl font-medium text-purple-700 px-4 transition duration-300 transform scale-100"></p>
+                <p id="currentWord" class="word text-4xl font-extrabold text-blue-600 mt-4 hidden transition duration-300 transform scale-110">?</p>
+            </div>
+            
+            <!-- 主持人操作按鈕 -->
+            <div class="flex flex-col gap-4 w-full max-w-xs">
+                <button id="btnDrawWord" class="px-6 py-3 bg-red-500 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    抽取語詞解釋
+                </button>
+                <button id="btnRevealWord" class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    顯示語詞
+                </button>
+                <button id="btnCloseHost" class="mt-4 px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold rounded-xl shadow-md transition duration-200">
+                    關閉主持人畫面
+                </button>
+            </div>
+
+            <p id="hostRemainingCount" class="mt-6 text-sm text-gray-500">
+                剩餘詞彙數量：24
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // -----------------------------------------------------
+        // 1. 遊戲資料
+        // -----------------------------------------------------
+
+        // 語詞和解釋列表 (已篩選字數在 2 到 4 個字之間)
+        const ALL_WORDS = [
+            { word: '仰光', def: '城市名。位於伊洛瓦底江三角洲東側，距海約四十公里。為緬甸最大和最重要的工商業城市。' },
+            { word: '緬甸', def: '國名。位於亞洲東南部。' },
+            { word: '腳踝', def: '小腿與腳掌間，腳骨兩旁凸起的部位。' },
+            { word: '呢絨', def: '用獸毛或人造毛等製成的毛織品的統稱。' },
+            { word: '下襬', def: '上衣、長袍和裙子等的下緣部分。' },
+            { word: '恣意', def: '放任而不加以約束。' },
+            { word: '批判', def: '評論判斷。' },
+            { word: '行徑', def: '行為、舉動。' },
+            { word: '謹記', def: '⑴恭謹牢記。⑵恭敬慎重的寫下。' },
+            { word: '恰恰', def: '恰巧、剛好。' },
+            { word: '乏人問津', def: '沒有人洽詢或探問。' },
+            { word: '嗤之以鼻', def: '從鼻子裡發出冷笑。表示不屑或鄙視。' },
+            { word: '縫隙', def: '空隙。' },
+            { word: '旨意', def: '⑴帝王的命令。⑵主旨目的。' },
+            { word: '悠閒', def: '閒適自得而無所牽掛。' },
+            { word: '寓言', def: '以淺近假託的故事或自然物的擬人手法，表達某種哲理或隱含訓誨教育作用的文體。' },
+            { word: '鷸蚌相爭', def: '比喻兩相爭執必會造成兩敗俱傷，而讓第三者獲利的局面。' },
+            { word: '狡兔三窟', def: '狡猾的兔子有三處藏身的洞穴。比喻人有多處藏身的地方或多種避禍的準備。' },
+            { word: '狡猾', def: '詭變多詐。' },
+            { word: '招搖撞騙', def: '假借他人的名義或聲勢而到處詐騙。' },
+            { word: '偽裝', def: '假裝，改裝掩飾真正的面目或身分。' },
+            { word: '誇大', def: '言語超過原有的事實。' },
+            { word: '分辨', def: '辨別。' },
+            { word: '謊言', def: '不實在的話。' },
+            { word: '諷刺', def: '以隱微的方式嘲諷譏刺。' },
+            { word: '警惕', def: '對可能發生的情況，心生警覺而加以戒備。' },
+            { word: '觀察', def: '仔細察看。' },
+            { word: '蒙蔽', def: '欺騙、隱瞞事實的真相。' },
+            { word: '虛張聲勢', def: '誇大聲威氣勢，用以嚇阻或欺騙他人。' },
+        ];
+
+        // -----------------------------------------------------
+        // 2. 遊戲狀態
+        // -----------------------------------------------------
+
+        let gameState = 'randomizing'; // 'randomizing' (重新配置), 'playing' (固定配置), 'host' (主持人模式)
+        let grid = []; // 5x5 的賓果卡資料
+        let lineCount = 0; // 連線數
+        let availableWords = [...ALL_WORDS]; // 剩餘可抽取的語詞
+        let drawnWords = []; // 已抽取的語詞
+        let currentDrawnWord = null; // 主持人畫面當前抽到的語詞
+
+        // DOM 元素引用
+        const $gridContainer = document.getElementById('bingoGridContainer');
+        const $bingoGrid = document.getElementById('bingoGrid');
+        const $scoreDisplay = document.getElementById('scoreDisplay');
+        const $btnRandomize = document.getElementById('btnRandomize');
+        const $btnStartGame = document.getElementById('btnStartGame');
+        const $btnHost = document.getElementById('btnHost');
+        const $hostScreen = document.getElementById('hostScreen');
+        const $btnDrawWord = document.getElementById('btnDrawWord');
+        const $btnRevealWord = document.getElementById('btnRevealWord');
+        const $btnCloseHost = document.getElementById('btnCloseHost');
+        const $hostStatus = document.getElementById('hostStatus');
+        const $currentDef = document.getElementById('currentDef');
+        const $currentWord = document.getElementById('currentWord');
+        const $hostRemainingCount = document.getElementById('hostRemainingCount');
+
+        // -----------------------------------------------------
+        // 3. 核心邏輯函數
+        // -----------------------------------------------------
+
+        /**
+         * 洗牌函數 (Fisher-Yates)
+         * @param {Array} array 要洗牌的陣列
+         * @returns {Array} 洗牌後的陣列
+         */
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        /**
+         * 隨機選擇 24 個語詞並建立 5x5 賓果卡
+         */
+        function initializeGrid() {
+            // 隨機選出 24 個語詞
+            const shuffledWords = shuffle([...ALL_WORDS]).slice(0, 24);
+            const gridItems = shuffledWords.map(item => ({
+                ...item,
+                state: 0, // 0: Word, 1: Heart, 2: Definition
+                isCenter: false,
+                isMarked: false,
+            }));
+
+            // 插入萬用格 (PASS)
+            gridItems.splice(12, 0, { // 25格，中間是第12個索引 (0-24)
+                word: 'PASS',
+                def: '萬用格',
+                state: 1, // 萬用格預設為標記狀態
+                isCenter: true,
+                isMarked: true,
+            });
+
+            // 將一維陣列轉換為 5x5 二維陣列
+            grid = [];
+            for (let i = 0; i < 5; i++) {
+                grid.push(gridItems.slice(i * 5, (i + 1) * 5));
+            }
+            lineCount = 0;
+            updateScoreDisplay();
+        }
+
+        /**
+         * 渲染賓果卡到 DOM 上
+         */
+        function renderGrid() {
+            $bingoGrid.innerHTML = '';
+            // 清除舊的連線
+            $gridContainer.querySelectorAll('.bingo-line').forEach(line => line.remove());
+
+            grid.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'bingo-cell relative';
+                    cellDiv.dataset.row = rowIndex;
+                    cellDiv.dataset.col = colIndex;
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'cell-content';
+
+                    if (cell.isCenter) {
+                        cellDiv.classList.add('center-cell', 'marked');
+                        contentDiv.innerHTML = cell.word; // 顯示 PASS
+                    } else {
+                        // 處理一般格子的顯示狀態
+                        let innerHTML = '';
+                        let contentClass = '';
+
+                        if (cell.state === 0) { // 語詞
+                            innerHTML = `<span class="word">${cell.word}</span>`;
+                            contentClass = 'word';
+                        } else if (cell.state === 1) { // 愛心
+                            innerHTML = `<i class="fas fa-heart heart"></i>`;
+                            contentClass = 'heart';
+                            cellDiv.classList.add('marked');
+                        } else if (cell.state === 2) { // 解釋
+                            innerHTML = `<span class="definition">${cell.def}</span>`;
+                            contentClass = 'definition';
+                            cellDiv.classList.add('marked');
+                        }
+
+                        contentDiv.innerHTML = innerHTML;
+                        contentDiv.classList.add(contentClass);
+
+                        if (cell.isMarked && cell.state !== 1 && cell.state !== 2) {
+                             cellDiv.classList.remove('marked'); // 避免未標記狀態仍有 marked 樣式
+                        }
+                    }
+
+                    cellDiv.appendChild(contentDiv);
+                    $bingoGrid.appendChild(cellDiv);
+
+                    // 僅在 'playing' 狀態下添加點擊事件
+                    if (gameState === 'playing' && !cell.isCenter) {
+                        cellDiv.onclick = handleCellClick;
+                    }
+                });
+            });
+
+            // 重新檢查並繪製連線
+            if (gameState === 'playing') {
+                checkBingo(true); // true 代表是渲染時的檢查
+            }
+        }
+
+        /**
+         * 處理遊戲卡單元格點擊 (Word -> Heart -> Definition -> Word)
+         * @param {Event} event 點擊事件
+         */
+        function handleCellClick(event) {
+            if (gameState !== 'playing') return;
+
+            const cellDiv = event.currentTarget;
+            const row = parseInt(cellDiv.dataset.row);
+            const col = parseInt(cellDiv.dataset.col);
+            const cell = grid[row][col];
+
+            if (cell.isCenter) return; // 萬用格不能點擊改變狀態
+
+            // 循環: 0(Word) -> 1(Heart) -> 2(Definition) -> 0(Word)
+            cell.state = (cell.state + 1) % 3;
+
+            // 更新 isMarked 狀態
+            cell.isMarked = (cell.state !== 0);
+
+            // 重新渲染該單元格，並檢查賓果
+            renderGrid();
+        }
+
+        /**
+         * 檢查賓果連線並更新樣式
+         * @param {boolean} redraw 是否為重新渲染時調用 (用於繪製連線，不重複計算 lineCount)
+         */
+        function checkBingo(redraw = false) {
+            const lines = []; // 儲存所有連線的資訊
+            const BINGO_SIZE = 5;
+
+            // 檢查所有行 (Rows)
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (grid[i].every(cell => cell.isMarked)) {
+                    lines.push({ type: 'row', index: i });
+                }
+            }
+
+            // 檢查所有列 (Columns)
+            for (let j = 0; j < BINGO_SIZE; j++) {
+                let isBingo = true;
+                for (let i = 0; i < BINGO_SIZE; i++) {
+                    if (!grid[i][j].isMarked) {
+                        isBingo = false;
+                        break;
+                    }
+                }
+                if (isBingo) {
+                    lines.push({ type: 'col', index: j });
+                }
+            }
+
+            // 檢查主對角線 (Top-Left to Bottom-Right)
+            let diag1Bingo = true;
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (!grid[i][i].isMarked) {
+                    diag1Bingo = false;
+                    break;
+                }
+            }
+            if (diag1Bingo) {
+                lines.push({ type: 'diag', index: 1 });
+            }
+
+            // 檢查副對角線 (Top-Right to Bottom-Left)
+            let diag2Bingo = true;
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (!grid[i][BINGO_SIZE - 1 - i].isMarked) {
+                    diag2Bingo = false;
+                    break;
+                }
+            }
+            if (diag2Bingo) {
+                lines.push({ type: 'diag', index: 2 });
+            }
+
+            // 繪製連線樣式
+            if (redraw) {
+                drawBingoLines(lines);
+                // 重新渲染時不需要重複更新 lineCount，因為 lineCount 應該與 lines.length 保持一致
+                lineCount = lines.length;
+            } else {
+                // 點擊事件觸發的檢查需要更新 lineCount
+                lineCount = lines.length;
+            }
+
+            updateScoreDisplay();
+        }
+
+        /**
+         * 在賓果格上繪製紅色的連線樣式
+         * @param {Array} lines - 包含連線類型和索引的陣列
+         */
+        function drawBingoLines(lines) {
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.classList.add('bingo-line');
+                
+                const gridWidth = $bingoGrid.offsetWidth;
+                const cellSize = gridWidth / 5;
+                const offset = cellSize / 2;
+
+                if (line.type === 'row') {
+                    lineDiv.classList.add('row-line');
+                    // 行連線: 位於該行中心
+                    lineDiv.style.top = `${line.index * cellSize + offset - 4}px`;
+                    lineDiv.style.left = '0';
+                } else if (line.type === 'col') {
+                    lineDiv.classList.add('col-line');
+                    // 列連線: 位於該列中心
+                    lineDiv.style.left = `${line.index * cellSize + offset - 4}px`;
+                    lineDiv.style.top = '0';
+                } else if (line.type === 'diag') {
+                    // 對角線連線: 需要旋轉
+                    // 對角線的寬度是 (5 * cellSize) * sqrt(2) ≈ 1.4142 * gridWidth
+                    lineDiv.style.left = `${offset - 4}px`;
+                    lineDiv.style.top = `${offset - 4}px`;
+
+                    if (line.index === 1) { // 主對角線 ( \ )
+                        lineDiv.classList.add('diag-down-line');
+                        lineDiv.style.transformOrigin = 'top left';
+                    } else if (line.index === 2) { // 副對角線 ( / )
+                        lineDiv.classList.add('diag-up-line');
+                        // 調整副對角線的位置，使其通過中心
+                        lineDiv.style.transformOrigin = 'top right';
+                        lineDiv.style.left = `${gridWidth - offset + 4}px`;
+                    }
+                }
+                $gridContainer.appendChild(lineDiv);
+            });
+        }
+
+        /**
+         * 更新上方的連線計數顯示
+         */
+        function updateScoreDisplay() {
+            $scoreDisplay.textContent = `目前連成 ${lineCount} 條線`;
+        }
+
+        // -----------------------------------------------------
+        // 4. 主控按鈕事件處理
+        // -----------------------------------------------------
+
+        /**
+         * 處理「重新配置」按鈕點擊
+         */
+        $btnRandomize.onclick = () => {
+            if (gameState === 'host') return;
+            gameState = 'randomizing';
+            initializeGrid();
+            renderGrid();
+            $scoreDisplay.textContent = '請點擊「固定配置」開始遊戲';
+            $btnStartGame.classList.add('bg-green-500');
+            $btnStartGame.classList.remove('bg-gray-500');
+            $btnRandomize.classList.remove('bg-blue-700');
+            console.log("遊戲進入「重新配置」狀態。語詞已打亂，點擊無效。");
+        };
+
+        /**
+         * 處理「固定配置」按鈕點擊
+         */
+        $btnStartGame.onclick = () => {
+            if (gameState === 'host') return;
+            if (gameState === 'randomizing' || grid.length === 0) {
+                // 如果是從隨機配置切換，則固定配置
+                gameState = 'playing';
+                renderGrid(); // 重新渲染以添加點擊事件
+                $scoreDisplay.textContent = `目前連成 ${lineCount} 條線`;
+                $btnStartGame.classList.remove('bg-green-500');
+                $btnStartGame.classList.add('bg-gray-500'); // 標示為已啟用
+                $btnRandomize.classList.add('bg-blue-700');
+                console.log("遊戲進入「固定配置」狀態。點擊格子開始遊戲。");
+            } else if (gameState === 'playing') {
+                // 如果已經是 playing，可以視為一個重置按鈕（重新固定當前配置）
+                // 這裡選擇不做任何事，因為點擊後已經開始遊戲
+                console.log("遊戲已在「固定配置」狀態。");
+            }
+        };
+
+        /**
+         * 處理「主持人」按鈕點擊
+         */
+        $btnHost.onclick = () => {
+            gameState = 'host';
+            $hostScreen.style.display = 'flex';
+            initializeHostScreen();
+            console.log("遊戲進入「主持人」模式。");
+        };
+
+        // -----------------------------------------------------
+        // 5. 主持人畫面邏輯
+        // -----------------------------------------------------
+
+        /**
+         * 初始化主持人畫面狀態
+         */
+        function initializeHostScreen() {
+            availableWords = [...ALL_WORDS];
+            drawnWords = [];
+            currentDrawnWord = null;
+            $currentDef.textContent = '';
+            $currentWord.textContent = '?';
+            $currentWord.classList.add('hidden');
+            $btnRevealWord.disabled = true;
+            $btnDrawWord.disabled = false;
+            $hostStatus.textContent = '點擊「抽取語詞解釋」開始';
+            updateHostRemainingCount();
+        }
+
+        /**
+         * 抽取詞彙
+         */
+        $btnDrawWord.onclick = () => {
+            if (availableWords.length === 0) {
+                $hostStatus.textContent = '所有詞彙已抽取完畢！';
+                $btnDrawWord.disabled = true;
+                $btnRevealWord.disabled = true;
+                return;
+            }
+
+            // 隨機選一個詞
+            const randomIndex = Math.floor(Math.random() * availableWords.length);
+            currentDrawnWord = availableWords.splice(randomIndex, 1)[0];
+            drawnWords.push(currentDrawnWord);
+
+            // 顯示解釋，隱藏語詞
+            $currentDef.textContent = currentDrawnWord.def;
+            $currentWord.textContent = '?';
+            $currentWord.classList.add('hidden');
+            $btnRevealWord.disabled = false;
+            $hostStatus.textContent = '請根據解釋猜語詞...';
+            $btnDrawWord.disabled = true; // 抽完後禁用，直到揭示完畢
+
+            updateHostRemainingCount();
+            console.log(`抽取詞彙: ${currentDrawnWord.def}`);
+        };
+
+        /**
+         * 顯示語詞
+         */
+        $btnRevealWord.onclick = () => {
+            if (!currentDrawnWord) return;
+
+            $currentWord.textContent = currentDrawnWord.word;
+            $currentWord.classList.remove('hidden');
+            $hostStatus.textContent = `正確答案是：「${currentDrawnWord.word}」`;
+            
+            // 揭示完畢後，禁用揭示按鈕，啟用抽取按鈕
+            $btnRevealWord.disabled = true;
+            $btnDrawWord.disabled = (availableWords.length === 0);
+            
+            // 清空當前詞彙，準備下一次抽取
+            currentDrawnWord = null;
+            console.log(`揭示語詞: ${$currentWord.textContent}`);
+        };
+
+        /**
+         * 關閉主持人畫面
+         */
+        $btnCloseHost.onclick = () => {
+            gameState = 'playing'; // 假定退出後回到 playing 狀態
+            $hostScreen.style.display = 'none';
+            renderGrid(); // 確保遊戲卡狀態更新
+            console.log("退出「主持人」模式，回到遊戲狀態。");
+        };
+
+        /**
+         * 更新主持人畫面剩餘詞彙數量
+         */
+        function updateHostRemainingCount() {
+            $hostRemainingCount.textContent = `剩餘詞彙數量：${availableWords.length}`;
+        }
+
+        // -----------------------------------------------------
+        // 6. 初始啟動
+        // -----------------------------------------------------
+
+        // 頁面載入時，先執行一次重新配置
+        initializeGrid();
+        renderGrid();
+        
+        // 設置初始狀態提示
+        $scoreDisplay.textContent = '請點擊「固定配置」開始遊戲';
+
+        // 監聽窗口大小變化，確保連線能正確重繪
+        window.addEventListener('resize', () => {
+            if (gameState === 'playing') {
+                renderGrid(); // 重新渲染以重繪連線
+            }
+        });
+
+    </script>
+</body>
+</html>
