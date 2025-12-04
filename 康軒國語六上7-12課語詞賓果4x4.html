@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語六上語詞賓果4x4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        .card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            aspect-ratio: 1; /* 保持卡片為正方形 */
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-content {
+            transition: opacity 0.2s ease;
+        }
+        
+        .animal-emoji {
+            font-size: 4rem;
+        }
+        
+        /* 賓果連線的紅線樣式 */
+        .bingo-line {
+            position: absolute;
+            background-color: #ef4444; /* Tailwind red-500 */
+            z-index: 20;
+            border-radius: 9999px;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+            transition: opacity 0.5s ease;
+        }
+
+        /* 萬用格 (PASS) 專屬樣式 */
+        .pass-card {
+             /* 保持與語詞狀態一致的綠色調，但加入特殊陰影 */
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 10px rgba(0,0,0,0.15);
+            transform: scale(1.03); 
+        }
+
+        /* 訊息框樣式 */
+        #messageBox {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        #messageBox.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 彩帶（Confetti）效果容器 */
+        #confettiContainer {
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 50; 
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        /* 彩帶元素動畫 */
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: transparent;
+            border-radius: 50%;
+            animation: confetti-fall 3s ease-in-out forwards;
+            opacity: 0.8;
+            transform-origin: center;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translate(var(--startX), -5vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(var(--endX), 105vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .definition-text {
+            font-size: 1.0rem !important; 
+            line-height: 1.2;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        .term-text {
+            font-size: 2.5rem; 
+            font-weight: 600;
+        }
+        
+        /* 針對行動裝置的按鈕佈局調整 (小於 lg 螢幕) */
+        #lessonButtons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+        /* 針對大螢幕的按鈕佈局調整 (lg 螢幕及以上) */
+        @media (min-width: 1024px) {
+            #lessonButtons {
+                display: flex; /* 變回 flex 容器 */
+                flex-direction: column; /* 直向排列 */
+                gap: 0.75rem; /* 保持間距 */
+            }
+        }
+
+        .lesson-btn {
+            @apply font-semibold py-2 px-3 rounded-lg transition duration-150 transform hover:scale-105 shadow-md;
+        }
+        .lesson-btn.active {
+             @apply bg-pink-600 ring-2 ring-pink-300 text-white shadow-xl;
+        }
+        .lesson-btn:not(.active) {
+            @apply bg-white text-indigo-700 hover:bg-indigo-50;
+        }
+    </style>
+ </head>
+ <body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-full p-4">
+    <!-- 3秒彩帶動畫容器 (fixed position) -->
+    <div id="confettiContainer"></div>
+    
+    <!-- Main container to hold sidebar and game -->
+    <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6"> 
+        
+        <!-- 左側選課按鈕區塊 -->
+        <div id="lessonButtons" class="flex-shrink-0 w-full lg:w-48 bg-white/70 p-4 rounded-xl shadow-2xl lg:order-1 order-2"> 
+            <h3 class="text-xl font-bold text-gray-800 border-b pb-2 mb-2 lg:block hidden">選擇課次</h3>
+            <!-- Buttons will be generated here by JS -->
+        </div>
+
+        <!-- 主遊戲區塊 -->
+        <div id="gameArea" class="flex-grow lg:order-2 order-1">
+            <!-- 標題 -->
+            <div class="text-center mb-6">
+                <h1 id="gameTitle" class="text-4xl font-bold text-gray-800 mb-2">中文語詞賓果4x4</h1>
+            </div>
+            
+            <div class="flex justify-center mb-6">
+                <button id="resetButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg shadow-xl transition duration-150 transform hover:scale-105">
+                    重新開始
+                </button>
+            </div>
+            
+            <!-- 卡片網格容器 (新增相對定位) -->
+            <div class="max-w-4xl mx-auto relative">
+                <!-- Bingo Grid with ID -->
+                <div class="grid grid-cols-4 gap-4" id="bingoGrid">
+                    <!-- 卡片會由JavaScript動態生成 -->
+                </div>
+                <!-- Line and Confetti Overlay (絕對定位，用於繪製紅線) -->
+                <div id="bingoOverlay" class="absolute inset-0 pointer-events-none">
+                    <!-- Red lines will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- 說明 -->
+            <div class="text-center mt-8 p-4 bg-white/70 rounded-lg backdrop-blur-sm max-w-4xl mx-auto">
+                <p class="text-gray-700">💡 提示：點擊卡片，循環切換 **圖案** → **解釋** → **語詞 (標記)** 三個狀態。</p>
+            </div>
+        </div>
+    </div>
+
+  <script>
+        // 全部的課次語詞資料 (7~12課)
+        const allLessonData = {
+            7: {
+                title: "第七課：大小剛好的鞋子",
+                vocab: [
+                    { term: "腳踝", definition: "小腿與腳掌間，腳骨兩旁凸起的部位。" },
+                    { term: "呢絨", definition: "用獸毛或人造毛等製成的毛織品的統稱。" },
+                    { term: "下襬", definition: "上衣、長袍和裙子等的下緣部分。" },
+                    { term: "恣意", definition: "放任而不加以約束。" },
+                    { term: "批判", definition: "評論判斷。" },
+                    { term: "行徑", definition: "行為、舉動。" },
+                    { term: "謹記", definition: "⑴恭謹牢記。⑵恭敬慎重的寫下。" },
+                    { term: "恰恰", definition: "恰巧、剛好。" },
+                    { term: "乏人問津", definition: "沒有人洽詢或探問。" },
+                    { term: "放之四海而皆準", definition: "用到任何地方任何方面都可作為準則。" },
+                    { term: "嗤之以鼻", definition: "從鼻子裡發出冷笑。表示不屑或鄙視。" }
+                    // 11 個詞彙，需要 5 個 PASS
+                ]
+            },
+            8: {
+                title: "第八課：狐假虎威",
+                vocab: [
+                    { term: "縫隙", definition: "空隙。" },
+                    { term: "旨意", definition: "⑴帝王的命令。⑵主旨目的。" },
+                    { term: "悠閒", definition: "閒適自得而無所牽掛。" },
+                    { term: "寓言", definition: "以淺近假託的故事或自然物的擬人手法，表達某種哲理或隱含訓誨教育作用的文體。" },
+                    { term: "鷸蚌相爭", definition: "比喻兩相爭執必會造成兩敗俱傷，而讓第三者獲利的局面。" },
+                    { term: "狡兔三窟", definition: "狡猾的兔子有三處藏身的洞穴。比喻人有多處藏身的地方或多種避禍的準備。" },
+                    { term: "狡猾", definition: "詭變多詐。" },
+                    { term: "招搖撞騙", definition: "假借他人的名義或聲勢而到處詐騙。" },
+                    { term: "偽裝", definition: "假裝，改裝掩飾真正的面目或身分。" },
+                    { term: "誇大", definition: "言語超過原有的事實。" },
+                    { term: "分辨", definition: "辨別。" },
+                    { term: "謊言", definition: "不實在的話。" },
+                    { term: "諷刺", definition: "以隱微的方式嘲諷譏刺。" },
+                    { term: "警惕", definition: "對可能發生的情況，心生警覺而加以戒備。" },
+                    { term: "觀察", definition: "仔細察看。" },
+                    { term: "蒙蔽", definition: "欺騙、隱瞞事實的真相。" }
+                    // 16 個詞彙 (移除了虛張聲勢)，需要 0 個 PASS
+                ]
+            },
+            9: {
+                title: "第九課：空城計",
+                vocab: [
+                    { term: "誘敵", definition: "引誘敵人。" },
+                    { term: "旗幟", definition: "⑴旗有標幟的功用，所以泛稱旌旗為﹁旗幟﹂。⑵比喻名義、藉口。" },
+                    { term: "崗位", definition: "⑴職責、本分。⑵軍警執勤的處所。" },
+                    { term: "百姓", definition: "泛指一般平民、國民。" },
+                    { term: "倘若", definition: "表示假設語氣的連接詞，即如果、假使。" },
+                    { term: "書僮", definition: "舊時在富人家中侍候主人或其弟子讀書，兼做雜役的未成年僮僕。" },
+                    { term: "撤退", definition: "放棄陣地或遷離已占領的地區。" },
+                    { term: "謹慎", definition: "仔細慎重。" },
+                    { term: "丞相", definition: "古時輔佐天子處理國事的最高行政官員。多由一人擔任，有時亦由二人或多人共同掌政。" }
+                    // 9 個詞彙，需要 7 個 PASS
+                ]
+            },
+            10: {
+                title: "第十課：耶誕節",
+                vocab: [
+                    { term: "耶誕節", definition: "紀念耶穌誕生的節日。耶穌誕辰，自古傳說不一，西元四世紀時，羅馬人始定十二月二十五日為耶穌誕辰，是歐美重要節慶之一。" },
+                    { term: "郊外", definition: "環繞城市外面的地方。" },
+                    { term: "慈祥", definition: "慈善祥和。" },
+                    { term: "劈啪", definition: "狀聲詞。形容燃燒時爆裂或撞擊拍打的聲音。" },
+                    { term: "零用錢", definition: "零碎花用的錢。" },
+                    { term: "厭倦", definition: "不再喜歡或提不起興趣。" },
+                    { term: "辯護", definition: "⑴提出理由、事實來加以袒護。⑵法律上指辯護人為保護當事人的利益及權利，防禦不法或不當的指控，在口頭或文字上所做的辯白。" },
+                    { term: "自私自利", definition: "只圖自己的私利，而不顧及一切。" },
+                    { term: "貧窮", definition: "缺少錢財，生活拮据困乏。" },
+                    { term: "關係", definition: "⑴對相關事物的影響、牽涉。⑵泛指原因、條件等。⑶人事物間的關連情形。" },
+                    { term: "稍微", definition: "程度或分量上極少的。" },
+                    { term: "暖烘烘", definition: "溫暖的樣子。" },
+                    { term: "衷心", definition: "出自內心。" },
+                    { term: "鋼琴", definition: "樂器名。屬鍵盤樂器。形狀像風琴，體積較大，內裝有許多鋼絲弦和包絨氈的木錘，手指按動鍵盤時，牽動鍵盤下的小木錘敲打鋼絲弦而發出聲音。十八世紀中葉以後廣泛流行。" }
+                    // 14 個詞彙，需要 2 個 PASS
+                ]
+            },
+            11: {
+                title: "第十一課：下午茶風波",
+                vocab: [
+                    { term: "恢復", definition: "⑴回復到原來的樣子。⑵收復，將失去的收回來。" },
+                    { term: "活潑", definition: "生動而不呆板。" },
+                    { term: "草莓", definition: "植物名。多年生草本植物。全株被絨毛，葉根生叢出，有長柄，著生三片邊緣有缺刻的小葉。花白色，果實也稱﹁草莓﹂，熟呈紅色，肉質多汁，味道酸甜，可生食，亦可製果醬。" },
+                    { term: "客廳", definition: "用來接待賓客的場所。" },
+                    { term: "前額", definition: "額頭。" },
+                    { term: "灌醉", definition: "勉強別人喝酒以致於酒醉。" },
+                    { term: "原諒", definition: "寬恕諒解。" },
+                    { term: "雙脣", definition: "上、下嘴脣。" },
+                    { term: "乞求", definition: "懇求、請求。" },
+                    { term: "神采煥發", definition: "精神充足，光采照人。" },
+                    { term: "雪橇", definition: "利用長條形平滑板塊在雪地上滑行的無輪交通工具。最初是由狗或鹿拉動，現有以機械帶動的。也稱為﹁冰橇﹂、﹁雪車﹂。" },
+                    { term: "迴盪", definition: "迴旋飄浮。" }
+                    // 12 個詞彙，需要 4 個 PASS
+                ]
+            },
+            12: {
+                title: "第十二課：祕密花園",
+                vocab: [
+                    { term: "訝異", definition: "覺得意外，難以相信。" },
+                    { term: "臉頰", definition: "臉的兩邊。" },
+                    { term: "蓬勃", definition: "茂盛繁榮的樣子。" },
+                    { term: "家庭醫師", definition: "照顧家庭各成員健康的第一線醫師。通常由社區中開業的全科醫師，或衛生機構的醫師來擔當。" },
+                    { term: "嚴肅", definition: "⑴態度嚴正莊重。⑵嚴格、認真。" },
+                    { term: "薔薇", definition: "植物名。薔薇科薔薇屬，常綠或落葉灌木。枝幹多刺，葉為奇數羽狀複葉，邊緣有鋸齒。花朵為兩性花，有紅、白、黃等色，富有香氣。可作觀賞用，亦可加工製作薔薇油和薔薇露。" },
+                    { term: "瀰漫", definition: "遍布、滿布。" },
+                    { term: "包括", definition: "包含、涵蓋。" },
+                    { term: "螞蟻", definition: "蟻科昆蟲的總稱。一般體小，有黑、褐、紅等色，體分頭、胸、腹三部分。職分女王蟻、雄蟻、工蟻三種。喜於地下築巢群居，種類很多。" },
+                    { term: "儘管", definition: "⑴即使、雖然。⑵不用考慮其他因素或加以節制，隨意去做。" }
+                    // 10 個詞彙，需要 6 個 PASS
+                ]
+            }
+        };
+
+        // 賓果卡片總數
+        const CARD_COUNT = 16;
+        const LESSON_EMOJIS = [
+            "🍎", "🍊", "🍋", "🥝", "🍉", "🍇", "🍓", "🍒", 
+            "🍍", "🍑", "🥭", "🥥", "🥑", "🥕", "🥦", "🍄"
+        ];
+        
+        // 遊戲狀態變數
+        let currentLesson = 7; // 預設載入第七課
+        let vocabulary = []; // 當前被打亂的語詞順序 (包含 PASS)
+        let cardStates = []; // 卡片狀態：0=動物, 1=解釋, 2=語詞(標記)
+        let markedCards = []; // 賓果標記狀態 (布林值)
+
+        // 隨機打亂陣列
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // -----------------------
+        // UI & 訊息邏輯
+        // -----------------------
+
+        // 顯示訊息框（取代 alert()）
+        function showMessage(title, message) {
+            let messageBox = document.getElementById('messageBox');
+            if (!messageBox) {
+                messageBox = document.createElement('div');
+                messageBox.id = 'messageBox';
+                messageBox.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300';
+                document.body.appendChild(messageBox);
+            }
+            
+            messageBox.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-2xl max-w-sm text-center transform scale-100 transition-transform duration-300">
+                    <div class="text-4xl mb-4">${title === "賓果！" ? "🎉" : "💡"}</div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">${title}</h2>
+                    <p class="text-gray-600 mb-6">${message}</p>
+                    <button onclick="document.getElementById('messageBox').classList.remove('active')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition duration-150">
+                        確定
+                    </button>
+                </div>
+            `;
+             messageBox.classList.add('active');
+        }
+
+        // 顯示彩帶畫面 (Confetti) 3秒
+        function showConfetti() {
+            const container = document.getElementById('confettiContainer');
+            if (!container) return;
+            
+            container.innerHTML = ''; 
+            container.style.opacity = '1';
+            
+            const colors = ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#3b82f6']; 
+            const count = 50; 
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                const size = Math.random() * 8 + 4; 
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                const startX = Math.random() * 100 + 'vw';
+                const endX = Math.random() * 100 + 'vw';
+
+                confetti.style.setProperty('--startX', startX);
+                confetti.style.setProperty('--endX', endX);
+
+                confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+                
+                container.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                container.style.opacity = '0';
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 500); 
+            }, 3000);
+        }
+
+        // -----------------------
+        // 賓果/卡片邏輯
+        // -----------------------
+        
+        // 繪製賓果連線
+        function drawBingoLines(lines) {
+            const overlay = document.getElementById('bingoOverlay');
+            if (!overlay) return;
+
+            overlay.innerHTML = '';
+
+            const grid = document.getElementById('bingoGrid');
+            if (!grid) return;
+            const gridRect = grid.getBoundingClientRect();
+            
+            const cardElements = Array.from(grid.children);
+            
+            lines.forEach(indices => {
+                // 找到連線中的第一個和最後一個卡片
+                const startCard = cardElements[indices[0]];
+                const endCard = cardElements[indices[indices.length - 1]];
+
+                if (!startCard || !endCard) return;
+
+                const startRect = startCard.getBoundingClientRect();
+                const endRect = endCard.getBoundingClientRect();
+
+                // 計算相對於 overlay/grid container 的中心點位置
+                const startX = startRect.left + startRect.width / 2 - gridRect.left;
+                const startY = startRect.top + startRect.height / 2 - gridRect.top;
+                const endX = endRect.left + endRect.width / 2 - gridRect.left;
+                const endY = endRect.top + endRect.height / 2 - gridRect.top;
+
+                // 計算距離 (長度) 和角度
+                const dx = endX - startX;
+                const dy = endY - startY;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                // 創建並設定連線元素樣式
+                const line = document.createElement('div');
+                line.className = 'bingo-line';
+                // 調整線條的起點，讓它居中
+                line.style.left = `${startX}px`;
+                line.style.top = `${startY}px`;
+                line.style.width = `${length}px`;
+                line.style.height = '8px'; 
+                line.style.transformOrigin = '0 0'; 
+                line.style.transform = `rotate(${angle}deg)`;
+
+                overlay.appendChild(line);
+            });
+        }
+
+        // 檢查是否達成賓果
+        function checkForBingo() {
+            const size = 4;
+            const lines = []; // 儲存達成連線的卡片索引列表
+            
+            // 輔助函式：檢查並添加連線
+            function addLine(indices) {
+                if (indices.every(i => markedCards[i])) {
+                    lines.push(indices);
+                }
+            }
+
+            // 檢查橫排 (Rows)
+            for (let i = 0; i < size; i++) {
+                const rowIndices = [];
+                for (let j = 0; j < size; j++) {
+                    rowIndices.push(i * size + j);
+                }
+                addLine(rowIndices);
+            }
+
+            // 檢查直行 (Columns)
+            for (let j = 0; j < size; j++) {
+                const colIndices = [];
+                for (let i = 0; i < size; i++) {
+                    colIndices.push(i * size + j);
+                }
+                addLine(colIndices);
+            }
+
+            // 檢查對角線 (Diagonals)
+            const diag1Indices = [];
+            for (let i = 0; i < size; i++) {
+                diag1Indices.push(i * size + i);
+            }
+            addLine(diag1Indices);
+
+            const diag2Indices = [];
+            for (let i = 0; i < size; i++) {
+                diag2Indices.push(i * size + (size - 1 - i));
+            }
+            addLine(diag2Indices);
+
+            if (lines.length > 0) {
+                showMessage("賓果！", `恭喜您達成 ${lines.length} 條連線！`);
+                drawBingoLines(lines); // 繪製紅線
+                showConfetti(); // 顯示彩帶動畫
+            } else {
+                document.getElementById('bingoOverlay').innerHTML = '';
+            }
+        }
+        
+        // 將文字按每行6個字排列，並避免末行僅 1 或 2 字
+        function formatTextIn6x4(text) {
+            const chars = [];
+            const charsPerLine = 6; 
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                chars.push(char);
+                
+                const isEndOfChunk = (i + 1) % charsPerLine === 0;
+                const hasMoreChars = i < text.length - 1;
+                
+                if (isEndOfChunk && hasMoreChars) {
+                    const remainingChars = text.length - (i + 1);
+                    
+                    if (remainingChars > 2) { 
+                        chars.push('<br>');
+                    }
+                }
+            }
+            
+            return chars.join('');
+        }
+
+        // 更新卡片內容
+        function updateCardContent(index) {
+            const content = document.getElementById(`card-${index}`);
+            const item = vocabulary[index];
+            const state = cardStates[index];
+            
+            content.parentElement.classList.remove('pass-card');
+            
+            if (state === 0) {
+                // 動物狀態 (預設狀態)
+                content.innerHTML = `<div class="animal-emoji">${item.animal}</div>`;
+                content.parentElement.className = 'card bg-gradient-to-br from-yellow-100 to-orange-100 rounded-xl shadow-lg p-4 flex items-center justify-center border-2 border-yellow-200';
+            } else if (state === 1) {
+                // 解釋狀態
+                const formattedText = formatTextIn6x4(item.definition); 
+                content.innerHTML = `<div class="definition-text text-gray-700 px-2 text-center">${formattedText}</div>`;
+                content.parentElement.className = 'card bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl shadow-lg p-4 flex items-center justify-center border-2 border-blue-200';
+                
+            } else {
+                // 語詞狀態 (標記狀態)
+                let termText = item.term;
+                
+                if (item.term === "PASS") {
+                    termText = "PASS"; 
+                    content.parentElement.classList.add('pass-card'); 
+                }
+
+                content.innerHTML = `<div class="term-text text-gray-800">${termText}</div>`;
+                content.parentElement.className = 'card bg-gradient-to-br from-green-100 to-teal-100 rounded-xl shadow-lg p-4 flex items-center justify-center border-2 border-green-200';
+            }
+        }
+
+        // 播放音效
+        function playClickSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // 切換卡片狀態 (已根據用戶要求修改萬用格邏輯)
+        function toggleCard(index) {
+            playClickSound();
+            const isPassCard = vocabulary[index].term === "PASS";
+            
+            if (isPassCard) {
+                // PASS卡片：只在 0 (圖案) 和 2 (PASS) 之間切換
+                if (cardStates[index] === 0) {
+                    cardStates[index] = 2; // 0 (圖案) -> 2 (PASS/標記)
+                } else {
+                    cardStates[index] = 0; // 2 (PASS/標記) -> 0 (圖案)
+                }
+            } else {
+                // 一般卡片：循環 0 (圖案), 1 (解釋), 2 (語詞)
+                cardStates[index] = (cardStates[index] + 1) % 3;
+            }
+
+            updateCardContent(index);
+
+            // 如果卡片切換到語詞狀態(2)，則視為標記
+            markedCards[index] = cardStates[index] === 2;
+            
+            checkForBingo(); // 每次標記後檢查賓果
+        }
+
+        // 初始化遊戲盤面
+        function initializeGame() {
+            const grid = document.getElementById('bingoGrid');
+            grid.innerHTML = ''; 
+            
+            // 清除連線和彩帶效果
+            document.getElementById('bingoOverlay').innerHTML = '';
+            const confettiContainer = document.getElementById('confettiContainer');
+            if (confettiContainer) {
+                confettiContainer.style.opacity = '0';
+                confettiContainer.innerHTML = '';
+            }
+
+            // 生成卡片
+            vocabulary.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card bg-white rounded-xl shadow-lg p-4 flex items-center justify-center border-2 border-gray-100';
+                card.onclick = () => toggleCard(index);
+                
+                const content = document.createElement('div');
+                content.className = 'card-content text-center w-full h-full flex items-center justify-center';
+                content.id = `card-${index}`;
+                
+                card.appendChild(content);
+                grid.appendChild(card);
+                
+                updateCardContent(index);
+            });
+            
+            document.getElementById('messageBox')?.classList.remove('active'); 
+        }
+        
+        // 載入指定課次的語詞並啟動遊戲
+        function loadLesson(lessonNumber) {
+            currentLesson = lessonNumber;
+            const lesson = allLessonData[lessonNumber];
+            if (!lesson) return;
+
+            // 1. 更新標題
+            document.getElementById('gameTitle').textContent = `中文語詞賓果4x4 - ${lesson.title}`;
+
+            // 2. 準備語詞列表
+            let currentVocab = [...lesson.vocab];
+            
+            // 3. 填充 PASS 卡片
+            const passNeeded = CARD_COUNT - currentVocab.length;
+            if (passNeeded > 0) {
+                const passEmojis = shuffleArray(LESSON_EMOJIS).slice(0, passNeeded);
+                for (let i = 0; i < passNeeded; i++) {
+                    currentVocab.push({ 
+                        term: "PASS", 
+                        definition: "萬用格，可自由選擇是否翻開。", 
+                        isPass: true 
+                    });
+                }
+            }
+            
+            // 4. 打亂順序
+            vocabulary = shuffleArray(currentVocab);
+            
+            // 5. 分配並打亂表情符號
+            const shuffledEmojis = shuffleArray(LESSON_EMOJIS);
+            vocabulary.forEach((item, index) => {
+                // 如果不是 PASS，分配一個隨機表情符號
+                if (!item.isPass) {
+                    item.animal = shuffledEmojis[index % shuffledEmojis.length]; 
+                } else {
+                    // PASS 專屬表情符號，確保和語詞的符號不同，這裡用星號
+                    item.animal = "⭐";
+                }
+            });
+            
+            // 6. 重設狀態
+            // 初始狀態都設定為 0 (圖案)
+            cardStates = new Array(vocabulary.length).fill(0);
+            markedCards = new Array(vocabulary.length).fill(false);
+            
+            // 7. 重新初始化遊戲盤面
+            initializeGame();
+            
+            // 8. 更新按鈕狀態
+            updateButtonStates(lessonNumber);
+        }
+
+        // 建立並顯示課次選擇按鈕
+        function createLessonButtons() {
+            const container = document.getElementById('lessonButtons');
+            const lessonKeys = Object.keys(allLessonData).map(Number).sort((a, b) => a - b);
+            
+            lessonKeys.forEach(key => {
+                const button = document.createElement('button');
+                button.textContent = `第${key}課`;
+                button.className = 'lesson-btn';
+                button.id = `btn-lesson-${key}`;
+                button.onclick = () => loadLesson(key);
+                container.appendChild(button);
+            });
+        }
+        
+        // 更新按鈕的 active 狀態
+        function updateButtonStates(activeLesson) {
+             const buttons = document.querySelectorAll('.lesson-btn');
+             buttons.forEach(btn => {
+                 const lessonNumber = parseInt(btn.id.replace('btn-lesson-', ''), 10);
+                 if (lessonNumber === activeLesson) {
+                     btn.classList.add('active');
+                 } else {
+                     btn.classList.remove('active');
+                 }
+             });
+        }
+        
+        // 啟動遊戲和綁定按鈕事件
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 建立課次按鈕
+            createLessonButtons();
+
+            // 2. 預設載入第七課 (第一個按鈕)
+            loadLesson(7);
+
+            // 3. 綁定重新開始按鈕事件
+            const resetButton = document.getElementById('resetButton');
+            if (resetButton) {
+                // 重新開始只需要調用 initializeGame，因為 loadLesson 已經準備好 vocabulary 陣列
+                resetButton.addEventListener('click', () => {
+                     // 重新載入當前課次，達到完全重置效果
+                     loadLesson(currentLesson);
+                });
+            }
+            
+            // 確保在視窗大小改變時，連線能正確重繪
+            window.addEventListener('resize', () => {
+                // 在 resize 時，先清除連線，讓使用者點擊卡片時再重繪
+                document.getElementById('bingoOverlay').innerHTML = '';
+            });
+        });
+    </script>
+ </body>
+</html>
