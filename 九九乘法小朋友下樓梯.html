@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九九乘法小朋友下樓梯</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #ffffff;
+            border: 8px solid #334155;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 100%;
+            max-width: 480px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            text-shadow: 1px 1px 0 #94a3b8;
+            text-align: center;
+        }
+
+        #gameCanvas {
+            border: 4px solid #1e293b;
+            background-color: #e2e8f0;
+            border-radius: 8px;
+            margin: 10px 0;
+            touch-action: none; /* Prevents mobile scrolling */
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            padding-top: 10px;
+        }
+
+        .score-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #334155;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow buttons to wrap if needed */
+            gap: 10px;
+        }
+
+        button {
+            background-color: #4f46e5;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+
+        button:hover {
+            background-color: #4338ca;
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #pauseButton {
+            background-color: #f59e0b;
+        }
+        
+        #pauseButton:hover {
+            background-color: #d97706;
+        }
+
+        #uploadButton {
+            background-color: #10b981; /* Green for upload */
+        }
+        
+        #uploadButton:hover {
+            background-color: #059669;
+        }
+
+        /* Mobile Controls (Touch) - 預設隱藏，在 <= 1024px 顯示 */
+        .mobile-controls {
+            display: none;
+            justify-content: center;
+            gap: 50px;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .control-button {
+            width: 80px;
+            height: 80px;
+            background-color: #0d9488;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 4px #0f766e;
+            user-select: none;
+            transition: background-color 0.1s;
+        }
+
+        .control-button:active {
+            background-color: #0f766e;
+            transform: translateY(2px);
+            box-shadow: 0 2px #0f766e;
+        }
+
+        /* 調整媒體查詢範圍以包含平板設備 */
+        @media (max-width: 1024px) { 
+            .game-container {
+                max-width: 95%;
+            }
+            .mobile-controls {
+                display: flex;
+            }
+            .score-panel {
+                font-size: 1rem;
+            }
+        }
+
+        /* Game Message Overlay (General) */
+        .message-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Initially hidden */
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            border-radius: 16px;
+        }
+
+        .message-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 90%;
+            position: relative;
+        }
+
+        .message-box h2 {
+            color: #dc2626;
+            margin-top: 0;
+        }
+
+        .message-box p {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-bottom: 20px;
+        }
+
+        /* Quiz Specific Styles */
+        #quizInput {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.5rem;
+            margin: 15px 0;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #quizInput:focus {
+            border-color: #4f46e5;
+            outline: none;
+        }
+
+        .quiz-hint {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        .quiz-error {
+            color: #dc2626;
+            font-weight: bold;
+            display: none;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <h1>九九乘法小朋友下樓梯</h1>
+        <div class="score-panel">
+            <span>分數: <span id="scoreDisplay">0</span></span>
+            <span>最高分: <span id="highScoreDisplay">0</span></span>
+        </div>
+        <canvas id="gameCanvas" width="380" height="600"></canvas>
+        
+        <div class="controls">
+            <div class="action-buttons">
+                <button id="startButton">開始 / 重新</button>
+                <button id="pauseButton" disabled>暫停</button>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <button id="uploadButton">更換角色圖片</button>
+            </div>
+            <div class="mobile-controls">
+                <div class="control-button" id="leftButton">◀</div>
+                <div class="control-button" id="rightButton">▶</div>
+            </div>
+        </div>
+
+        <!-- Game Message Overlay for Game Over / Instructions -->
+        <div class="message-overlay" id="messageOverlay">
+            <div class="message-box">
+                <h2 id="messageTitle">歡迎！</h2>
+                <p id="messageText">使用鍵盤左右鍵或下方按鈕移動。<br>收集 **黃色知識點** 來回答九九乘法問題！<br><br>💡 想要自訂角色？點擊「更換角色圖片」按鈕！</p>
+                <button id="closeMessageButton">確定</button>
+            </div>
+        </div>
+
+        <!-- Quiz Overlay -->
+        <div class="message-overlay" id="quizOverlay">
+            <div class="message-box">
+                <h2 style="color: #4f46e5;">數學挑戰！</h2>
+                <p id="quizQuestion">題目載入中...</p>
+                <!-- type="number" pattern="[0-9]*" for better mobile keyboard -->
+                <input type="number" pattern="[0-9]*" inputmode="numeric" id="quizInput" placeholder="輸入數字答案" autocomplete="off">
+                <div class="quiz-error" id="quizError">答案不正確，請再試一次！</div>
+                <p class="quiz-hint">提示：請輸入計算結果</p>
+                <button id="submitQuizButton">送出答案</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('debug');
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'little-man-game';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let userId = null;
+        let isAuthReady = false;
+        const HIGH_SCORE_DOC_PATH = `/artifacts/${appId}/public/data/highScores/global`;
+
+        // --- Game Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const uploadButton = document.getElementById('uploadButton');
+        const imageInput = document.getElementById('imageInput');
+        
+        // Message Overlays
+        const messageOverlay = document.getElementById('messageOverlay');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const closeMessageButton = document.getElementById('closeMessageButton');
+        
+        // Quiz Overlay Elements
+        const quizOverlay = document.getElementById('quizOverlay');
+        const quizQuestion = document.getElementById('quizQuestion');
+        const quizInput = document.getElementById('quizInput');
+        const quizError = document.getElementById('quizError');
+        const submitQuizButton = document.getElementById('submitQuizButton');
+
+        // Game Constants
+        const PLAYER_SIZE = 35; 
+        const PLAYER_SPEED = 5;
+        const GRAVITY = 0.8;
+        const OBSTACLE_HEIGHT = 20;
+        
+        // Adjusted for smaller, multi-gaps
+        const OBSTACLE_GAP_MIN = 45; 
+        const OBSTACLE_GAP_MAX = 75; 
+        const OBSTACLE_ROW_DISTANCE = 120;
+        const KNOWLEDGE_NODE_SIZE = 14; 
+
+        // Speed settings - UPDATED for quiz-based progression
+        const SPEED_START = 1.5; 
+        const SPEED_INCREMENT = 0.3; // Speed increase per correct answer
+        const SPEED_MAX = 6.0;
+
+        // 載入小朋友的圖片
+        const playerImage = new Image();
+        let playerImageLoaded = false;
+
+        let gameState = {
+            isRunning: false,
+            isPaused: false, 
+            isQuizActive: false, 
+            gameOver: false,
+            score: 0,
+            highScore: 0,
+            player: {
+                x: canvas.width / 2 - PLAYER_SIZE / 2,
+                y: canvas.height - PLAYER_SIZE * 2,
+                dx: 0,
+                dy: 0,
+                isJumping: false,
+                width: PLAYER_SIZE,
+                height: PLAYER_SIZE
+            },
+            obstacles: [],
+            obstacleSpeed: SPEED_START,
+            pauseStartTime: 0, 
+            countedRows: new Set(),
+            currentQuizNode: null,
+            remainingQuestions: [] // Store remaining math questions
+        };
+
+        // --- Firebase Logic ---
+        async function initializeFirebase() {
+            try {
+                if (firebaseConfig) {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        userId = user ? user.uid : 'anonymous_' + crypto.randomUUID();
+                        isAuthReady = true;
+                        setupHighScoreListener();
+                    });
+                } else {
+                    isAuthReady = true;
+                }
+            } catch (error) {
+                console.error("Firebase init failed:", error);
+                isAuthReady = true;
+            }
+        }
+
+        function setupHighScoreListener() {
+            if (!db || !isAuthReady) return;
+            const docRef = doc(db, HIGH_SCORE_DOC_PATH);
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    gameState.highScore = docSnap.data().score || 0;
+                    highScoreDisplay.textContent = gameState.highScore;
+                } else {
+                    setDoc(docRef, { score: 0, setBy: 'system' }, { merge: true });
+                }
+            });
+        }
+
+        async function updateHighScore() {
+            if (!db || !isAuthReady || !userId || gameState.score <= gameState.highScore) return;
+            const docRef = doc(db, HIGH_SCORE_DOC_PATH);
+            await setDoc(docRef, { 
+                score: gameState.score, 
+                setBy: userId,
+                timestamp: new Date().toISOString()
+            }, { merge: true });
+        }
+
+        // --- Helper: Generate Random Questions ---
+        function generateQuestionPool() {
+            const allPairs = [];
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 1; j <= 9; j++) {
+                    allPairs.push({ a: i, b: j, ans: i * j });
+                }
+            }
+            // Shuffle
+            for (let i = allPairs.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allPairs[i], allPairs[j]] = [allPairs[j], allPairs[i]];
+            }
+            // Pick 10
+            return allPairs.slice(0, 10);
+        }
+
+        // --- Game Logic ---
+
+        function startGame() {
+            if (gameState.isRunning && !gameState.gameOver) return;
+
+            gameState.gameOver = false;
+            gameState.isRunning = true;
+            gameState.isPaused = false;
+            gameState.isQuizActive = false;
+            gameState.score = 0;
+            gameState.countedRows = new Set(); 
+            
+            // Generate 10 random multiplication questions
+            gameState.remainingQuestions = generateQuestionPool();
+            
+            gameState.player.x = canvas.width / 2 - PLAYER_SIZE / 2;
+            gameState.player.y = canvas.height - PLAYER_SIZE; 
+            gameState.player.dx = 0;
+            gameState.player.dy = 0;
+            gameState.player.isJumping = true;
+            
+            gameState.obstacles = [];
+            gameState.obstacleSpeed = SPEED_START;
+
+            scoreDisplay.textContent = '0';
+            startButton.textContent = '遊戲進行中...';
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            pauseButton.textContent = '暫停';
+            
+            // Initial obstacles
+            for (let i = 0; i < 5; i++) {
+                generateObstacleRow(canvas.height - i * OBSTACLE_ROW_DISTANCE - OBSTACLE_ROW_DISTANCE); 
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function togglePause() {
+            if (!gameState.isRunning || gameState.gameOver || gameState.isQuizActive) return;
+
+            if (gameState.isPaused) {
+                // Resume
+                gameState.isPaused = false;
+                pauseButton.textContent = '暫停';
+                requestAnimationFrame(gameLoop);
+            } else {
+                // Pause
+                gameState.isPaused = true;
+                pauseButton.textContent = '繼續';
+                
+                // Draw pause screen
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = '30px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('已暫停', canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        function gameOver() {
+            if (!gameState.isRunning) return;
+
+            gameState.isRunning = false;
+            gameState.gameOver = true;
+            startButton.textContent = '重新開始';
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            
+            updateHighScore();
+            showMessage('遊戲結束！', `你獲得了 ${gameState.score} 分！`);
+        }
+
+        function generateObstacleRow(y) {
+            const rowId = crypto.randomUUID(); 
+            let numGaps = 1;
+            const r = Math.random();
+            if (r > 0.6) numGaps = 2; 
+            if (r > 0.9) numGaps = 3; 
+
+            const minPlatformWidth = 30; 
+            let platforms = [{x: 0, width: canvas.width}];
+
+            for (let i = 0; i < numGaps; i++) {
+                const candidates = platforms.filter(p => p.width >= minPlatformWidth * 2 + OBSTACLE_GAP_MIN);
+                if (candidates.length === 0) break; 
+
+                const target = candidates[Math.floor(Math.random() * candidates.length)];
+                platforms = platforms.filter(p => p !== target);
+
+                const gapW = Math.random() * (OBSTACLE_GAP_MAX - OBSTACLE_GAP_MIN) + OBSTACLE_GAP_MIN;
+                const minGapX = target.x + minPlatformWidth;
+                const maxGapX = target.x + target.width - minPlatformWidth - gapW;
+                const gapX = Math.random() * (maxGapX - minGapX) + minGapX;
+
+                const p1 = { x: target.x, width: gapX - target.x };
+                const p2 = { x: gapX + gapW, width: (target.x + target.width) - (gapX + gapW) };
+                
+                platforms.push(p1);
+                platforms.push(p2);
+            }
+
+            platforms.sort((a, b) => a.x - b.x);
+
+            platforms.forEach((p, index) => {
+                let obs = {
+                    x: p.x,
+                    y: y,
+                    width: p.width,
+                    height: OBSTACLE_HEIGHT,
+                    rowId: rowId,
+                    hasNode: false,
+                    question: null
+                };
+
+                // Node Generation
+                // 1. Must have remaining questions
+                // 2. Probability
+                if (gameState.remainingQuestions.length > 0 && p.width > 40 && Math.random() < 0.11) {
+                    obs.hasNode = true;
+                    // Pick random question from REMAINING list (Don't remove yet, remove on correct answer)
+                    obs.question = gameState.remainingQuestions[Math.floor(Math.random() * gameState.remainingQuestions.length)];
+                    
+                    let placeNear = 'center';
+                    if (index === 0) placeNear = 'right';
+                    else if (index === platforms.length - 1) placeNear = 'left';
+                    else placeNear = Math.random() < 0.5 ? 'left' : 'right';
+                    
+                    const offset = 25; 
+                    if (placeNear === 'right') obs.nodeX = obs.x + obs.width - offset;
+                    else if (placeNear === 'left') obs.nodeX = obs.x + offset;
+                    else obs.nodeX = obs.x + obs.width / 2;
+                    
+                    if (obs.nodeX < obs.x + 10) obs.nodeX = obs.x + 10;
+                    if (obs.nodeX > obs.x + obs.width - 10) obs.nodeX = obs.x + obs.width - 10;
+                }
+                gameState.obstacles.push(obs);
+            });
+        }
+
+        function triggerQuiz(obstacle) {
+            gameState.isPaused = true; 
+            gameState.isQuizActive = true;
+            gameState.currentQuizNode = obstacle;
+            
+            // Setup math question UI
+            quizQuestion.textContent = `${obstacle.question.a} × ${obstacle.question.b} = ?`;
+            quizInput.value = '';
+            quizError.style.display = 'none';
+            quizOverlay.style.display = 'flex';
+            setTimeout(() => quizInput.focus(), 100);
+        }
+
+        function checkQuizAnswer() {
+            const answer = parseInt(quizInput.value.trim());
+            
+            if (isNaN(answer)) {
+                quizError.textContent = "請輸入數字！";
+                quizError.style.display = 'block';
+                return;
+            }
+
+            const correctAnswer = gameState.currentQuizNode.question.ans;
+
+            if (answer === correctAnswer) {
+                // Correct!
+                quizOverlay.style.display = 'none';
+                gameState.currentQuizNode.hasNode = false;
+                
+                // Remove the answered question from the pool so it doesn't appear again
+                const qIndex = gameState.remainingQuestions.indexOf(gameState.currentQuizNode.question);
+                if (qIndex > -1) {
+                    gameState.remainingQuestions.splice(qIndex, 1);
+                }
+                
+                // Increase Speed
+                gameState.obstacleSpeed = Math.min(gameState.obstacleSpeed + SPEED_INCREMENT, SPEED_MAX);
+                
+                gameState.currentQuizNode = null;
+                gameState.isQuizActive = false;
+                gameState.isPaused = false;
+                requestAnimationFrame(gameLoop);
+            } else {
+                quizError.textContent = "答案不正確，請再試一次！";
+                quizError.style.display = 'block';
+                quizInput.value = '';
+                quizInput.focus();
+            }
+        }
+
+        function update() {
+            if (!gameState.isRunning || gameState.isPaused || gameState.isQuizActive) return;
+
+            gameState.player.dy += GRAVITY;
+            gameState.player.y += gameState.player.dy;
+            gameState.player.x += gameState.player.dx;
+
+            if (gameState.player.x < 0) gameState.player.x = 0;
+            if (gameState.player.x + PLAYER_SIZE > canvas.width) gameState.player.x = canvas.width - PLAYER_SIZE;
+
+            let onPlatform = false;
+            if (gameState.player.y + PLAYER_SIZE > canvas.height) {
+                gameState.player.y = canvas.height - PLAYER_SIZE;
+                gameState.player.dy = 0;
+                gameState.player.isJumping = false;
+                onPlatform = true;
+            }
+
+            gameState.obstacles.forEach(obstacle => {
+                if (gameState.player.dy >= 0 && checkLanding(gameState.player, obstacle)) {
+                    gameState.player.y = obstacle.y - PLAYER_SIZE;
+                    gameState.player.dy = 0;
+                    gameState.player.isJumping = false;
+                    onPlatform = true;
+                }
+                if (obstacle.hasNode) {
+                    const playerCenterX = gameState.player.x + PLAYER_SIZE / 2;
+                    const playerCenterY = gameState.player.y + PLAYER_SIZE / 2;
+                    const nodeY = obstacle.y + OBSTACLE_HEIGHT / 2; 
+                    const dist = Math.sqrt(
+                        Math.pow(playerCenterX - obstacle.nodeX, 2) + 
+                        Math.pow(playerCenterY - nodeY, 2)
+                    );
+                    if (dist < PLAYER_SIZE + KNOWLEDGE_NODE_SIZE) {
+                        triggerQuiz(obstacle);
+                    }
+                }
+            });
+
+            if (onPlatform) {
+                gameState.player.isJumping = false;
+            } else if (gameState.player.dy === 0) {
+                gameState.player.isJumping = true;
+            }
+            
+            const newObstacles = [];
+            const rowsPassedAndUnscored = new Set();
+            let platformSpeed = gameState.obstacleSpeed;
+
+            for (let i = 0; i < gameState.obstacles.length; i++) {
+                const obstacle = gameState.obstacles[i];
+                obstacle.y -= platformSpeed;
+
+                if (obstacle.y + OBSTACLE_HEIGHT < -10) {
+                    if (!gameState.countedRows.has(obstacle.rowId)) {
+                        rowsPassedAndUnscored.add(obstacle.rowId);
+                    }
+                }
+                if (obstacle.y > -OBSTACLE_HEIGHT * 2) { 
+                    newObstacles.push(obstacle);
+                }
+            }
+
+            rowsPassedAndUnscored.forEach(rowId => {
+                gameState.score += 1;
+                scoreDisplay.textContent = gameState.score;
+                gameState.countedRows.add(rowId);
+            });
+            
+            gameState.obstacles = newObstacles;
+
+            const lowestY = gameState.obstacles.reduce((max, obs) => Math.max(max, obs.y), -Infinity);
+            if (gameState.obstacles.length === 0 || canvas.height - lowestY >= OBSTACLE_ROW_DISTANCE) {
+                generateObstacleRow(canvas.height);
+            }
+
+            if (gameState.player.y < 0) {
+                gameOver();
+                return;
+            }
+        }
+
+        function checkLanding(player, platform) {
+            return player.x < platform.x + platform.width && 
+                   player.x + player.width > platform.x &&  
+                   player.y + player.height >= platform.y && 
+                   player.y + player.height <= platform.y + platform.height && 
+                   player.dy >= 0; 
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            gameState.obstacles.forEach(obstacle => {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+                if (obstacle.hasNode) {
+                    ctx.beginPath();
+                    ctx.arc(obstacle.nodeX, obstacle.y + OBSTACLE_HEIGHT/2, KNOWLEDGE_NODE_SIZE/2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fbbf24'; 
+                    ctx.fill();
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.stroke();
+                    ctx.shadowBlur = 0; 
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('?', obstacle.nodeX, obstacle.y + OBSTACLE_HEIGHT/2);
+                }
+            });
+
+            // Draw Player
+            if (playerImageLoaded) {
+                ctx.drawImage(playerImage, gameState.player.x, gameState.player.y, PLAYER_SIZE, PLAYER_SIZE);
+            } else {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(gameState.player.x, gameState.player.y, gameState.player.width, gameState.player.height);
+                ctx.font = `${PLAYER_SIZE * 0.9}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🏃', gameState.player.x + PLAYER_SIZE / 2, gameState.player.y + PLAYER_SIZE / 2);
+            }
+        }
+
+        function gameLoop() {
+            if (!gameState.isRunning) return;
+
+            update();
+            draw();
+
+            if (gameState.isRunning && !gameState.isPaused && !gameState.isQuizActive) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function handleKeyDown(e) {
+            if (!gameState.isRunning || gameState.isPaused || gameState.isQuizActive) return;
+            if (e.key === 'ArrowLeft') gameState.player.dx = -PLAYER_SPEED;
+            else if (e.key === 'ArrowRight') gameState.player.dx = PLAYER_SPEED;
+        }
+
+        function handleKeyUp(e) {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') gameState.player.dx = 0;
+        }
+
+        function setPlayerDirection(direction) {
+            if (!gameState.isRunning || gameState.isPaused || gameState.isQuizActive) return;
+            gameState.player.dx = direction * PLAYER_SPEED;
+        }
+
+        function stopPlayerDirection() {
+            gameState.player.dx = 0;
+        }
+
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.innerHTML = text;
+            messageOverlay.style.display = 'flex';
+        }
+
+        function hideMessage() {
+            messageOverlay.style.display = 'none';
+        }
+
+        // --- Image Upload Handling ---
+        uploadButton.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    playerImage.src = event.target.result;
+                    playerImage.onload = () => {
+                        playerImageLoaded = true;
+                        draw(); // Redraw immediately to show the new image
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
+        startButton.addEventListener('click', startGame);
+        pauseButton.addEventListener('click', togglePause);
+        
+        submitQuizButton.addEventListener('click', checkQuizAnswer);
+        quizInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') checkQuizAnswer();
+        });
+
+        const leftButton = document.getElementById('leftButton');
+        const rightButton = document.getElementById('rightButton');
+
+        leftButton.addEventListener('mousedown', () => setPlayerDirection(-1));
+        leftButton.addEventListener('mouseup', stopPlayerDirection);
+        leftButton.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(-1); });
+        leftButton.addEventListener('touchend', stopPlayerDirection);
+
+        rightButton.addEventListener('mousedown', () => setPlayerDirection(1));
+        rightButton.addEventListener('mouseup', stopPlayerDirection);
+        rightButton.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(1); });
+        rightButton.addEventListener('touchend', stopPlayerDirection);
+        
+        closeMessageButton.addEventListener('click', hideMessage);
+
+        window.onload = function () {
+            initializeFirebase();
+            draw(); 
+            showMessage('九九乘法小朋友下樓梯', '收集 **黃色知識點** 並回答數學問題。<br>目標是 **不斷往下**，避免碰到天花板！<br><br>💡 想要自訂角色？點擊「更換角色圖片」按鈕！');
+        }
+
+    </script>
+</body>
+</html>
