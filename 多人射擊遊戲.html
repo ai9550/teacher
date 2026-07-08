@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>多人數學射擊</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0e14; font-family: 'Noto Sans TC', sans-serif; user-select: none; -webkit-user-select: none; }
+  #gameCanvas { position: fixed; inset: 0; display: block; touch-action: none; -webkit-tap-highlight-color: transparent; }
+
+  /* ---------- 開始畫面 ---------- */
+  #menu {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255, 140, 60, 0.15), transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(60, 200, 255, 0.15), transparent 50%),
+      linear-gradient(180deg, #0a0e14 0%, #12161f 100%);
+  }
+  .menu-card {
+    background: rgba(15, 18, 28, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(120, 200, 255, 0.3);
+    border-radius: 24px;
+    padding: 44px 54px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 60px rgba(80, 200, 255, 0.12);
+    text-align: center;
+    max-width: 560px;
+    width: calc(100% - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(28px, 6vw, 46px);
+    background: linear-gradient(135deg, #4cf 0%, #fc4 50%, #f84 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 20px rgba(100, 200, 255, 0.5));
+  }
+  .subtitle {
+    font-family: 'Orbitron', sans-serif;
+    color: #88aacc; letter-spacing: 5px; font-size: 12px; margin-bottom: 28px;
+  }
+  #nameInput {
+    width: 100%;
+    font-size: 18px; font-family: 'Noto Sans TC', sans-serif;
+    padding: 14px 22px; margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(120, 200, 255, 0.4);
+    border-radius: 999px;
+    color: #fff; outline: none; text-align: center;
+  }
+  #nameInput:focus { border-color: #4cf; box-shadow: 0 0 20px rgba(80, 200, 255, 0.4); }
+  .start-btn {
+    display: inline-block; cursor: pointer;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 20px; letter-spacing: 3px;
+    padding: 15px 56px;
+    color: #0a0e14;
+    background: linear-gradient(135deg, #4cf 0%, #f84 100%);
+    border: none; border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(80, 200, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  .start-btn:active { transform: translateY(1px); }
+  .controls {
+    margin-top: 26px; padding-top: 20px;
+    border-top: 1px solid rgba(120, 200, 255, 0.15);
+    color: #aac; font-size: 13.5px; line-height: 1.9;
+    text-align: left;
+  }
+  .controls .key {
+    display: inline-block; padding: 2px 9px; margin: 0 2px;
+    background: rgba(120, 200, 255, 0.12); border: 1px solid rgba(120, 200, 255, 0.3);
+    border-radius: 6px; font-family: 'Orbitron', sans-serif; font-size: 11px; color: #cef;
+  }
+  .qtype-label {
+    color: #88aacc; letter-spacing: 3px; font-size: 11px; font-family: 'Orbitron', sans-serif;
+    margin: 16px 0 8px; text-align: left;
+  }
+  .qtype-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .qtype-card {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(120, 200, 255, 0.18);
+    border-radius: 12px; padding: 10px 6px;
+    cursor: pointer; text-align: center;
+  }
+  .qtype-card::after {
+    content: ''; position: absolute; top: 6px; right: 6px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 1.5px solid rgba(120, 200, 255, 0.45);
+    background: rgba(0, 0, 0, 0.2);
+    line-height: 11px; font-size: 10px; font-weight: 900; color: transparent;
+  }
+  .qtype-card.selected::after { content: '✓'; background: #4cf; border-color: #4cf; color: #0a0e14; }
+  .qtype-card.selected { background: linear-gradient(180deg, rgba(80,200,255,0.22), rgba(80,200,255,0.10)); border-color: #4cf; }
+  .qtype-card .op { font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 22px; color: #4cf; line-height: 1; }
+  .qtype-card.selected .op { color: #fff; }
+  .qtype-card .name { font-size: 11.5px; color: #cef; margin-top: 4px; font-weight: 700; }
+  .qtype-card .ex { font-size: 10px; color: #88a; margin-top: 1px; font-family: 'Orbitron', sans-serif; }
+
+  /* ---------- HUD ---------- */
+  #hud { display: none; position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  .hp-row { position: absolute; top: 20px; left: 20px; display: flex; gap: 6px; }
+  .hp-heart { font-size: 26px; filter: drop-shadow(0 0 6px rgba(255,80,120,0.6)); }
+  .hp-heart.lost { opacity: 0.2; filter: none; }
+  .ammo-box {
+    position: absolute; top: 58px; left: 20px;
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 22px; color: #ffd84a;
+    text-shadow: 0 0 10px rgba(255, 216, 74, 0.6);
+    background: rgba(8,10,20,0.5); border-radius: 10px; padding: 4px 14px;
+    border: 1px solid rgba(255,216,74,0.3);
+  }
+  #minimapWrap {
+    position: fixed; top: 20px; right: 20px; z-index: 6;
+    background: rgba(8, 10, 20, 0.65); border: 1px solid rgba(120,200,255,0.3);
+    border-radius: 12px; padding: 8px;
+  }
+  #minimapLabel { font-family: 'Orbitron', sans-serif; font-size: 10px; color: #88aacc; letter-spacing: 2px; text-align: center; margin-bottom: 4px; }
+  #minimap { display: block; border-radius: 6px; }
+  #statusList {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(8,10,20,0.55); border: 1px solid rgba(120,200,255,0.25);
+    border-radius: 10px; padding: 6px 16px; font-size: 12.5px; color: #cef;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .crosshair {
+    position: absolute; top: 50%; left: 50%; width: 22px; height: 22px; transform: translate(-50%,-50%);
+  }
+  .crosshair::before, .crosshair::after {
+    content: ''; position: absolute; background: rgba(255,255,255,0.85);
+  }
+  .crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-1px); }
+  .crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-1px); }
+  #hitFlash {
+    position: absolute; inset: 0; background: radial-gradient(ellipse at center, rgba(255,60,60,0) 40%, rgba(255,40,40,0.45) 100%);
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  #hitFlash.show { opacity: 1; }
+  #hitMarker {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.6);
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 15px; color: #6f9;
+    text-shadow: 0 0 10px rgba(100,255,150,0.8);
+    opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  #hitMarker.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+
+  /* ---------- 觸控 ---------- */
+  .joystick-base {
+    position: fixed; left: 30px; bottom: 30px;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(8, 14, 32, 0.4); border: 2px solid rgba(120,200,255,0.4);
+    touch-action: none; z-index: 6;
+  }
+  .joystick-knob {
+    position: absolute; top: 50%; left: 50%; width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, #4cf 0%, #38d 100%);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    transform: translate(-50%,-50%); pointer-events: none;
+  }
+  #shootBtn {
+    position: fixed; right: 34px; bottom: 40px;
+    width: 100px; height: 100px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff8a5c, #d3401f);
+    border: 3px solid rgba(255,255,255,0.4);
+    box-shadow: 0 6px 20px rgba(220,60,30,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; touch-action: none; z-index: 6;
+  }
+  #shootBtn:active { filter: brightness(1.3); }
+  .look-hint {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(10, 10, 30, 0.5); border: 1px solid rgba(120, 200, 255, 0.2);
+    border-radius: 999px; padding: 8px 20px; color: #aac; font-size: 12px; z-index: 5; pointer-events: none;
+  }
+
+  /* ---------- 淘汰畫面 ---------- */
+  #eliminated {
+    display: none; position: fixed; inset: 0; z-index: 20;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(120, 20, 40, 0.4), rgba(5, 5, 20, 0.95));
+    backdrop-filter: blur(8px);
+  }
+  .elim-card {
+    background: rgba(15, 10, 30, 0.85); border: 1px solid rgba(255, 100, 150, 0.4);
+    border-radius: 24px; padding: 46px 64px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(255,80,130,0.2);
+  }
+  .elim-card h2 {
+    font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 40px; letter-spacing: 4px;
+    background: linear-gradient(135deg, #f84, #fc4);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 20px;
+  }
+
+  /* ---------- 數學題彈窗（沿用先前設計）---------- */
+  #mathModal {
+    display: none; position: fixed; inset: 0; z-index: 30;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(20, 30, 80, 0.55), rgba(5, 8, 24, 0.85));
+    backdrop-filter: blur(8px);
+  }
+  .math-card {
+    background: linear-gradient(180deg, #15183a 0%, #0a0d24 100%);
+    border: 2px solid #4cf; border-radius: 28px; padding: 34px 46px 30px; text-align: center;
+    box-shadow: 0 25px 70px rgba(0,0,0,0.65), 0 0 80px rgba(80,200,255,0.35);
+    max-width: 92vw;
+  }
+  .math-title { font-family: 'Orbitron', sans-serif; color: #ffd84a; letter-spacing: 5px; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
+  .math-question {
+    font-family: 'Orbitron', sans-serif; font-size: clamp(42px, 7vw, 64px); font-weight: 900;
+    color: #fff; letter-spacing: 4px; margin-bottom: 24px;
+    text-shadow: 0 0 30px rgba(80,200,255,0.6);
+  }
+  .math-card input {
+    width: 200px; font-size: 32px; font-family: 'Orbitron', sans-serif; font-weight: 900;
+    text-align: center; padding: 12px 18px; margin-bottom: 14px;
+    background: rgba(255,255,255,0.06); border: 2px solid rgba(120,200,255,0.4);
+    border-radius: 14px; color: #fff; outline: none;
+  }
+  .math-submit {
+    display: block; margin: 0 auto; padding: 11px 50px; font-size: 18px;
+    font-family: 'Orbitron', sans-serif; letter-spacing: 5px; font-weight: 700;
+    color: #0a0e14; background: linear-gradient(135deg, #4cf 0%, #f84 100%);
+    border: none; border-radius: 999px; cursor: pointer;
+  }
+  .math-feedback { margin-top: 14px; min-height: 24px; font-weight: 700; font-size: 16px; }
+  .math-feedback.correct { color: #6f9; }
+  .math-feedback.wrong { color: #f88; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-12px);} 40%,80%{transform:translateX(12px);} }
+  .math-card.shake { animation: shake 0.4s ease; }
+</style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<div id="minimapWrap">
+  <div id="minimapLabel">MAP</div>
+  <canvas id="minimap" width="140" height="140"></canvas>
+</div>
+
+<!-- 選單 -->
+<div id="menu">
+  <div class="menu-card">
+    <h1>多人數學射擊</h1>
+    <div class="subtitle">M A T H · B L A S T E R · A R E N A</div>
+    <input id="nameInput" placeholder="輸入你的名字" maxlength="10">
+
+    <div class="qtype-label">⚙ 選擇題型（可複選）</div>
+    <div class="qtype-grid">
+      <div class="qtype-card selected" data-type="add1"><div class="op">＋</div><div class="name">一位數加法</div><div class="ex">5+3</div></div>
+      <div class="qtype-card" data-type="add2"><div class="op">＋</div><div class="name">二位數加法</div><div class="ex">25+7</div></div>
+      <div class="qtype-card" data-type="sub1"><div class="op">−</div><div class="name">一位數減法</div><div class="ex">9−4</div></div>
+      <div class="qtype-card" data-type="sub2"><div class="op">−</div><div class="name">二位數減法</div><div class="ex">38−5</div></div>
+      <div class="qtype-card" data-type="mul"><div class="op">×</div><div class="name">九九乘法</div><div class="ex">7×8</div></div>
+      <div class="qtype-card" data-type="div"><div class="op">÷</div><div class="name">二位數除法</div><div class="ex">56÷7</div></div>
+    </div>
+
+    <button class="start-btn" onclick="startGame()">開 始 戰 鬥</button>
+    <div class="controls">
+      🌐 <strong style="color:#cef">跟同班同學一起連線</strong>，在同一個倉庫裡對戰<br>
+      📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、螢幕右側<span class="key">拖曳</span>轉視角、右下角<span class="key">🔫按鈕</span>射擊<br>
+      🔋 <strong style="color:#ffd84a">彈匣：</strong>走近會先出數學題，答對才能領取 5 發子彈<br>
+      ❤️ <strong style="color:#ff7caa">血量：</strong>每人 5 滴血，被擊中 5 次淘汰，其他人繼續戰鬥<br>
+      🗺️ 小地圖只會顯示<strong style="color:#cef">你自己</strong>的位置，其他玩家要靠近才會出現
+    </div>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hp-row" id="hpRow"></div>
+  <div class="ammo-box">🔵 <span id="ammoCount">0</span></div>
+  <div id="statusList">存活 <span id="aliveCount">1</span> 人</div>
+  <div class="crosshair"></div>
+  <div id="hitFlash"></div>
+  <div id="hitMarker">🎯 命中！</div>
+  <div class="look-hint">拖曳畫面右側轉視角</div>
+</div>
+
+<div class="joystick-base" id="joyBase" style="display:none;">
+  <div class="joystick-knob" id="joyKnob"></div>
+</div>
+<div id="shootBtn" style="display:none;">🔫</div>
+
+<!-- 淘汰畫面 -->
+<div id="eliminated">
+  <div class="elim-card">
+    <h2>已 淘 汰</h2>
+    <p style="color:#aac; margin-bottom:26px; letter-spacing:2px; font-family:'Orbitron',sans-serif; font-size:12px;">ELIMINATED — 其他玩家仍在戰鬥中</p>
+    <button class="start-btn" onclick="respawnPlayer()">重 新 加 入 戰 場</button>
+  </div>
+</div>
+
+<!-- 數學題 -->
+<div id="mathModal">
+  <div class="math-card" id="mathCard">
+    <div class="math-title">🧮 領取彈藥：答對才能拿到 5 發子彈</div>
+    <div class="math-question" id="mathQuestion">5 + 3 = ?</div>
+    <input id="mathInput" type="number" inputmode="numeric" placeholder="？">
+    <button class="math-submit" onclick="submitAnswer()">確 定</button>
+    <div class="math-feedback" id="mathFeedback"></div>
+  </div>
+</div>
+
+<script type="module">
+'use strict';
+
+import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, increment
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  projectId: "mygame-1af09",
+  appId: "1:388340775447:web:0769fb994834e68939ba52",
+  storageBucket: "mygame-1af09.firebasestorage.app",
+  apiKey: "AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM",
+  authDomain: "mygame-1af09.firebaseapp.com",
+  messagingSenderId: "388340775447"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+// ============== 常數 ==============
+const MAX_HP = 5;
+const MOVE_SPEED = 6.5;
+const PLAYER_RADIUS = 0.4;
+const EYE_HEIGHT = 1.6;
+const SHOOT_RANGE = 40;
+const SHOOT_COOLDOWN_MS = 350;
+const NETWORK_SYNC_MS = 200;
+const STALE_MS = 8000;
+const MINIMAP_REVEAL_DIST = 11;
+const AMMO_PICKUP_DIST = 1.9;
+const AMMO_RESPAWN_MS = 18000;
+const QUIZ_RETRY_COOLDOWN_MS = 2500;
+
+// ============== Three.js 基本設置 ==============
+const canvas = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1119);
+scene.fog = new THREE.Fog(0x0d1119, 12, 46);
+
+const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 200);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const hemi = new THREE.HemisphereLight(0x8899bb, 0x201812, 0.9);
+scene.add(hemi);
+const dirLight = new THREE.DirectionalLight(0xfff2dd, 0.8);
+dirLight.position.set(10, 18, 6);
+scene.add(dirLight);
+// 幾盞倉庫燈（暖色點光源），增加氣氛
+[[-14,6,-14],[14,6,-14],[-14,6,14],[14,6,14],[0,6,0]].forEach(([x,y,z]) => {
+  const pl = new THREE.PointLight(0xffcc88, 0.55, 22);
+  pl.position.set(x, y, z);
+  scene.add(pl);
+});
+
+// ============== 倉庫地圖 ==============
+const HALF = 22;
+const WALL_H = 5;
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x33322e, roughness: 0.95 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, HALF*2), floorMat);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x556072, roughness: 0.85 });
+const colliders = []; // {minX,maxX,minZ,maxZ}
+const solidMeshes = []; // 牆壁 + 障礙物（用來擋子彈與視線）
+
+function addBoxCollider(cx, cz, w, d, h, color, isWall) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = isWall ? wallMat : new THREE.MeshStandardMaterial({ color: color || 0x8a6a45, roughness: 0.9 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(cx, h/2, cz);
+  scene.add(mesh);
+  solidMeshes.push(mesh);
+  colliders.push({ minX: cx - w/2, maxX: cx + w/2, minZ: cz - d/2, maxZ: cz + d/2 });
+}
+
+// 四面外牆
+addBoxCollider(0, -HALF, HALF*2, 1, WALL_H, null, true);
+addBoxCollider(0,  HALF, HALF*2, 1, WALL_H, null, true);
+addBoxCollider(-HALF, 0, 1, HALF*2, WALL_H, null, true);
+addBoxCollider( HALF, 0, 1, HALF*2, WALL_H, null, true);
+
+// 倉庫障礙物（板條箱）
+const crateSpots = [
+  [-10,-10,3,3],[9,-9,4,2.4],[0,0,2.4,2.4],[-7,7,3,3],[11,10,2.4,4],
+  [-15,4,2.4,2.4],[5,-15,3,2.4],[15,-5,2.4,3],[-4,-16,2.4,2.4],[3,15,4,2.4],
+  [-16,-2,2,4],[16,4,3,2]
+];
+crateSpots.forEach(([x,z,w,d]) => addBoxCollider(x, z, w, d, 2.2, 0x8a6a45, false));
+
+function collidesAt(x, z, radius) {
+  for (const c of colliders) {
+    if (x > c.minX - radius && x < c.maxX + radius && z > c.minZ - radius && z < c.maxZ + radius) return true;
+  }
+  return false;
+}
+function randomFreeSpot(radius) {
+  for (let i = 0; i < 40; i++) {
+    const x = rand(-HALF+2, HALF-2), z = rand(-HALF+2, HALF-2);
+    if (!collidesAt(x, z, radius + 0.6)) return { x, z };
+  }
+  return { x: 0, z: -HALF+3 };
+}
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+// ============== 彈匣 ==============
+const ammoCrateGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+const ammoCrateMat = new THREE.MeshStandardMaterial({ color: 0x4cf0ff, emissive: 0x1188aa, emissiveIntensity: 0.6, roughness: 0.4 });
+const ammoCrates = [];
+for (let i = 0; i < 6; i++) {
+  const spot = randomFreeSpot(1.2);
+  const mesh = new THREE.Mesh(ammoCrateGeo, ammoCrateMat.clone());
+  mesh.position.set(spot.x, 0.9, spot.z);
+  scene.add(mesh);
+  ammoCrates.push({ mesh, x: spot.x, z: spot.z, available: true, cooldownUntil: 0 });
+}
+
+// ============== 數學題（沿用先前設計）==============
+const selectedTypes = new Set(['add1']);
+let paused = false;
+let currentQuestion = null;
+let activeCrate = null;
+
+document.querySelectorAll('.qtype-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const type = card.dataset.type;
+    if (selectedTypes.has(type)) {
+      if (selectedTypes.size > 1) { selectedTypes.delete(type); card.classList.remove('selected'); }
+    } else { selectedTypes.add(type); card.classList.add('selected'); }
+  });
+});
+function pickRandomType() { const a = Array.from(selectedTypes); return a[Math.floor(Math.random()*a.length)]; }
+function genQuestion(type) {
+  const r = (lo,hi) => lo + Math.floor(Math.random()*(hi-lo+1));
+  let a,b,op,ans;
+  switch(type) {
+    case 'add1': a=r(1,9); b=r(1,9); op='+'; ans=a+b; break;
+    case 'add2': a=r(10,99); b=r(1,9); op='+'; ans=a+b; break;
+    case 'sub1': a=r(2,9); b=r(1,a); op='−'; ans=a-b; break;
+    case 'sub2': a=r(11,99); b=r(1,9); op='−'; ans=a-b; break;
+    case 'mul': a=r(1,9); b=r(1,9); op='×'; ans=a*b; break;
+    case 'div': { b=r(2,9); const q=r(Math.ceil(10/b), Math.floor(99/b)); a=b*q; op='÷'; ans=q; break; }
+  }
+  return { a,b,op, answer: ans, text: `${a} ${op} ${b}` };
+}
+function showQuestion(crate) {
+  paused = true;
+  activeCrate = crate;
+  currentQuestion = genQuestion(pickRandomType());
+  document.getElementById('mathQuestion').textContent = currentQuestion.text + ' = ?';
+  const inp = document.getElementById('mathInput');
+  inp.value = '';
+  const fb = document.getElementById('mathFeedback');
+  fb.textContent = ''; fb.className = 'math-feedback';
+  document.getElementById('mathModal').style.display = 'flex';
+}
+window.submitAnswer = function submitAnswer() {
+  if (!currentQuestion) return;
+  const inp = document.getElementById('mathInput');
+  const fb = document.getElementById('mathFeedback');
+  const card = document.getElementById('mathCard');
+  const v = parseInt(inp.value, 10);
+  if (isNaN(v)) { fb.textContent = '✏ 請輸入數字'; fb.className = 'math-feedback wrong'; return; }
+  if (v === currentQuestion.answer) {
+    fb.textContent = '✓ 答對了！+5 發子彈';
+    fb.className = 'math-feedback correct';
+    if (player.alive) player.ammo += 5;
+    if (activeCrate) {
+      activeCrate.available = false;
+      activeCrate.mesh.visible = false;
+      activeCrate.cooldownUntil = performance.now() + AMMO_RESPAWN_MS;
+    }
+    currentQuestion = null;
+    setTimeout(() => { document.getElementById('mathModal').style.display = 'none'; paused = false; activeCrate = null; }, 900);
+  } else {
+    fb.textContent = '✗ 再試試看！';
+    fb.className = 'math-feedback wrong';
+    inp.value = '';
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+    if (activeCrate) activeCrate.cooldownUntil = performance.now() + QUIZ_RETRY_COOLDOWN_MS;
+    currentQuestion = null;
+    setTimeout(() => { document.getElementById('mathModal').style.display = 'none'; paused = false; activeCrate = null; }, 600);
+  }
+};
+document.getElementById('mathInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.submitAnswer(); });
+
+// ============== 觸控輸入（搖桿 + 拖曳視角 + 射擊）==============
+const joyBase = document.getElementById('joyBase');
+const joyKnob = document.getElementById('joyKnob');
+const shootBtn = document.getElementById('shootBtn');
+const JOY_MAX = 55;
+let joyTouchId = null, joyDX = 0, joyDY = 0;
+let lookTouchId = null, lookLastX = 0, lookLastY = 0;
+let yaw = 0, pitch = 0;
+const LOOK_SENS = 0.0032;
+
+function inJoyBase(x, y) {
+  const r = joyBase.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  return Math.hypot(x-cx, y-cy) < r.width * 0.9;
+}
+function inShootBtn(x, y) {
+  const r = shootBtn.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  return Math.hypot(x-cx, y-cy) < r.width * 0.7;
+}
+function updateJoy(x, y) {
+  const r = joyBase.getBoundingClientRect();
+  const cx = r.left + r.width/2, cy = r.top + r.height/2;
+  let dx = x-cx, dy = y-cy;
+  const d = Math.hypot(dx,dy);
+  const clamped = Math.min(d, JOY_MAX);
+  const ang = Math.atan2(dy,dx);
+  const kx = Math.cos(ang)*clamped, ky = Math.sin(ang)*clamped;
+  joyKnob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+  joyDX = kx / JOY_MAX; joyDY = ky / JOY_MAX;
+}
+function resetJoy() { joyTouchId = null; joyDX = 0; joyDY = 0; joyKnob.style.transform = 'translate(-50%,-50%)'; }
+
+window.addEventListener('touchstart', e => {
+  for (const t of e.changedTouches) {
+    if (joyTouchId === null && inJoyBase(t.clientX, t.clientY)) {
+      joyTouchId = t.identifier; updateJoy(t.clientX, t.clientY);
+    } else if (inShootBtn(t.clientX, t.clientY)) {
+      tryShoot();
+    } else if (lookTouchId === null) {
+      lookTouchId = t.identifier; lookLastX = t.clientX; lookLastY = t.clientY;
+    }
+  }
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joyTouchId) updateJoy(t.clientX, t.clientY);
+    else if (t.identifier === lookTouchId) {
+      const dx = t.clientX - lookLastX, dy = t.clientY - lookLastY;
+      lookLastX = t.clientX; lookLastY = t.clientY;
+      yaw -= dx * LOOK_SENS * 60;
+      pitch -= dy * LOOK_SENS * 60;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    }
+  }
+}, { passive: true });
+function touchEndHandler(e) {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joyTouchId) resetJoy();
+    if (t.identifier === lookTouchId) lookTouchId = null;
+  }
+}
+window.addEventListener('touchend', touchEndHandler, { passive: true });
+window.addEventListener('touchcancel', touchEndHandler, { passive: true });
+
+// 桌機測試用：滑鼠拖曳看方向、WASD 移動、點擊射擊
+let mouseDown = false, mouseLastX = 0, mouseLastY = 0;
+const keys = {};
+window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+canvas.addEventListener('mousedown', e => { mouseDown = true; mouseLastX = e.clientX; mouseLastY = e.clientY; });
+window.addEventListener('mouseup', () => { mouseDown = false; });
+window.addEventListener('mousemove', e => {
+  if (!mouseDown) return;
+  const dx = e.clientX - mouseLastX, dy = e.clientY - mouseLastY;
+  mouseLastX = e.clientX; mouseLastY = e.clientY;
+  yaw -= dx * LOOK_SENS * 60;
+  pitch -= dy * LOOK_SENS * 60;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+});
+canvas.addEventListener('click', () => tryShoot());
+
+// ============== 玩家 ==============
+const player = {
+  name: '玩家', hue: 0, x: 0, z: 0, alive: false,
+  hp: MAX_HP, ammo: 0, lastShotAt: 0
+};
+let myDocRef = null;
+let syncInterval = null;
+let running = false;
+
+const remotePlayers = new Map(); // docId -> {mesh, target:{x,z,rotY}, name, hue, alive, hp, lastUpdatedMs}
+const raycaster = new THREE.Raycaster();
+raycaster.far = SHOOT_RANGE;
+
+function makeCharacterMesh(hue) {
+  const color = new THREE.Color().setHSL(hue/360, 0.75, 0.55);
+  const group = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.36, 0.9, 4, 8),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.6 })
+  );
+  body.position.y = 0.95;
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.3, 12, 10),
+    new THREE.MeshStandardMaterial({ color: 0xffe4c4, roughness: 0.7 })
+  );
+  head.position.y = 1.62;
+  group.add(body, head);
+  group.userData.isPlayer = true;
+  body.userData.isPlayer = true;
+  head.userData.isPlayer = true;
+  return { group, body, head };
+}
+
+function ensureRemote(id, data) {
+  let r = remotePlayers.get(id);
+  if (!r) {
+    const { group, body, head } = makeCharacterMesh(data.hue || 0);
+    body.userData.docId = id; head.userData.docId = id;
+    scene.add(group);
+    r = { group, body, head, target: { x: data.pos?.x||0, z: data.pos?.z||0, rotY: 0 }, name: '', hue: 0, alive: true, hp: MAX_HP, lastUpdatedMs: Date.now() };
+    remotePlayers.set(id, r);
+  }
+  return r;
+}
+function removeRemote(id) {
+  const r = remotePlayers.get(id);
+  if (r) { scene.remove(r.group); remotePlayers.delete(id); }
+}
+
+// ============== Firestore 同步 ==============
+onSnapshot(collection(db, 'fps_players'), snapshot => {
+  const now = Date.now();
+  snapshot.docChanges().forEach(change => {
+    const id = change.doc.id;
+    if (change.type === 'removed') { if (myDocRef && id === myDocRef.id) return; removeRemote(id); return; }
+    const data = change.doc.data();
+
+    if (myDocRef && id === myDocRef.id) {
+      // 自己的血量只信任伺服器（其他人用 increment 扣血），偵測掉血
+      if (typeof data.hp === 'number' && data.hp < player.hp && player.alive) {
+        player.hp = data.hp;
+        flashHit();
+        if (player.hp <= 0) eliminatePlayer();
+      }
+      return;
+    }
+
+    const r = ensureRemote(id, data);
+    r.name = data.name || 'Guest';
+    r.hue = data.hue || 0;
+    r.hp = typeof data.hp === 'number' ? data.hp : MAX_HP;
+    const updatedMs = data.updated_at?.toMillis?.() ?? now;
+    r.lastUpdatedMs = updatedMs;
+    const stale = now - updatedMs > STALE_MS;
+    r.alive = stale ? false : (data.alive !== false);
+    r.group.visible = r.alive;
+    if (r.alive && data.pos) {
+      r.target.x = data.pos.x; r.target.z = data.pos.z; r.target.rotY = data.rotY || 0;
+    }
+  });
+});
+setInterval(() => {
+  const now = Date.now();
+  for (const r of remotePlayers.values()) {
+    if (r.alive && now - r.lastUpdatedMs > STALE_MS) { r.alive = false; r.group.visible = false; }
+  }
+}, 2000);
+
+function startNetworkSync() { stopNetworkSync(); syncInterval = setInterval(syncToFirestore, NETWORK_SYNC_MS); }
+function stopNetworkSync() { if (syncInterval) clearInterval(syncInterval); syncInterval = null; }
+function syncToFirestore() {
+  if (!myDocRef || !player.alive) return;
+  updateDoc(myDocRef, {
+    name: player.name, hue: player.hue, alive: player.alive, ammo: player.ammo,
+    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw,
+    updated_at: serverTimestamp()
+  }).catch(()=>{});
+}
+window.addEventListener('beforeunload', () => { if (myDocRef) deleteDoc(myDocRef).catch(()=>{}); });
+
+// ============== 射擊 / 命中判定 ==============
+const tracerMat = new THREE.LineBasicMaterial({ color: 0x9fe8ff });
+function tryShoot() {
+  if (!running || !player.alive || paused) return;
+  const now = performance.now();
+  if (now - player.lastShotAt < SHOOT_COOLDOWN_MS) return;
+  if (player.ammo <= 0) { flashNoAmmo(); return; }
+  player.lastShotAt = now;
+  player.ammo--;
+
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  raycaster.set(camera.position, dir);
+
+  const targets = [];
+  for (const r of remotePlayers.values()) if (r.alive) targets.push(r.body, r.head);
+  const hits = raycaster.intersectObjects([...solidMeshes, ...targets], false);
+
+  let endPoint = camera.position.clone().add(dir.clone().multiplyScalar(SHOOT_RANGE));
+  if (hits.length > 0) {
+    const hit = hits[0];
+    endPoint = hit.point;
+    const docId = hit.object.userData?.docId;
+    if (docId) {
+      registerHit(docId);
+      showHitMarker();
+    } else {
+      spawnSpark(hit.point);
+    }
+  }
+  drawTracer(camera.position.clone(), endPoint);
+}
+function registerHit(targetId) {
+  const targetRef = doc(collection(db, 'fps_players'), targetId);
+  updateDoc(targetRef, { hp: increment(-1) }).catch(()=>{});
+}
+function drawTracer(from, to) {
+  const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
+  const line = new THREE.Line(geo, tracerMat);
+  scene.add(line);
+  setTimeout(() => scene.remove(line), 90);
+}
+function spawnSpark(point) {
+  const geo = new THREE.SphereGeometry(0.06, 6, 6);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xffe38a });
+  const s = new THREE.Mesh(geo, mat);
+  s.position.copy(point);
+  scene.add(s);
+  setTimeout(() => scene.remove(s), 150);
+}
+function flashNoAmmo() {
+  const el = document.getElementById('ammoCount');
+  el.style.color = '#f66';
+  setTimeout(() => el.style.color = '', 200);
+}
+function flashHit() {
+  const el = document.getElementById('hitFlash');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 200);
+}
+function showHitMarker() {
+  const el = document.getElementById('hitMarker');
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 300);
+}
+
+// ============== HUD ==============
+function renderHpHud() {
+  const row = document.getElementById('hpRow');
+  row.innerHTML = '';
+  for (let i = 0; i < MAX_HP; i++) {
+    const span = document.createElement('span');
+    span.className = 'hp-heart' + (i < player.hp ? '' : ' lost');
+    span.textContent = '❤️';
+    row.appendChild(span);
+  }
+  document.getElementById('ammoCount').textContent = player.ammo;
+}
+
+const minimapCanvas = document.getElementById('minimap');
+const mctx = minimapCanvas.getContext('2d');
+function renderMinimap() {
+  const S = 140, scale = S / (HALF*2);
+  mctx.clearRect(0,0,S,S);
+  mctx.fillStyle = 'rgba(8,10,20,0.85)';
+  mctx.fillRect(0,0,S,S);
+  // 牆壁/障礙物輪廓
+  mctx.strokeStyle = 'rgba(120,200,255,0.35)';
+  mctx.lineWidth = 1;
+  crateSpots.forEach(([x,z,w,d]) => {
+    mctx.strokeRect((x+HALF-w/2)*scale, (z+HALF-d/2)*scale, w*scale, d*scale);
+  });
+  mctx.strokeStyle = 'rgba(255,80,130,0.5)';
+  mctx.strokeRect(1,1,S-2,S-2);
+
+  // 自己
+  const px = (player.x+HALF)*scale, pz = (player.z+HALF)*scale;
+  mctx.fillStyle = '#ffea66';
+  mctx.beginPath(); mctx.arc(px, pz, 4, 0, Math.PI*2); mctx.fill();
+  mctx.strokeStyle = '#ffea66'; mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.moveTo(px, pz); mctx.lineTo(px + Math.sin(yaw)*10, pz + Math.cos(yaw)*10); mctx.stroke();
+
+  // 附近玩家（靠近才顯示）
+  for (const r of remotePlayers.values()) {
+    if (!r.alive) continue;
+    const dist = Math.hypot(r.group.position.x - player.x, r.group.position.z - player.z);
+    if (dist > MINIMAP_REVEAL_DIST) continue;
+    const rx = (r.group.position.x+HALF)*scale, rz = (r.group.position.z+HALF)*scale;
+    mctx.fillStyle = `hsl(${r.hue}, 70%, 60%)`;
+    mctx.beginPath(); mctx.arc(rx, rz, 3, 0, Math.PI*2); mctx.fill();
+  }
+}
+
+function renderStatus() {
+  const alive = 1 + [...remotePlayers.values()].filter(r => r.alive).length;
+  document.getElementById('aliveCount').textContent = alive;
+}
+
+// ============== 主迴圈 ==============
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!running) { renderer.render(scene, camera); return; }
+
+  if (!paused && player.alive) {
+    // 鍵盤（桌機測試）
+    let mx = joyDX, my = joyDY;
+    if (keys['w']) my -= 1;
+    if (keys['s']) my += 1;
+    if (keys['a']) mx -= 1;
+    if (keys['d']) mx += 1;
+    const mag = Math.hypot(mx, my);
+    if (mag > 0.08) {
+      const nx = mx/Math.max(mag,1), ny = my/Math.max(mag,1);
+      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+      const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+      const move = new THREE.Vector3()
+        .addScaledVector(right, nx)
+        .addScaledVector(forward, -ny)
+        .normalize()
+        .multiplyScalar(MOVE_SPEED * dt * Math.min(mag,1));
+      const tryX = player.x + move.x, tryZ = player.z + move.z;
+      if (!collidesAt(tryX, player.z, PLAYER_RADIUS)) player.x = tryX;
+      if (!collidesAt(player.x, tryZ, PLAYER_RADIUS)) player.z = tryZ;
+    }
+
+    camera.position.set(player.x, EYE_HEIGHT, player.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+
+    // 彈匣拾取判定
+    if (!paused) {
+      for (const crate of ammoCrates) {
+        if (!crate.available && performance.now() > crate.cooldownUntil) {
+          crate.available = true; crate.mesh.visible = true;
+        }
+        if (crate.available && performance.now() > crate.cooldownUntil) {
+          const dist = Math.hypot(crate.x - player.x, crate.z - player.z);
+          if (dist < AMMO_PICKUP_DIST) { showQuestion(crate); break; }
+        }
+      }
+    }
+  } else {
+    camera.rotation.order = 'YXZ';
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+
+  // 彈匣旋轉動畫
+  ammoCrates.forEach(c => { c.mesh.rotation.y += dt * 1.2; });
+
+  // 遠端玩家插值移動
+  for (const r of remotePlayers.values()) {
+    r.group.position.x += (r.target.x - r.group.position.x) * 0.18;
+    r.group.position.z += (r.target.z - r.group.position.z) * 0.18;
+    r.group.rotation.y = r.target.rotY;
+  }
+
+  renderHpHud();
+  renderMinimap();
+  renderStatus();
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ============== 開始 / 淘汰 / 重生 ==============
+window.startGame = async function startGame() {
+  const nameInput = document.getElementById('nameInput');
+  const name = (nameInput.value || '').trim() || '玩家';
+  player.name = name;
+  player.hue = Math.random() * 360;
+
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('eliminated').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  document.querySelector('.joystick-base').style.display = 'block';
+  document.getElementById('shootBtn').style.display = 'flex';
+
+  spawnPlayerAt();
+  player.hp = MAX_HP;
+  player.ammo = 0;
+  player.alive = true;
+
+  const payload = {
+    name: player.name, hue: player.hue, alive: true, hp: player.hp, ammo: player.ammo,
+    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, updated_at: serverTimestamp()
+  };
+  if (!myDocRef) myDocRef = doc(collection(db, 'fps_players'));
+  await setDoc(myDocRef, payload).catch(()=>{});
+  startNetworkSync();
+
+  running = true;
+};
+
+function spawnPlayerAt() {
+  const spot = randomFreeSpot(PLAYER_RADIUS);
+  player.x = spot.x; player.z = spot.z;
+  yaw = Math.random() * Math.PI * 2; pitch = 0;
+}
+
+function eliminatePlayer() {
+  player.alive = false;
+  stopNetworkSync();
+  if (myDocRef) updateDoc(myDocRef, { alive: false, updated_at: serverTimestamp() }).catch(()=>{});
+  document.getElementById('eliminated').style.display = 'flex';
+}
+
+window.respawnPlayer = async function respawnPlayer() {
+  document.getElementById('eliminated').style.display = 'none';
+  spawnPlayerAt();
+  player.hp = MAX_HP;
+  player.ammo = 0;
+  player.alive = true;
+  if (myDocRef) {
+    await updateDoc(myDocRef, {
+      alive: true, hp: player.hp, ammo: player.ammo,
+      pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, updated_at: serverTimestamp()
+    }).catch(()=>{});
+  }
+  startNetworkSync();
+};
+
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.startGame(); });
+</script>
+</body>
+</html>
