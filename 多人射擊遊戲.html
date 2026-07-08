@@ -163,8 +163,13 @@
     box-shadow: 0 4px 14px rgba(0,0,0,0.35);
     transform: translate(-50%,-50%); pointer-events: none;
   }
+  .look-base {
+    left: auto; right: 26px; bottom: 150px;
+    width: 140px; height: 140px;
+  }
+  .look-knob { background: linear-gradient(135deg, #f96 0%, #d34 100%); }
   #shootBtn {
-    position: fixed; right: 34px; bottom: 40px;
+    position: fixed; right: 40px; bottom: 20px;
     width: 100px; height: 100px; border-radius: 50%;
     background: radial-gradient(circle at 35% 30%, #ff8a5c, #d3401f);
     border: 3px solid rgba(255,255,255,0.4);
@@ -264,7 +269,7 @@
     <button class="start-btn" onclick="startGame()">開 始 戰 鬥</button>
     <div class="controls">
       🌐 <strong style="color:#cef">跟同班同學一起連線</strong>，在同一個倉庫裡對戰<br>
-      📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、螢幕右側<span class="key">拖曳</span>轉視角、右下角<span class="key">🔫按鈕</span>射擊<br>
+      📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、右下角<span class="key">搖桿</span>轉視角、<span class="key">🔫按鈕</span>射擊<br>
       🔋 <strong style="color:#ffd84a">彈匣：</strong>走近會先出數學題，答對才能領取 5 發子彈<br>
       ❤️ <strong style="color:#ff7caa">血量：</strong>每人 5 滴血，被擊中 5 次淘汰，其他人繼續戰鬥<br>
       🗺️ 小地圖只會顯示<strong style="color:#cef">你自己</strong>的位置，其他玩家要靠近才會出現
@@ -280,11 +285,14 @@
   <div class="crosshair"></div>
   <div id="hitFlash"></div>
   <div id="hitMarker">🎯 命中！</div>
-  <div class="look-hint">拖曳畫面右側轉視角</div>
+  <div class="look-hint">左搖桿移動・右搖桿轉視角</div>
 </div>
 
 <div class="joystick-base" id="joyBase" style="display:none;">
   <div class="joystick-knob" id="joyKnob"></div>
+</div>
+<div class="joystick-base look-base" id="lookBase" style="display:none;">
+  <div class="joystick-knob look-knob" id="lookKnob"></div>
 </div>
 <div id="shootBtn" style="display:none;">🔫</div>
 
@@ -504,87 +512,74 @@ window.submitAnswer = function submitAnswer() {
 };
 document.getElementById('mathInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.submitAnswer(); });
 
-// ============== 觸控輸入（搖桿 + 拖曳視角 + 射擊）==============
+// ============== 觸控輸入（雙搖桿：左移動／右視角 + 射擊鍵）==============
 const joyBase = document.getElementById('joyBase');
 const joyKnob = document.getElementById('joyKnob');
+const lookBase = document.getElementById('lookBase');
+const lookKnob = document.getElementById('lookKnob');
 const shootBtn = document.getElementById('shootBtn');
 const JOY_MAX = 55;
-let joyTouchId = null, joyDX = 0, joyDY = 0;
-let lookTouchId = null, lookLastX = 0, lookLastY = 0;
+const LOOK_DEAD_ZONE = 0.12;
+const LOOK_TURN_RATE = 1.5; // 每秒最大轉動弧度，放慢速度避免頭暈
+let joyPointerId = null, joyDX = 0, joyDY = 0;
+let lookPointerId = null, lookDX = 0, lookDY = 0;
 let yaw = 0, pitch = 0;
-const LOOK_SENS = 0.0032;
 
-function inJoyBase(x, y) {
-  const r = joyBase.getBoundingClientRect();
+function updateStick(base, knob, clientX, clientY) {
+  const r = base.getBoundingClientRect();
   const cx = r.left + r.width/2, cy = r.top + r.height/2;
-  return Math.hypot(x-cx, y-cy) < r.width * 0.9;
-}
-function inShootBtn(x, y) {
-  const r = shootBtn.getBoundingClientRect();
-  const cx = r.left + r.width/2, cy = r.top + r.height/2;
-  return Math.hypot(x-cx, y-cy) < r.width * 0.7;
-}
-function updateJoy(x, y) {
-  const r = joyBase.getBoundingClientRect();
-  const cx = r.left + r.width/2, cy = r.top + r.height/2;
-  let dx = x-cx, dy = y-cy;
-  const d = Math.hypot(dx,dy);
+  const dx = clientX - cx, dy = clientY - cy;
+  const d = Math.hypot(dx, dy);
   const clamped = Math.min(d, JOY_MAX);
-  const ang = Math.atan2(dy,dx);
-  const kx = Math.cos(ang)*clamped, ky = Math.sin(ang)*clamped;
-  joyKnob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
-  joyDX = kx / JOY_MAX; joyDY = ky / JOY_MAX;
+  const ang = Math.atan2(dy, dx);
+  const kx = Math.cos(ang) * clamped, ky = Math.sin(ang) * clamped;
+  knob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+  return { x: kx / JOY_MAX, y: ky / JOY_MAX };
 }
-function resetJoy() { joyTouchId = null; joyDX = 0; joyDY = 0; joyKnob.style.transform = 'translate(-50%,-50%)'; }
+function resetStick(knob) { knob.style.transform = 'translate(-50%,-50%)'; }
 
-window.addEventListener('touchstart', e => {
-  for (const t of e.changedTouches) {
-    if (joyTouchId === null && inJoyBase(t.clientX, t.clientY)) {
-      joyTouchId = t.identifier; updateJoy(t.clientX, t.clientY);
-    } else if (inShootBtn(t.clientX, t.clientY)) {
-      tryShoot();
-    } else if (lookTouchId === null) {
-      lookTouchId = t.identifier; lookLastX = t.clientX; lookLastY = t.clientY;
-    }
-  }
-}, { passive: true });
-window.addEventListener('touchmove', e => {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) updateJoy(t.clientX, t.clientY);
-    else if (t.identifier === lookTouchId) {
-      const dx = t.clientX - lookLastX, dy = t.clientY - lookLastY;
-      lookLastX = t.clientX; lookLastY = t.clientY;
-      yaw -= dx * LOOK_SENS * 60;
-      pitch -= dy * LOOK_SENS * 60;
-      pitch = Math.max(-1.3, Math.min(1.3, pitch));
-    }
-  }
-}, { passive: true });
-function touchEndHandler(e) {
-  for (const t of e.changedTouches) {
-    if (t.identifier === joyTouchId) resetJoy();
-    if (t.identifier === lookTouchId) lookTouchId = null;
-  }
+joyBase.addEventListener('pointerdown', e => {
+  joyPointerId = e.pointerId;
+  try { joyBase.setPointerCapture(e.pointerId); } catch (err) {}
+  const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY);
+  joyDX = p.x; joyDY = p.y;
+});
+joyBase.addEventListener('pointermove', e => {
+  if (joyPointerId !== e.pointerId) return;
+  const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY);
+  joyDX = p.x; joyDY = p.y;
+});
+function releaseJoy(e) {
+  if (joyPointerId !== e.pointerId) return;
+  joyPointerId = null; joyDX = 0; joyDY = 0; resetStick(joyKnob);
 }
-window.addEventListener('touchend', touchEndHandler, { passive: true });
-window.addEventListener('touchcancel', touchEndHandler, { passive: true });
+joyBase.addEventListener('pointerup', releaseJoy);
+joyBase.addEventListener('pointercancel', releaseJoy);
 
-// 桌機測試用：滑鼠拖曳看方向、WASD 移動、點擊射擊
-let mouseDown = false, mouseLastX = 0, mouseLastY = 0;
+lookBase.addEventListener('pointerdown', e => {
+  lookPointerId = e.pointerId;
+  try { lookBase.setPointerCapture(e.pointerId); } catch (err) {}
+  const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY);
+  lookDX = p.x; lookDY = p.y;
+});
+lookBase.addEventListener('pointermove', e => {
+  if (lookPointerId !== e.pointerId) return;
+  const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY);
+  lookDX = p.x; lookDY = p.y;
+});
+function releaseLook(e) {
+  if (lookPointerId !== e.pointerId) return;
+  lookPointerId = null; lookDX = 0; lookDY = 0; resetStick(lookKnob);
+}
+lookBase.addEventListener('pointerup', releaseLook);
+lookBase.addEventListener('pointercancel', releaseLook);
+
+shootBtn.addEventListener('pointerdown', e => { e.preventDefault(); tryShoot(); });
+
+// 桌機測試用：WASD 移動
 const keys = {};
 window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
 window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-canvas.addEventListener('mousedown', e => { mouseDown = true; mouseLastX = e.clientX; mouseLastY = e.clientY; });
-window.addEventListener('mouseup', () => { mouseDown = false; });
-window.addEventListener('mousemove', e => {
-  if (!mouseDown) return;
-  const dx = e.clientX - mouseLastX, dy = e.clientY - mouseLastY;
-  mouseLastX = e.clientX; mouseLastY = e.clientY;
-  yaw -= dx * LOOK_SENS * 60;
-  pitch -= dy * LOOK_SENS * 60;
-  pitch = Math.max(-1.3, Math.min(1.3, pitch));
-});
-canvas.addEventListener('click', () => tryShoot());
 
 // ============== 玩家 ==============
 const player = {
@@ -716,7 +711,10 @@ function tryShoot() {
       spawnSpark(hit.point);
     }
   }
-  drawTracer(camera.position.clone(), endPoint);
+  const gunOrigin = camera.localToWorld(new THREE.Vector3(0.28, -0.22, -0.35));
+  drawTracer(gunOrigin, endPoint);
+  spawnProjectile(gunOrigin, endPoint);
+  spawnMuzzleFlash(gunOrigin);
 }
 function registerHit(targetId) {
   const targetRef = doc(collection(db, 'fps_players'), targetId);
@@ -727,6 +725,34 @@ function drawTracer(from, to) {
   const line = new THREE.Line(geo, tracerMat);
   scene.add(line);
   setTimeout(() => scene.remove(line), 90);
+}
+const activeProjectiles = [];
+const projectileGeo = new THREE.SphereGeometry(0.09, 8, 8);
+const projectileMat = new THREE.MeshBasicMaterial({ color: 0xaef4ff });
+function spawnProjectile(from, to) {
+  const mesh = new THREE.Mesh(projectileGeo, projectileMat);
+  mesh.position.copy(from);
+  scene.add(mesh);
+  const light = new THREE.PointLight(0x9fe8ff, 1.2, 3);
+  mesh.add(light);
+  activeProjectiles.push({ mesh, from: from.clone(), to: to.clone(), start: performance.now(), duration: 130 });
+}
+function updateProjectiles() {
+  const now = performance.now();
+  for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+    const p = activeProjectiles[i];
+    const t = (now - p.start) / p.duration;
+    if (t >= 1) { scene.remove(p.mesh); activeProjectiles.splice(i, 1); continue; }
+    p.mesh.position.lerpVectors(p.from, p.to, t);
+  }
+}
+function spawnMuzzleFlash(point) {
+  const geo = new THREE.SphereGeometry(0.13, 8, 8);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xdfffff });
+  const s = new THREE.Mesh(geo, mat);
+  s.position.copy(point);
+  scene.add(s);
+  setTimeout(() => scene.remove(s), 70);
 }
 function spawnSpark(point) {
   const geo = new THREE.SphereGeometry(0.06, 6, 6);
@@ -812,6 +838,14 @@ function animate() {
   if (!running) { renderer.render(scene, camera); return; }
 
   if (!paused && player.alive) {
+    // 右搖桿：連續轉動視角（速度上限固定，避免轉太快頭暈）
+    const lookMag = Math.hypot(lookDX, lookDY);
+    if (lookMag > LOOK_DEAD_ZONE) {
+      yaw -= lookDX * LOOK_TURN_RATE * dt;
+      pitch -= lookDY * LOOK_TURN_RATE * dt * 0.75;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    }
+
     // 鍵盤（桌機測試）
     let mx = joyDX, my = joyDY;
     if (keys['w']) my -= 1;
@@ -866,6 +900,7 @@ function animate() {
     r.group.rotation.y = r.target.rotY;
   }
 
+  updateProjectiles();
   renderHpHud();
   renderMinimap();
   renderStatus();
@@ -884,7 +919,8 @@ window.startGame = async function startGame() {
   document.getElementById('menu').style.display = 'none';
   document.getElementById('eliminated').style.display = 'none';
   document.getElementById('hud').style.display = 'block';
-  document.querySelector('.joystick-base').style.display = 'block';
+  document.getElementById('joyBase').style.display = 'block';
+  document.getElementById('lookBase').style.display = 'block';
   document.getElementById('shootBtn').style.display = 'flex';
 
   spawnPlayerAt();
