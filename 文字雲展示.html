@@ -23,9 +23,8 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
-            max-width: 1100px;
+            max-width: 1300px;
             margin: 0 auto;
-            min-height: 500px;
         }
 
         h1 {
@@ -41,30 +40,91 @@
             margin-bottom: 30px;
         }
 
-        .cloud {
+        .layout {
+            display: flex;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        .cloud-panel {
+            flex: 2;
+            min-width: 0;
+            min-height: 400px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
             gap: 14px;
-            min-height: 350px;
+            border-right: 1px solid #eee;
+            padding-right: 30px;
         }
 
-        .cloud span {
+        .cloud-panel span {
             font-weight: 700;
             line-height: 1;
             transition: transform 0.2s ease;
         }
 
-        .cloud span:hover {
+        .cloud-panel span:hover {
             transform: scale(1.15);
+        }
+
+        .data-panel {
+            flex: 1;
+            min-width: 240px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .data-panel h2 {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead th {
+            text-align: left;
+            color: #666;
+            padding: 6px 8px;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+            background: white;
+        }
+
+        tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        tbody tr:hover {
+            background: #f9f9fb;
         }
 
         .empty {
             text-align: center;
             color: #999;
-            font-size: 1.2em;
+            font-size: 1.1em;
             width: 100%;
+        }
+
+        @media (max-width: 800px) {
+            .layout {
+                flex-direction: column;
+            }
+            .cloud-panel {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+                padding-right: 0;
+                padding-bottom: 20px;
+            }
         }
     </style>
 </head>
@@ -72,7 +132,18 @@
     <div class="container">
         <h1>☁️ 即時文字雲</h1>
         <div class="count" id="count">目前共 0 筆投稿</div>
-        <div class="cloud" id="cloud"></div>
+        <div class="layout">
+            <div class="cloud-panel" id="cloud"></div>
+            <div class="data-panel">
+                <h2>📋 資料庫（wordcloud_words）</h2>
+                <table>
+                    <thead>
+                        <tr><th>詞語</th><th>時間</th></tr>
+                    </thead>
+                    <tbody id="dataBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -93,36 +164,64 @@
 
         const cloudEl = document.getElementById("cloud");
         const countEl = document.getElementById("count");
+        const dataBodyEl = document.getElementById("dataBody");
 
         const colors = ["#667eea", "#764ba2", "#e07798", "#3c78d8", "#149e60", "#eaa041", "#cc3a21"];
 
+        function formatTime(timestamp) {
+            if (!timestamp) return "—";
+            const d = timestamp.toDate();
+            return d.toLocaleString("zh-TW", { hour12: false });
+        }
+
         onSnapshot(collection(db, "wordcloud_words"), (snapshot) => {
+            const docs = [];
             const tally = new Map();
+
             snapshot.forEach((doc) => {
-                const word = (doc.data().word || "").trim();
+                const data = doc.data();
+                const word = (data.word || "").trim();
                 if (!word) return;
                 tally.set(word, (tally.get(word) || 0) + 1);
+                docs.push({ word, created_at: data.created_at });
             });
 
             countEl.textContent = `目前共 ${snapshot.size} 筆投稿，${tally.size} 個不同詞語`;
-            cloudEl.innerHTML = "";
 
+            // 文字雲
+            cloudEl.innerHTML = "";
             if (tally.size === 0) {
                 cloudEl.innerHTML = '<div class="empty">還沒有人投稿，等待第一筆資料...</div>';
-                return;
+            } else {
+                const entries = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+                const maxCount = entries[0][1];
+                entries.forEach(([word, count], i) => {
+                    const span = document.createElement("span");
+                    span.textContent = word;
+                    const scale = 1 + (count / maxCount) * 2.5;
+                    span.style.fontSize = `${1 + scale}em`;
+                    span.style.color = colors[i % colors.length];
+                    cloudEl.appendChild(span);
+                });
             }
 
-            const entries = [...tally.entries()].sort((a, b) => b[1] - a[1]);
-            const maxCount = entries[0][1];
-
-            entries.forEach(([word, count], i) => {
-                const span = document.createElement("span");
-                span.textContent = word;
-                const scale = 1 + (count / maxCount) * 2.5;
-                span.style.fontSize = `${1 + scale}em`;
-                span.style.color = colors[i % colors.length];
-                cloudEl.appendChild(span);
-            });
+            // 資料庫列表（新到舊）
+            docs.sort((a, b) => (b.created_at?.toMillis?.() || 0) - (a.created_at?.toMillis?.() || 0));
+            dataBodyEl.innerHTML = "";
+            if (docs.length === 0) {
+                dataBodyEl.innerHTML = '<tr><td colspan="2" class="empty">尚無資料</td></tr>';
+            } else {
+                docs.forEach(({ word, created_at }) => {
+                    const tr = document.createElement("tr");
+                    const wordTd = document.createElement("td");
+                    wordTd.textContent = word;
+                    const timeTd = document.createElement("td");
+                    timeTd.textContent = formatTime(created_at);
+                    tr.appendChild(wordTd);
+                    tr.appendChild(timeTd);
+                    dataBodyEl.appendChild(tr);
+                });
+            }
         }, (err) => {
             console.error(err);
             cloudEl.innerHTML = '<div class="empty">讀取失敗，請檢查網路連線或 Firestore 規則</div>';
