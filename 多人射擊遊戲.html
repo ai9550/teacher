@@ -228,6 +228,18 @@
     background: rgba(255,255,255,0.06); border: 2px solid rgba(120,200,255,0.4);
     border-radius: 14px; color: #fff; outline: none;
   }
+  .numpad {
+    display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(4, 56px);
+    gap: 10px; justify-content: center; margin: 0 auto 20px;
+  }
+  .numpad button {
+    font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700;
+    color: #dfeeff; background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(120,200,255,0.3); border-radius: 12px; cursor: pointer;
+    touch-action: manipulation;
+  }
+  .numpad button:active { background: rgba(80,200,255,0.35); transform: scale(0.96); }
+  .numpad button.np-action { font-size: 18px; color: #ffd84a; }
   .math-submit {
     display: block; margin: 0 auto; padding: 11px 50px; font-size: 18px;
     font-family: 'Orbitron', sans-serif; letter-spacing: 5px; font-weight: 700;
@@ -310,7 +322,13 @@
   <div class="math-card" id="mathCard">
     <div class="math-title">🧮 領取彈藥：答對才能拿到 5 發子彈</div>
     <div class="math-question" id="mathQuestion">5 + 3 = ?</div>
-    <input id="mathInput" type="number" inputmode="numeric" placeholder="？">
+    <input id="mathInput" type="text" inputmode="none" readonly placeholder="？">
+    <div class="numpad" id="numpad">
+      <button data-num="7">7</button><button data-num="8">8</button><button data-num="9">9</button>
+      <button data-num="4">4</button><button data-num="5">5</button><button data-num="6">6</button>
+      <button data-num="1">1</button><button data-num="2">2</button><button data-num="3">3</button>
+      <button class="np-action" data-action="clear">C</button><button data-num="0">0</button><button class="np-action" data-action="back">⌫</button>
+    </div>
     <button class="math-submit" onclick="submitAnswer()">確 定</button>
     <div class="math-feedback" id="mathFeedback"></div>
   </div>
@@ -511,6 +529,19 @@ window.submitAnswer = function submitAnswer() {
   }
 };
 document.getElementById('mathInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.submitAnswer(); });
+document.querySelectorAll('#numpad button').forEach(btn => {
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const inp = document.getElementById('mathInput');
+    if (btn.dataset.num !== undefined) {
+      if (inp.value.length < 3) inp.value += btn.dataset.num;
+    } else if (btn.dataset.action === 'clear') {
+      inp.value = '';
+    } else if (btn.dataset.action === 'back') {
+      inp.value = inp.value.slice(0, -1);
+    }
+  });
+});
 
 // ============== 觸控輸入（雙搖桿：左移動／右視角 + 射擊鍵）==============
 const joyBase = document.getElementById('joyBase');
@@ -594,6 +625,35 @@ const remotePlayers = new Map(); // docId -> {mesh, target:{x,z,rotY}, name, hue
 const raycaster = new THREE.Raycaster();
 raycaster.far = SHOOT_RANGE;
 
+function makeNameplate() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 72;
+  const ctx2d = canvas.getContext('2d');
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(1.5, 0.42, 1);
+  sprite.position.y = 2.15;
+  return { sprite, canvas, ctx2d, texture, lastName: null, lastHp: null };
+}
+function drawNameplate(np, name, hp) {
+  if (np.lastName === name && np.lastHp === hp) return;
+  np.lastName = name; np.lastHp = hp;
+  const { canvas, ctx2d, texture } = np;
+  ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+  ctx2d.textAlign = 'center';
+  ctx2d.font = '700 30px "Noto Sans TC", sans-serif';
+  ctx2d.lineWidth = 5;
+  ctx2d.strokeStyle = 'rgba(0,0,0,0.75)';
+  ctx2d.strokeText(name, 128, 32);
+  ctx2d.fillStyle = '#fff';
+  ctx2d.fillText(name, 128, 32);
+  const hearts = '❤'.repeat(Math.max(0, hp)) + '🖤'.repeat(Math.max(0, MAX_HP - hp));
+  ctx2d.font = '26px sans-serif';
+  ctx2d.fillText(hearts, 128, 64);
+  texture.needsUpdate = true;
+}
+
 function makeCharacterMesh(hue) {
   const color = new THREE.Color().setHSL(hue/360, 0.75, 0.55);
   const group = new THREE.Group();
@@ -607,20 +667,21 @@ function makeCharacterMesh(hue) {
     new THREE.MeshStandardMaterial({ color: 0xffe4c4, roughness: 0.7 })
   );
   head.position.y = 1.62;
-  group.add(body, head);
+  const nameplate = makeNameplate();
+  group.add(body, head, nameplate.sprite);
   group.userData.isPlayer = true;
   body.userData.isPlayer = true;
   head.userData.isPlayer = true;
-  return { group, body, head };
+  return { group, body, head, nameplate };
 }
 
 function ensureRemote(id, data) {
   let r = remotePlayers.get(id);
   if (!r) {
-    const { group, body, head } = makeCharacterMesh(data.hue || 0);
+    const { group, body, head, nameplate } = makeCharacterMesh(data.hue || 0);
     body.userData.docId = id; head.userData.docId = id;
     scene.add(group);
-    r = { group, body, head, target: { x: data.pos?.x||0, z: data.pos?.z||0, rotY: 0 }, name: '', hue: 0, alive: true, hp: MAX_HP, lastUpdatedMs: Date.now() };
+    r = { group, body, head, nameplate, target: { x: data.pos?.x||0, z: data.pos?.z||0, rotY: 0 }, name: '', hue: 0, alive: true, hp: MAX_HP, lastUpdatedMs: Date.now() };
     remotePlayers.set(id, r);
   }
   return r;
@@ -652,6 +713,7 @@ onSnapshot(collection(db, 'fps_players'), snapshot => {
     r.name = data.name || 'Guest';
     r.hue = data.hue || 0;
     r.hp = typeof data.hp === 'number' ? data.hp : MAX_HP;
+    drawNameplate(r.nameplate, r.name, Math.max(0, r.hp));
     const updatedMs = data.updated_at?.toMillis?.() ?? now;
     r.lastUpdatedMs = updatedMs;
     const stale = now - updatedMs > STALE_MS;
@@ -855,7 +917,7 @@ function animate() {
     const mag = Math.hypot(mx, my);
     if (mag > 0.08) {
       const nx = mx/Math.max(mag,1), ny = my/Math.max(mag,1);
-      const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
+      const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
       const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
       const move = new THREE.Vector3()
         .addScaledVector(right, nx)
