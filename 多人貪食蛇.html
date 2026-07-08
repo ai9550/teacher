@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多人貪食蛇</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        /* 加入畫面 */
+        #joinScreen {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #joinScreen input {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: inherit;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        #joinScreen input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 14px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #joinScreen button {
+            width: 100%;
+        }
+
+        .hint {
+            color: #666;
+            margin-top: 16px;
+            font-size: 0.95em;
+        }
+
+        /* 遊戲畫面 */
+        #gameScreen {
+            display: none;
+        }
+
+        .layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .board-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        canvas {
+            background: #f5f7fa;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.65);
+            border-radius: 8px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            color: white;
+            text-align: center;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .overlay .big {
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+
+        .data-panel {
+            flex: 1;
+            min-width: 220px;
+            max-width: 280px;
+        }
+
+        .data-panel h2 {
+            font-size: 1.05em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        thead th {
+            text-align: left;
+            color: #666;
+            padding: 6px 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        tbody td {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .controls-hint {
+            text-align: center;
+            color: #666;
+            margin-top: 14px;
+            font-size: 0.9em;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 46px);
+            grid-template-rows: repeat(3, 46px);
+            gap: 6px;
+            justify-content: center;
+            margin: 16px auto 0;
+        }
+
+        .dpad button {
+            padding: 0;
+            font-size: 1.3em;
+        }
+
+        .dpad .up { grid-column: 2; grid-row: 1; }
+        .dpad .left { grid-column: 1; grid-row: 2; }
+        .dpad .right { grid-column: 3; grid-row: 2; }
+        .dpad .down { grid-column: 2; grid-row: 3; }
+
+        .leave {
+            display: block;
+            margin: 20px auto 0;
+            background: #999;
+        }
+
+        @media (max-width: 780px) {
+            .layout {
+                flex-direction: column;
+                align-items: center;
+            }
+            .data-panel {
+                max-width: 440px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐍 多人貪食蛇</h1>
+
+        <div id="joinScreen">
+            <input type="text" id="nameInput" maxlength="8" placeholder="輸入你的名字" autocomplete="off">
+            <button id="joinBtn">加入遊戲</button>
+            <p class="hint">跟其他同學一起連線，方向鍵/WASD 控制，吃到食物會變長，撞牆或撞到蛇就淘汰</p>
+        </div>
+
+        <div id="gameScreen">
+            <div class="layout">
+                <div class="board-wrap">
+                    <canvas id="board" width="440" height="440"></canvas>
+                    <div class="overlay" id="overlay">
+                        <div class="big" id="overlayText">遊戲結束</div>
+                        <button id="respawnBtn">重新開始</button>
+                    </div>
+                </div>
+                <div class="data-panel">
+                    <h2>🏆 即時計分板</h2>
+                    <table>
+                        <thead>
+                            <tr><th>玩家</th><th>分數</th><th>狀態</th></tr>
+                        </thead>
+                        <tbody id="leaderboardBody"></tbody>
+                    </table>
+                    <button class="leave" id="leaveBtn">離開遊戲</button>
+                </div>
+            </div>
+            <p class="controls-hint">方向鍵 / WASD 控制方向</p>
+            <div class="dpad">
+                <button class="up" data-dir="up">▲</button>
+                <button class="left" data-dir="left">◀</button>
+                <button class="right" data-dir="right">▶</button>
+                <button class="down" data-dir="down">▼</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import {
+            getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
+            onSnapshot, serverTimestamp, getDoc, setDoc
+        } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            projectId: "mygame-1af09",
+            appId: "1:388340775447:web:0769fb994834e68939ba52",
+            storageBucket: "mygame-1af09.firebasestorage.app",
+            apiKey: "AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM",
+            authDomain: "mygame-1af09.firebaseapp.com",
+            messagingSenderId: "388340775447"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const GRID = 20;
+        const CELL = 22;
+        const TICK_MS = 180;
+        const WRITE_EVERY = 2; // 每 2 個 tick 才寫回 Firestore，降低寫入量
+        const STALE_MS = 10000; // 超過 10 秒沒更新視為離線
+
+        const COLORS = ["#667eea", "#e07798", "#3c78d8", "#149e60", "#eaa041", "#cc3a21", "#8e63ce", "#16a766"];
+
+        const canvas = document.getElementById("board");
+        const ctx = canvas.getContext("2d");
+        const overlay = document.getElementById("overlay");
+        const overlayText = document.getElementById("overlayText");
+        const leaderboardBody = document.getElementById("leaderboardBody");
+
+        let myDocRef = null;
+        let myColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+        let myName = "";
+        let myBody = [];
+        let myDir = { x: 1, y: 0 };
+        let pendingDir = { x: 1, y: 0 };
+        let alive = false;
+        let score = 0;
+        let tickCount = 0;
+        let loopHandle = null;
+
+        let playersCache = {}; // 其他玩家（含自己）最新快照
+        let foodPos = { x: 10, y: 10 };
+
+        function randCell() {
+            return { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) };
+        }
+
+        function cellsOfBody(body) {
+            return new Set(body.map((c) => `${c.x},${c.y}`));
+        }
+
+        function isOccupied(pos, excludeSelf) {
+            for (const [id, p] of Object.entries(playersCache)) {
+                if (excludeSelf && myDocRef && id === myDocRef.id) continue;
+                if (!p.alive) continue;
+                for (const c of p.body || []) {
+                    if (c.x === pos.x && c.y === pos.y) return true;
+                }
+            }
+            return false;
+        }
+
+        function randomFreeCell() {
+            for (let i = 0; i < 30; i++) {
+                const c = randCell();
+                if (!isOccupied(c, false)) return c;
+            }
+            return randCell();
+        }
+
+        // ---- Firestore 監聽：所有玩家 ----
+        onSnapshot(collection(db, "snake_players"), (snapshot) => {
+            const now = Date.now();
+            const next = {};
+            snapshot.forEach((d) => {
+                const data = d.data();
+                const updatedMs = data.updated_at?.toMillis?.() ?? now;
+                next[d.id] = { ...data, stale: now - updatedMs > STALE_MS };
+            });
+            playersCache = next;
+            renderLeaderboard();
+            if (!loopHandle) renderBoard(); // 遊戲迴圈未啟動時也要畫出其他玩家
+        });
+
+        onSnapshot(doc(db, "snake_food", "current"), (d) => {
+            if (d.exists()) foodPos = d.data();
+            else ensureFoodExists();
+        });
+
+        async function ensureFoodExists() {
+            const ref = doc(db, "snake_food", "current");
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                await setDoc(ref, randCell());
+            }
+        }
+        ensureFoodExists();
+
+        function renderLeaderboard() {
+            const entries = Object.values(playersCache)
+                .filter((p) => p.name)
+                .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+            leaderboardBody.innerHTML = "";
+            if (entries.length === 0) {
+                leaderboardBody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#999;">還沒有玩家</td></tr>';
+                return;
+            }
+            entries.forEach((p) => {
+                const tr = document.createElement("tr");
+                const status = !p.alive ? "淘汰" : (p.stale ? "離線" : "存活");
+                tr.innerHTML = `<td><span class="dot" style="background:${p.color}"></span>${p.name}</td><td>${p.score || 0}</td><td>${status}</td>`;
+                leaderboardBody.appendChild(tr);
+            });
+        }
+
+        function renderBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 食物
+            ctx.fillStyle = "#cc3a21";
+            ctx.beginPath();
+            ctx.arc(foodPos.x * CELL + CELL / 2, foodPos.y * CELL + CELL / 2, CELL / 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 其他玩家
+            for (const [id, p] of Object.entries(playersCache)) {
+                if (myDocRef && id === myDocRef.id) continue;
+                if (!p.alive || p.stale) continue;
+                drawSnake(p.body, p.color, p.name);
+            }
+
+            // 自己畫在最上層
+            if (alive && myBody.length) {
+                drawSnake(myBody, myColor, myName + "（你）", true);
+            }
+        }
+
+        function drawSnake(body, color, label, isSelf) {
+            ctx.fillStyle = color;
+            (body || []).forEach((c, i) => {
+                ctx.globalAlpha = i === 0 ? 1 : 0.75;
+                ctx.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
+            });
+            ctx.globalAlpha = 1;
+            if (body && body.length) {
+                ctx.fillStyle = "#333";
+                ctx.font = "11px 'Microsoft JhengHei'";
+                ctx.fillText(label, body[0].x * CELL, body[0].y * CELL - 4);
+            }
+        }
+
+        // ---- 移動與碰撞 ----
+        function tick() {
+            if (!alive) return;
+
+            if ((pendingDir.x !== -myDir.x || pendingDir.y !== -myDir.y)) {
+                myDir = pendingDir;
+            }
+
+            const head = myBody[0];
+            const newHead = { x: head.x + myDir.x, y: head.y + myDir.y };
+
+            // 撞牆
+            if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
+                return die();
+            }
+            // 撞自己
+            if (myBody.some((c) => c.x === newHead.x && c.y === newHead.y)) {
+                return die();
+            }
+            // 撞其他玩家
+            for (const [id, p] of Object.entries(playersCache)) {
+                if (myDocRef && id === myDocRef.id) continue;
+                if (!p.alive || p.stale) continue;
+                if ((p.body || []).some((c) => c.x === newHead.x && c.y === newHead.y)) {
+                    return die();
+                }
+            }
+
+            const ateFood = newHead.x === foodPos.x && newHead.y === foodPos.y;
+            myBody = [newHead, ...myBody];
+            if (ateFood) {
+                score += 1;
+                setDoc(doc(db, "snake_food", "current"), randomFreeCell()).catch(() => {});
+            } else {
+                myBody.pop();
+            }
+
+            tickCount++;
+            const shouldWrite = ateFood || tickCount % WRITE_EVERY === 0;
+            if (shouldWrite) syncToFirestore();
+            renderBoard();
+        }
+
+        async function syncToFirestore() {
+            if (!myDocRef) return;
+            try {
+                await updateDoc(myDocRef, {
+                    body: myBody,
+                    score,
+                    alive,
+                    updated_at: serverTimestamp()
+                });
+            } catch (err) {
+                console.error("sync failed", err);
+            }
+        }
+
+        function die() {
+            alive = false;
+            clearInterval(loopHandle);
+            loopHandle = null;
+            syncToFirestore();
+            overlayText.textContent = `💀 遊戲結束！分數：${score}`;
+            overlay.classList.add("show");
+            renderBoard();
+        }
+
+        function startLoop() {
+            if (loopHandle) clearInterval(loopHandle);
+            loopHandle = setInterval(tick, TICK_MS);
+        }
+
+        async function joinGame() {
+            const name = document.getElementById("nameInput").value.trim();
+            if (!name) return;
+            myName = name;
+
+            const spawn = randomFreeCell();
+            myDir = { x: 1, y: 0 };
+            pendingDir = { x: 1, y: 0 };
+            myBody = [spawn, { x: spawn.x - 1, y: spawn.y }, { x: spawn.x - 2, y: spawn.y }].map((c) => ({
+                x: ((c.x % GRID) + GRID) % GRID,
+                y: c.y
+            }));
+            score = 0;
+            tickCount = 0;
+            alive = true;
+
+            myDocRef = await addDoc(collection(db, "snake_players"), {
+                name: myName,
+                color: myColor,
+                body: myBody,
+                score,
+                alive: true,
+                updated_at: serverTimestamp()
+            });
+
+            document.getElementById("joinScreen").style.display = "none";
+            document.getElementById("gameScreen").style.display = "block";
+            overlay.classList.remove("show");
+            startLoop();
+        }
+
+        async function respawn() {
+            const spawn = randomFreeCell();
+            myDir = { x: 1, y: 0 };
+            pendingDir = { x: 1, y: 0 };
+            myBody = [spawn, { x: spawn.x - 1, y: spawn.y }, { x: spawn.x - 2, y: spawn.y }].map((c) => ({
+                x: ((c.x % GRID) + GRID) % GRID,
+                y: c.y
+            }));
+            score = 0;
+            tickCount = 0;
+            alive = true;
+            overlay.classList.remove("show");
+            await syncToFirestore();
+            startLoop();
+        }
+
+        async function leaveGame() {
+            alive = false;
+            if (loopHandle) clearInterval(loopHandle);
+            loopHandle = null;
+            if (myDocRef) {
+                try { await deleteDoc(myDocRef); } catch (e) {}
+            }
+            myDocRef = null;
+            document.getElementById("gameScreen").style.display = "none";
+            document.getElementById("joinScreen").style.display = "block";
+            document.getElementById("nameInput").value = "";
+        }
+
+        function setDirection(dir) {
+            const map = {
+                up: { x: 0, y: -1 },
+                down: { x: 0, y: 1 },
+                left: { x: -1, y: 0 },
+                right: { x: 1, y: 0 }
+            };
+            pendingDir = map[dir];
+        }
+
+        document.getElementById("joinBtn").addEventListener("click", joinGame);
+        document.getElementById("nameInput").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") joinGame();
+        });
+        document.getElementById("respawnBtn").addEventListener("click", respawn);
+        document.getElementById("leaveBtn").addEventListener("click", leaveGame);
+
+        document.querySelectorAll(".dpad button").forEach((btn) => {
+            btn.addEventListener("click", () => setDirection(btn.dataset.dir));
+        });
+
+        window.addEventListener("keydown", (e) => {
+            const keyMap = {
+                ArrowUp: "up", w: "up", W: "up",
+                ArrowDown: "down", s: "down", S: "down",
+                ArrowLeft: "left", a: "left", A: "left",
+                ArrowRight: "right", d: "right", D: "right"
+            };
+            if (keyMap[e.key]) {
+                e.preventDefault();
+                setDirection(keyMap[e.key]);
+            }
+        });
+
+        window.addEventListener("beforeunload", () => {
+            if (myDocRef) deleteDoc(myDocRef).catch(() => {});
+        });
+    </script>
+</body>
+</html>
