@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字雲展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 500px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .count {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            min-height: 350px;
+        }
+
+        .cloud span {
+            font-weight: 700;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .cloud span:hover {
+            transform: scale(1.15);
+        }
+
+        .empty {
+            text-align: center;
+            color: #999;
+            font-size: 1.2em;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ 即時文字雲</h1>
+        <div class="count" id="count">目前共 0 筆投稿</div>
+        <div class="cloud" id="cloud"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            projectId: "mygame-1af09",
+            appId: "1:388340775447:web:0769fb994834e68939ba52",
+            storageBucket: "mygame-1af09.firebasestorage.app",
+            apiKey: "AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM",
+            authDomain: "mygame-1af09.firebaseapp.com",
+            messagingSenderId: "388340775447"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const cloudEl = document.getElementById("cloud");
+        const countEl = document.getElementById("count");
+
+        const colors = ["#667eea", "#764ba2", "#e07798", "#3c78d8", "#149e60", "#eaa041", "#cc3a21"];
+
+        onSnapshot(collection(db, "wordcloud_words"), (snapshot) => {
+            const tally = new Map();
+            snapshot.forEach((doc) => {
+                const word = (doc.data().word || "").trim();
+                if (!word) return;
+                tally.set(word, (tally.get(word) || 0) + 1);
+            });
+
+            countEl.textContent = `目前共 ${snapshot.size} 筆投稿，${tally.size} 個不同詞語`;
+            cloudEl.innerHTML = "";
+
+            if (tally.size === 0) {
+                cloudEl.innerHTML = '<div class="empty">還沒有人投稿，等待第一筆資料...</div>';
+                return;
+            }
+
+            const entries = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+            const maxCount = entries[0][1];
+
+            entries.forEach(([word, count], i) => {
+                const span = document.createElement("span");
+                span.textContent = word;
+                const scale = 1 + (count / maxCount) * 2.5;
+                span.style.fontSize = `${1 + scale}em`;
+                span.style.color = colors[i % colors.length];
+                cloudEl.appendChild(span);
+            });
+        }, (err) => {
+            console.error(err);
+            cloudEl.innerHTML = '<div class="empty">讀取失敗，請檢查網路連線或 Firestore 規則</div>';
+        });
+    </script>
+</body>
+</html>

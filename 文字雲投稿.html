@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字雲投稿</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        p.hint {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: inherit;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2em;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .message.success {
+            display: block;
+            background: #e3f7e8;
+            color: #2e7d32;
+        }
+
+        .message.error {
+            display: block;
+            background: #fee;
+            color: #c33;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💭 文字雲投稿</h1>
+        <p class="hint">請輸入一個詞語，送出後會即時出現在展示畫面</p>
+        <form id="wordForm">
+            <input type="text" id="wordInput" maxlength="20" placeholder="輸入詞語..." autocomplete="off" required>
+            <button type="submit" id="submitBtn">送出</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            projectId: "mygame-1af09",
+            appId: "1:388340775447:web:0769fb994834e68939ba52",
+            storageBucket: "mygame-1af09.firebasestorage.app",
+            apiKey: "AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM",
+            authDomain: "mygame-1af09.firebaseapp.com",
+            messagingSenderId: "388340775447"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const form = document.getElementById("wordForm");
+        const input = document.getElementById("wordInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const message = document.getElementById("message");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const word = input.value.trim();
+            if (!word) return;
+
+            submitBtn.disabled = true;
+            message.className = "message";
+
+            try {
+                await addDoc(collection(db, "wordcloud_words"), {
+                    word: word,
+                    created_at: serverTimestamp()
+                });
+                message.textContent = "✅ 送出成功！";
+                message.className = "message success";
+                input.value = "";
+                input.focus();
+            } catch (err) {
+                console.error(err);
+                message.textContent = "❌ 送出失敗，請再試一次";
+                message.className = "message error";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
