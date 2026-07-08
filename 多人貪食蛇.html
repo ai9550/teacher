@@ -111,6 +111,9 @@
             border-radius: 10px;
             border: 3px solid #667eea;
             display: block;
+            max-width: 100%;
+            height: auto;
+            touch-action: none;
         }
 
         .overlay {
@@ -182,24 +185,36 @@
             font-size: 0.9em;
         }
 
-        .dpad {
-            display: grid;
-            grid-template-columns: repeat(3, 46px);
-            grid-template-rows: repeat(3, 46px);
-            gap: 6px;
+        .joystick-wrap {
+            display: flex;
             justify-content: center;
-            margin: 16px auto 0;
+            margin: 20px auto 0;
         }
 
-        .dpad button {
-            padding: 0;
-            font-size: 1.3em;
+        .joystick-base {
+            position: relative;
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 50% 50%, #f0f2fa 0%, #dde1f0 70%, #cfd4e8 100%);
+            border: 3px solid #c7cce6;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .dpad .up { grid-column: 2; grid-row: 1; }
-        .dpad .left { grid-column: 1; grid-row: 2; }
-        .dpad .right { grid-column: 3; grid-row: 2; }
-        .dpad .down { grid-column: 2; grid-row: 3; }
+        .joystick-knob {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 74px;
+            height: 74px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
 
         .leave {
             display: block;
@@ -226,7 +241,7 @@
         <div id="joinScreen">
             <input type="text" id="nameInput" maxlength="8" placeholder="輸入你的名字" autocomplete="off">
             <button id="joinBtn">加入遊戲</button>
-            <p class="hint">跟其他同學一起連線，方向鍵/WASD 控制，吃到食物會變長，撞牆或撞到蛇就淘汰</p>
+            <p class="hint">跟其他同學一起連線，拖曳搖桿控制方向，吃到食物會變長，撞牆或撞到蛇就淘汰</p>
         </div>
 
         <div id="gameScreen">
@@ -249,12 +264,11 @@
                     <button class="leave" id="leaveBtn">離開遊戲</button>
                 </div>
             </div>
-            <p class="controls-hint">方向鍵 / WASD 控制方向</p>
-            <div class="dpad">
-                <button class="up" data-dir="up">▲</button>
-                <button class="left" data-dir="left">◀</button>
-                <button class="right" data-dir="right">▶</button>
-                <button class="down" data-dir="down">▼</button>
+            <p class="controls-hint">拖曳下方搖桿控制方向（電腦也可用方向鍵 / WASD）</p>
+            <div class="joystick-wrap">
+                <div class="joystick-base" id="joyBase">
+                    <div class="joystick-knob" id="joyKnob"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -564,8 +578,53 @@
         document.getElementById("respawnBtn").addEventListener("click", respawn);
         document.getElementById("leaveBtn").addEventListener("click", leaveGame);
 
-        document.querySelectorAll(".dpad button").forEach((btn) => {
-            btn.addEventListener("click", () => setDirection(btn.dataset.dir));
+        // ---- 虛擬搖桿（觸控 / 滑鼠通用） ----
+        const joyBase = document.getElementById("joyBase");
+        const joyKnob = document.getElementById("joyKnob");
+        const JOY_MAX = 55;
+        const JOY_DEAD_ZONE = 15;
+        let joyPointerId = null;
+
+        function updateJoystick(clientX, clientY) {
+            const rect = joyBase.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const dx = clientX - cx;
+            const dy = clientY - cy;
+            const dist = Math.hypot(dx, dy);
+            const clamped = Math.min(dist, JOY_MAX);
+            const angle = Math.atan2(dy, dx);
+            const kx = Math.cos(angle) * clamped;
+            const ky = Math.sin(angle) * clamped;
+            joyKnob.style.transform = `translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+
+            if (dist > JOY_DEAD_ZONE) {
+                const deg = angle * 180 / Math.PI;
+                if (deg > -45 && deg <= 45) setDirection("right");
+                else if (deg > 45 && deg <= 135) setDirection("down");
+                else if (deg > 135 || deg <= -135) setDirection("left");
+                else setDirection("up");
+            }
+        }
+
+        function resetJoystick() {
+            joyPointerId = null;
+            joyKnob.style.transform = "translate(-50%, -50%)";
+        }
+
+        joyBase.addEventListener("pointerdown", (e) => {
+            joyPointerId = e.pointerId;
+            try { joyBase.setPointerCapture(e.pointerId); } catch (err) {}
+            updateJoystick(e.clientX, e.clientY);
+        });
+        joyBase.addEventListener("pointermove", (e) => {
+            if (joyPointerId === e.pointerId) updateJoystick(e.clientX, e.clientY);
+        });
+        joyBase.addEventListener("pointerup", (e) => {
+            if (joyPointerId === e.pointerId) resetJoystick();
+        });
+        joyBase.addEventListener("pointercancel", (e) => {
+            if (joyPointerId === e.pointerId) resetJoystick();
         });
 
         window.addEventListener("keydown", (e) => {
