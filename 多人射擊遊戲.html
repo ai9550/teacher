@@ -729,6 +729,16 @@ document.addEventListener('touchmove', e => {
 }, { passive: false });
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
+// 快速連點射擊鍵/搖桿會被瀏覽器判定成「雙擊縮放」——
+// 雙擊縮放是靠 touchend 判定的，必須在這些控制元件上把 touchstart/touchend 都擋掉
+// （不能掛在整個 document，否則選單按鈕的 click 會失效）
+[shootBtn, joyBase, lookBase].forEach(el => {
+  el.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  el.addEventListener('touchend', e => e.preventDefault(), { passive: false });
+});
 if (!window.PointerEvent) {
   const touchAdapter = (el, downFn, moveFn, upFn) => {
     el.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; downFn({ pointerId: t.identifier, clientX: t.clientX, clientY: t.clientY, preventDefault(){} }); }, { passive: false });
