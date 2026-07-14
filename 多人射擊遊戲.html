@@ -1126,7 +1126,7 @@ function renderMinimap() {
   mctx.fillStyle = '#ffea66';
   mctx.beginPath(); mctx.arc(px, pz, 4, 0, Math.PI*2); mctx.fill();
   mctx.strokeStyle = '#ffea66'; mctx.lineWidth = 2;
-  mctx.beginPath(); mctx.moveTo(px, pz); mctx.lineTo(px + Math.sin(yaw)*10, pz + Math.cos(yaw)*10); mctx.stroke();
+  mctx.beginPath(); mctx.moveTo(px, pz); mctx.lineTo(px - Math.sin(yaw)*10, pz - Math.cos(yaw)*10); mctx.stroke();
 
   // 附近玩家（靠近才顯示）
   for (const r of remotePlayers.values()) {
