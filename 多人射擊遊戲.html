@@ -7,7 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0e14; font-family: 'Noto Sans TC', sans-serif; user-select: none; -webkit-user-select: none; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0e14; font-family: 'Noto Sans TC', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none; -webkit-touch-callout: none; }
+  .menu-card { touch-action: pan-y; } /* 選單內容允許上下捲動 */
   #gameCanvas { position: fixed; inset: 0; display: block; touch-action: none; -webkit-tap-highlight-color: transparent; }
 
   /* ---------- 開始畫面 ---------- */
@@ -284,6 +285,7 @@
       📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、右下角<span class="key">搖桿</span>轉視角、<span class="key">🔫按鈕</span>射擊<br>
       🔋 <strong style="color:#ffd84a">彈匣：</strong>走近會先出數學題，答對才能領取 5 發子彈<br>
       ❤️ <strong style="color:#ff7caa">血量：</strong>每人 5 滴血，被擊中 5 次淘汰，其他人繼續戰鬥<br>
+      🧟 <strong style="color:#7ed957">殭屍：</strong>地圖上有殭屍遊蕩，被咬到扣 1 滴血，射 3 發可擊倒<br>
       🗺️ 小地圖只會顯示<strong style="color:#cef">你自己</strong>的位置，其他玩家要靠近才會出現
     </div>
   </div>
@@ -371,7 +373,7 @@ const QUIZ_RETRY_COOLDOWN_MS = 2500;
 // ============== Three.js 基本設置 ==============
 const canvas = document.getElementById('gameCanvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 平板 GPU 負擔上限
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 const scene = new THREE.Scene();
@@ -393,16 +395,61 @@ const dirLight = new THREE.DirectionalLight(0xfff4dd, 1.25);
 dirLight.position.set(18, 30, 12);
 scene.add(dirLight);
 
-// ============== 戶外沙漠風地圖（仿經典 FPS 佈局）==============
+// ============== 程式產生的寫實材質貼圖（不用外部圖檔） ==============
+function makeNoiseTexture(base, speckles, repeat, extra) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 256;
+  const g = c.getContext('2d');
+  g.fillStyle = base;
+  g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) {
+    const col = speckles[Math.floor(Math.random() * speckles.length)];
+    g.fillStyle = col;
+    const s = 1 + Math.random() * 3;
+    g.fillRect(Math.random() * 256, Math.random() * 256, s, s);
+  }
+  if (extra) extra(g);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(repeat, repeat);
+  return tex;
+}
+
+// 草地（綠色調 + 土色斑點）
+const grassTex = makeNoiseTexture('#6d8f4e', ['#5d7f42', '#7fa15c', '#87a35e', '#546f39', '#93a06a'], 14);
+// 石牆（灰石塊 + 磚縫線條）
+const stoneTex = makeNoiseTexture('#9a938a', ['#8b847b', '#a8a198', '#787168', '#b0a99f'], 3, (g) => {
+  g.strokeStyle = 'rgba(70,65,58,0.55)';
+  g.lineWidth = 3;
+  for (let y = 0; y < 256; y += 42) {
+    g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke();
+    const off = (y / 42) % 2 === 0 ? 0 : 40;
+    for (let x = off; x < 256; x += 80) {
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 42); g.stroke();
+    }
+  }
+});
+// 木箱（木紋直條）
+const woodTex = makeNoiseTexture('#8a6437', ['#7a5730', '#96703f', '#6d4d2a', '#a1793f'], 1, (g) => {
+  g.strokeStyle = 'rgba(60,42,20,0.5)';
+  g.lineWidth = 4;
+  for (let x = 32; x < 256; x += 64) {
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 256); g.stroke();
+  }
+});
+// 泥土據點區
+const dirtTex = makeNoiseTexture('#9b7d55', ['#8a6f4b', '#a98a5f', '#7d6543', '#b39468'], 4);
+
+// ============== 戶外草原地圖（仿經典 FPS 佈局） ==============
 const HALF = 26;
 const WALL_H = 4.5;
-const floorMat = new THREE.MeshStandardMaterial({ color: 0xb9ab8d, roughness: 0.95 }); // 沙土地面
+const floorMat = new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, HALF*2), floorMat);
 floor.rotation.x = -Math.PI/2;
 scene.add(floor);
 
-// 兩塊特殊區域地板（仿地圖上的據點色塊）
-const zoneMat = new THREE.MeshStandardMaterial({ color: 0xa8a06a, roughness: 0.9 });
+// 兩塊泥土據點區（仿地圖上的目標點色塊）
+const zoneMat = new THREE.MeshStandardMaterial({ map: dirtTex, roughness: 0.92 });
 [[-16, -14, 12, 10], [16, 6, 10, 9]].forEach(([x, z, w, d]) => {
   const zone = new THREE.Mesh(new THREE.PlaneGeometry(w, d), zoneMat);
   zone.rotation.x = -Math.PI/2;
@@ -410,13 +457,14 @@ const zoneMat = new THREE.MeshStandardMaterial({ color: 0xa8a06a, roughness: 0.9
   scene.add(zone);
 });
 
-const wallMat = new THREE.MeshStandardMaterial({ color: 0xcbbfa4, roughness: 0.85 }); // 淺沙色牆
+const wallMat = new THREE.MeshStandardMaterial({ map: stoneTex, roughness: 0.88 });
+const crateMat = new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.9 });
 const colliders = []; // {minX,maxX,minZ,maxZ}
 const solidMeshes = []; // 牆壁 + 障礙物（用來擋子彈與視線）
 
 function addBoxCollider(cx, cz, w, d, h, color, isWall) {
   const geo = new THREE.BoxGeometry(w, h, d);
-  const mat = isWall ? wallMat : new THREE.MeshStandardMaterial({ color: color || 0x8a6a45, roughness: 0.9 });
+  const mat = isWall ? wallMat : crateMat;
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(cx, h/2, cz);
   scene.add(mesh);
@@ -455,6 +503,47 @@ mazeWalls.forEach(([x, z, w, d]) => addBoxCollider(x, z, w, d, WALL_H, null, tru
 // 中央廣場的低掩體（半身高，可以蹲點但擋不住視線）＋散落木箱
 const crateSpots = [[0, 0, 2.6, 2.6], [-4, 2, 1.8, 1.8], [3.5, -3.5, 1.8, 1.8], [14, 16, 2.2, 2.2], [-15, 0, 2, 2], [1, -16, 2, 2]];
 crateSpots.forEach(([x,z,w,d]) => addBoxCollider(x, z, w, d, 1.3, 0x9c7a4e, false));
+
+// ============== 戶外景觀：樹木 / 岩石 / 雲朵 ==============
+const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6b4a2a, roughness: 0.95 });
+const leafMat = new THREE.MeshStandardMaterial({ color: 0x3e7a35, roughness: 0.9 });
+const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x4e8f3f, roughness: 0.9 });
+function addTree(x, z, scale) {
+  const s = scale || 1;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22*s, 0.3*s, 2.4*s, 7), trunkMat);
+  trunk.position.set(x, 1.2*s, z);
+  const lower = new THREE.Mesh(new THREE.ConeGeometry(1.5*s, 2.4*s, 8), leafMat);
+  lower.position.set(x, 3.0*s, z);
+  const upper = new THREE.Mesh(new THREE.ConeGeometry(1.05*s, 1.9*s, 8), leafMat2);
+  upper.position.set(x, 4.3*s, z);
+  scene.add(trunk, lower, upper);
+  solidMeshes.push(trunk, lower);
+  colliders.push({ minX: x-0.4*s, maxX: x+0.4*s, minZ: z-0.4*s, maxZ: z+0.4*s });
+}
+// 樹放在通道邊、據點旁，不擋主要路線
+[[-23, 10, 1.1], [-13, 20, 1.0], [17, 20, 1.2], [23, -8, 0.9], [4, -22, 1.1], [-23, -5, 1.0], [13, 3, 0.8]].forEach(([x, z, s]) => addTree(x, z, s));
+
+const rockMat = new THREE.MeshStandardMaterial({ color: 0x8d8d90, roughness: 0.98, flatShading: true });
+[[-6, 16, 0.9], [19, -20, 1.2], [-20, -2, 0.7], [6, 10.5, 0.6], [23, 14, 1.0]].forEach(([x, z, s]) => {
+  const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), rockMat);
+  rock.position.set(x, s*0.55, z);
+  rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+  scene.add(rock);
+  solidMeshes.push(rock);
+  colliders.push({ minX: x-s*0.8, maxX: x+s*0.8, minZ: z-s*0.8, maxZ: z+s*0.8 });
+});
+
+// 天上的雲（半透明白色板，緩慢漂移）
+const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false });
+const clouds = [];
+for (let i = 0; i < 7; i++) {
+  const cw = rand(7, 14);
+  const cloud = new THREE.Mesh(new THREE.PlaneGeometry(cw, cw * 0.45), cloudMat);
+  cloud.position.set(rand(-40, 40), rand(26, 38), rand(-40, 40));
+  cloud.rotation.x = -Math.PI / 2;
+  scene.add(cloud);
+  clouds.push({ mesh: cloud, speed: rand(0.3, 0.8) });
+}
 
 function collidesAt(x, z, radius) {
   for (const c of colliders) {
@@ -592,6 +681,7 @@ function updateStick(base, knob, clientX, clientY) {
 function resetStick(knob) { knob.style.transform = 'translate(-50%,-50%)'; }
 
 joyBase.addEventListener('pointerdown', e => {
+  e.preventDefault();
   joyPointerId = e.pointerId;
   try { joyBase.setPointerCapture(e.pointerId); } catch (err) {}
   const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY);
@@ -599,6 +689,7 @@ joyBase.addEventListener('pointerdown', e => {
 });
 joyBase.addEventListener('pointermove', e => {
   if (joyPointerId !== e.pointerId) return;
+  e.preventDefault();
   const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY);
   joyDX = p.x; joyDY = p.y;
 });
@@ -610,6 +701,7 @@ joyBase.addEventListener('pointerup', releaseJoy);
 joyBase.addEventListener('pointercancel', releaseJoy);
 
 lookBase.addEventListener('pointerdown', e => {
+  e.preventDefault();
   lookPointerId = e.pointerId;
   try { lookBase.setPointerCapture(e.pointerId); } catch (err) {}
   const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY);
@@ -617,6 +709,7 @@ lookBase.addEventListener('pointerdown', e => {
 });
 lookBase.addEventListener('pointermove', e => {
   if (lookPointerId !== e.pointerId) return;
+  e.preventDefault();
   const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY);
   lookDX = p.x; lookDY = p.y;
 });
@@ -628,6 +721,32 @@ lookBase.addEventListener('pointerup', releaseLook);
 lookBase.addEventListener('pointercancel', releaseLook);
 
 shootBtn.addEventListener('pointerdown', e => { e.preventDefault(); tryShoot(); });
+
+// 平板輸入強化：擋掉瀏覽器的捲動/縮放/長按手勢，避免吃掉遊戲觸控。
+// 觸控備援：若裝置不支援 Pointer Events（少數舊平板），改掛 touch 事件對應同一套邏輯。
+document.addEventListener('touchmove', e => {
+  if (!e.target.closest('.menu-card')) e.preventDefault();
+}, { passive: false });
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+if (!window.PointerEvent) {
+  const touchAdapter = (el, downFn, moveFn, upFn) => {
+    el.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; downFn({ pointerId: t.identifier, clientX: t.clientX, clientY: t.clientY, preventDefault(){} }); }, { passive: false });
+    el.addEventListener('touchmove', e => { e.preventDefault(); for (const t of e.changedTouches) moveFn({ pointerId: t.identifier, clientX: t.clientX, clientY: t.clientY, preventDefault(){} }); }, { passive: false });
+    const end = e => { for (const t of e.changedTouches) upFn({ pointerId: t.identifier }); };
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+  };
+  touchAdapter(joyBase,
+    e => { joyPointerId = e.pointerId; const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY); joyDX = p.x; joyDY = p.y; },
+    e => { if (joyPointerId === e.pointerId) { const p = updateStick(joyBase, joyKnob, e.clientX, e.clientY); joyDX = p.x; joyDY = p.y; } },
+    releaseJoy);
+  touchAdapter(lookBase,
+    e => { lookPointerId = e.pointerId; const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY); lookDX = p.x; lookDY = p.y; },
+    e => { if (lookPointerId === e.pointerId) { const p = updateStick(lookBase, lookKnob, e.clientX, e.clientY); lookDX = p.x; lookDY = p.y; } },
+    releaseLook);
+  shootBtn.addEventListener('touchstart', e => { e.preventDefault(); tryShoot(); }, { passive: false });
+}
 
 // 桌機測試用：WASD 移動
 const keys = {};
@@ -646,6 +765,102 @@ let running = false;
 const remotePlayers = new Map(); // docId -> {mesh, target:{x,z,rotY}, name, hue, alive, hp, lastUpdatedMs}
 const raycaster = new THREE.Raycaster();
 raycaster.far = SHOOT_RANGE;
+
+// ============== 殭屍（各裝置本地模擬，跟彈匣同一模式） ==============
+const ZOMBIE_COUNT = 4;
+const ZOMBIE_SPEED = 2.3;       // 比玩家慢，跑得掉
+const ZOMBIE_HP = 3;            // 三發子彈可擊倒
+const ZOMBIE_BITE_DIST = 1.35;
+const ZOMBIE_BITE_COOLDOWN_MS = 1300;
+const ZOMBIE_DETECT_DIST = 13;
+const ZOMBIE_RESPAWN_MS = 7000;
+const zombies = [];
+const zombieHeadMat = new THREE.MeshStandardMaterial({ color: 0x77a566, roughness: 0.85 });
+const zombieEyeMat = new THREE.MeshBasicMaterial({ color: 0xffe94a });
+
+function makeZombieMesh() {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5e8f52, roughness: 0.85 }); // 每隻獨立材質，受擊才能單獨閃紅
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.85, 4, 8), bodyMat);
+  body.position.y = 0.9;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), zombieHeadMat);
+  head.position.y = 1.6;
+  const armGeo = new THREE.BoxGeometry(0.16, 0.16, 0.8);
+  const armL = new THREE.Mesh(armGeo, bodyMat); armL.position.set(-0.28, 1.15, -0.5);
+  const armR = new THREE.Mesh(armGeo, bodyMat); armR.position.set(0.28, 1.15, -0.5);
+  const eyeGeo = new THREE.SphereGeometry(0.05, 6, 6);
+  const eyeL = new THREE.Mesh(eyeGeo, zombieEyeMat); eyeL.position.set(-0.12, 1.66, -0.27);
+  const eyeR = new THREE.Mesh(eyeGeo, zombieEyeMat); eyeR.position.set(0.12, 1.66, -0.27);
+  group.add(body, head, armL, armR, eyeL, eyeR);
+  return { group, body, head, bodyMat };
+}
+
+function spawnZombie(index) {
+  let spot = randomFreeSpot(0.5);
+  for (let i = 0; i < 30; i++) {
+    if (!player.alive || Math.hypot(spot.x - player.x, spot.z - player.z) > 12) break;
+    spot = randomFreeSpot(0.5);
+  }
+  const z = zombies[index];
+  z.x = spot.x; z.z = spot.z;
+  z.hp = ZOMBIE_HP;
+  z.alive = true;
+  z.group.visible = true;
+  z.wanderAngle = Math.random() * Math.PI * 2;
+  z.wanderTimer = 0;
+}
+
+for (let i = 0; i < ZOMBIE_COUNT; i++) {
+  const { group, body, head, bodyMat } = makeZombieMesh();
+  scene.add(group);
+  body.userData.zombieIndex = i;
+  head.userData.zombieIndex = i;
+  zombies.push({ group, body, head, bodyMat, x: 0, z: 0, hp: ZOMBIE_HP, alive: true, wanderAngle: 0, wanderTimer: 0, lastBiteAt: 0, respawnAt: 0, hitFlashUntil: 0 });
+  spawnZombie(i);
+}
+
+function zombieBitePlayer() {
+  player.hp = Math.max(0, player.hp - 1);
+  flashHit();
+  if (myDocRef) updateDoc(myDocRef, { hp: increment(-1) }).catch(()=>{});
+  if (player.hp <= 0) eliminatePlayer();
+}
+
+function updateZombies(dt) {
+  const now = performance.now();
+  for (let i = 0; i < zombies.length; i++) {
+    const z = zombies[i];
+    if (!z.alive) {
+      if (now > z.respawnAt) spawnZombie(i);
+      continue;
+    }
+    const distToPlayer = player.alive ? Math.hypot(player.x - z.x, player.z - z.z) : Infinity;
+    let dir;
+    if (distToPlayer < ZOMBIE_DETECT_DIST) {
+      dir = Math.atan2(player.x - z.x, player.z - z.z);
+    } else {
+      z.wanderTimer -= dt;
+      if (z.wanderTimer <= 0) { z.wanderAngle = Math.random() * Math.PI * 2; z.wanderTimer = 2 + Math.random() * 3; }
+      dir = z.wanderAngle;
+    }
+    const step = ZOMBIE_SPEED * dt;
+    const nx = z.x + Math.sin(dir) * step;
+    const nz = z.z + Math.cos(dir) * step;
+    let blocked = true;
+    if (!collidesAt(nx, z.z, 0.4)) { z.x = nx; blocked = false; }
+    if (!collidesAt(z.x, nz, 0.4)) { z.z = nz; blocked = false; }
+    if (blocked) { z.wanderAngle = Math.random() * Math.PI * 2; z.wanderTimer = 1.5; }
+
+    if (player.alive && distToPlayer < ZOMBIE_BITE_DIST && now - z.lastBiteAt > ZOMBIE_BITE_COOLDOWN_MS) {
+      z.lastBiteAt = now;
+      zombieBitePlayer();
+    }
+
+    z.group.position.set(z.x, Math.abs(Math.sin(now * 0.006 + i)) * 0.07, z.z);
+    z.group.rotation.y = dir + Math.PI; // 手臂朝移動方向
+    z.bodyMat.emissive.setHex(now < z.hitFlashUntil ? 0xff3333 : 0x000000);
+  }
+}
 
 function makeNameplate() {
   const canvas = document.createElement('canvas');
@@ -781,6 +996,7 @@ function tryShoot() {
 
   const targets = [];
   for (const r of remotePlayers.values()) if (r.alive) targets.push(r.body, r.head);
+  for (const z of zombies) if (z.alive) targets.push(z.body, z.head);
   const hits = raycaster.intersectObjects([...solidMeshes, ...targets], false);
 
   let endPoint = camera.position.clone().add(dir.clone().multiplyScalar(SHOOT_RANGE));
@@ -788,9 +1004,20 @@ function tryShoot() {
     const hit = hits[0];
     endPoint = hit.point;
     const docId = hit.object.userData?.docId;
+    const zi = hit.object.userData?.zombieIndex;
     if (docId) {
       registerHit(docId);
       showHitMarker();
+    } else if (zi !== undefined) {
+      const z = zombies[zi];
+      z.hp--;
+      z.hitFlashUntil = performance.now() + 160;
+      showHitMarker();
+      if (z.hp <= 0) {
+        z.alive = false;
+        z.group.visible = false;
+        z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
+      }
     } else {
       spawnSpark(hit.point);
     }
@@ -817,8 +1044,6 @@ function spawnProjectile(from, to) {
   const mesh = new THREE.Mesh(projectileGeo, projectileMat);
   mesh.position.copy(from);
   scene.add(mesh);
-  const light = new THREE.PointLight(0x9fe8ff, 1.2, 3);
-  mesh.add(light);
   activeProjectiles.push({ mesh, from: from.clone(), to: to.clone(), start: performance.now(), duration: 130 });
 }
 function updateProjectiles() {
@@ -912,6 +1137,14 @@ function renderMinimap() {
     mctx.fillStyle = `hsl(${r.hue}, 70%, 60%)`;
     mctx.beginPath(); mctx.arc(rx, rz, 3, 0, Math.PI*2); mctx.fill();
   }
+  // 附近殭屍（同樣靠近才顯示）
+  for (const z of zombies) {
+    if (!z.alive) continue;
+    const dist = Math.hypot(z.x - player.x, z.z - player.z);
+    if (dist > MINIMAP_REVEAL_DIST) continue;
+    mctx.fillStyle = '#7ed957';
+    mctx.beginPath(); mctx.arc((z.x+HALF)*scale, (z.z+HALF)*scale, 2.6, 0, Math.PI*2); mctx.fill();
+  }
 }
 
 function renderStatus() {
@@ -987,6 +1220,15 @@ function animate() {
     r.group.position.x += (r.target.x - r.group.position.x) * 0.18;
     r.group.position.z += (r.target.z - r.group.position.z) * 0.18;
     r.group.rotation.y = r.target.rotY;
+  }
+
+  // 殭屍（答題暫停時也跟著暫停，避免解題時被咬）
+  if (!paused) updateZombies(dt);
+
+  // 雲朵緩慢漂移
+  for (const c of clouds) {
+    c.mesh.position.x += c.speed * dt;
+    if (c.mesh.position.x > 46) c.mesh.position.x = -46;
   }
 
   updateProjectiles();
