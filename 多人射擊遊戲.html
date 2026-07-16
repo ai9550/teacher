@@ -281,12 +281,12 @@
 
     <button class="start-btn" onclick="startGame()">開 始 戰 鬥</button>
     <div class="controls">
-      🌐 <strong style="color:#cef">跟同班同學一起連線</strong>，在同一個倉庫裡對戰<br>
+      🤝 <strong style="color:#cef">合作模式：</strong>跟同學連線組隊，一起在草原上抵擋殭屍（子彈不會傷害隊友）<br>
       📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、右下角<span class="key">搖桿</span>轉視角、<span class="key">🔫按鈕</span>射擊<br>
-      🔋 <strong style="color:#ffd84a">彈匣：</strong>走近會先出數學題，答對才能領取 5 發子彈<br>
-      ❤️ <strong style="color:#ff7caa">血量：</strong>每人 5 滴血，被擊中 5 次淘汰，其他人繼續戰鬥<br>
-      🧟 <strong style="color:#7ed957">殭屍：</strong>地圖上有殭屍遊蕩，被咬到扣 1 滴血，射 3 發可擊倒<br>
-      🗺️ 小地圖只會顯示<strong style="color:#cef">你自己</strong>的位置，其他玩家要靠近才會出現
+      🔋 <strong style="color:#ffd84a">彈匣：</strong>走過去直接補 5 發子彈，不用解題<br>
+      ❤️ <strong style="color:#ff7caa">血量：</strong>撿白色醫療包會出數學題，答對回復 1 滴血；血量歸零淘汰，可重新加入<br>
+      🧟 <strong style="color:#7ed957">殭屍：</strong>全班打的是同一批殭屍！被咬扣 1 滴血，射 3 發可擊倒<br>
+      🗺️ 小地圖只會顯示<strong style="color:#cef">你自己</strong>的位置，隊友和殭屍要靠近才會出現
     </div>
   </div>
 </div>
@@ -314,7 +314,7 @@
 <div id="eliminated">
   <div class="elim-card">
     <h2>已 淘 汰</h2>
-    <p style="color:#aac; margin-bottom:26px; letter-spacing:2px; font-family:'Orbitron',sans-serif; font-size:12px;">ELIMINATED — 其他玩家仍在戰鬥中</p>
+    <p style="color:#aac; margin-bottom:26px; letter-spacing:2px; font-family:'Orbitron',sans-serif; font-size:12px;">ELIMINATED — 隊友仍在奮戰中</p>
     <button class="start-btn" onclick="respawnPlayer()">重 新 加 入 戰 場</button>
   </div>
 </div>
@@ -322,7 +322,7 @@
 <!-- 數學題 -->
 <div id="mathModal">
   <div class="math-card" id="mathCard">
-    <div class="math-title">🧮 領取彈藥：答對才能拿到 5 發子彈</div>
+    <div class="math-title">🧮 回復血量：答對可以補 1 滴血</div>
     <div class="math-question" id="mathQuestion">5 + 3 = ?</div>
     <input id="mathInput" type="text" inputmode="none" readonly placeholder="？">
     <div class="numpad" id="numpad">
@@ -342,7 +342,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, increment
+  getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, increment
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -369,6 +369,8 @@ const MINIMAP_REVEAL_DIST = 11;
 const AMMO_PICKUP_DIST = 1.9;
 const AMMO_RESPAWN_MS = 18000;
 const QUIZ_RETRY_COOLDOWN_MS = 2500;
+const HEALTH_PACK_COUNT = 3;
+const HEALTH_RESPAWN_MS = 20000;
 
 // ============== Three.js 基本設置 ==============
 const canvas = document.getElementById('gameCanvas');
@@ -572,6 +574,27 @@ for (let i = 0; i < 6; i++) {
   ammoCrates.push({ mesh, x: spot.x, z: spot.z, available: true, cooldownUntil: 0 });
 }
 
+// ============== 醫療包（撿取時出數學題，答對 +1 血） ==============
+const healthPacks = [];
+const packBoxMat = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.5 });
+const packCrossMat = new THREE.MeshBasicMaterial({ color: 0xe03636 });
+function makeHealthPackMesh() {
+  const group = new THREE.Group();
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.45, 0.7), packBoxMat);
+  const barV = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.44), packCrossMat);
+  const barH = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.05, 0.12), packCrossMat);
+  barV.position.y = 0.25; barH.position.y = 0.25;
+  group.add(box, barV, barH);
+  return group;
+}
+for (let i = 0; i < HEALTH_PACK_COUNT; i++) {
+  const spot = randomFreeSpot(1.2);
+  const mesh = makeHealthPackMesh();
+  mesh.position.set(spot.x, 0.55, spot.z);
+  scene.add(mesh);
+  healthPacks.push({ mesh, x: spot.x, z: spot.z, available: true, cooldownUntil: 0 });
+}
+
 // ============== 數學題（沿用先前設計）==============
 const selectedTypes = new Set(['add1']);
 let paused = false;
@@ -619,13 +642,17 @@ window.submitAnswer = function submitAnswer() {
   const v = parseInt(inp.value, 10);
   if (isNaN(v)) { fb.textContent = '✏ 請輸入數字'; fb.className = 'math-feedback wrong'; return; }
   if (v === currentQuestion.answer) {
-    fb.textContent = '✓ 答對了！+5 發子彈';
+    fb.textContent = '✓ 答對了！+1 ❤️';
     fb.className = 'math-feedback correct';
-    if (player.alive) player.ammo += 5;
+    if (player.alive && player.hp < MAX_HP) {
+      player.hp++;
+      // 直接寫入（不用 increment），避免疊到超過上限
+      if (myDocRef) updateDoc(myDocRef, { hp: player.hp }).catch(()=>{});
+    }
     if (activeCrate) {
       activeCrate.available = false;
       activeCrate.mesh.visible = false;
-      activeCrate.cooldownUntil = performance.now() + AMMO_RESPAWN_MS;
+      activeCrate.cooldownUntil = performance.now() + HEALTH_RESPAWN_MS;
     }
     currentQuestion = null;
     setTimeout(() => { document.getElementById('mathModal').style.display = 'none'; paused = false; activeCrate = null; }, 900);
@@ -766,7 +793,7 @@ window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 // ============== 玩家 ==============
 const player = {
   name: '玩家', hue: 0, x: 0, z: 0, alive: false,
-  hp: MAX_HP, ammo: 0, lastShotAt: 0
+  hp: MAX_HP, ammo: 0, kills: 0, lastShotAt: 0
 };
 let myDocRef = null;
 let syncInterval = null;
@@ -778,7 +805,7 @@ raycaster.far = SHOOT_RANGE;
 
 // ============== 殭屍（各裝置本地模擬，跟彈匣同一模式） ==============
 const ZOMBIE_COUNT = 4;
-const ZOMBIE_SPEED = 2.3;       // 比玩家慢，跑得掉
+const ZOMBIE_SPEED = 1.6;       // 比玩家慢很多，容易跑掉
 const ZOMBIE_HP = 3;            // 三發子彈可擊倒
 const ZOMBIE_BITE_DIST = 1.35;
 const ZOMBIE_BITE_COOLDOWN_MS = 1300;
@@ -825,9 +852,72 @@ for (let i = 0; i < ZOMBIE_COUNT; i++) {
   scene.add(group);
   body.userData.zombieIndex = i;
   head.userData.zombieIndex = i;
-  zombies.push({ group, body, head, bodyMat, x: 0, z: 0, hp: ZOMBIE_HP, alive: true, wanderAngle: 0, wanderTimer: 0, lastBiteAt: 0, respawnAt: 0, hitFlashUntil: 0 });
+  zombies.push({ group, body, head, bodyMat, x: 0, z: 0, hp: ZOMBIE_HP, alive: true, target: { x: 0, z: 0 }, wanderAngle: 0, wanderTimer: 0, lastBiteAt: 0, respawnAt: 0, hitFlashUntil: 0 });
   spawnZombie(i);
+  zombies[i].target.x = zombies[i].x;
+  zombies[i].target.z = zombies[i].z;
 }
+
+// ---- 合作模式：殭屍狀態全班共用，由「主機」玩家模擬 ----
+// 主機 = 存活玩家中文件 ID 最小者；主機離線或陣亡後自動換人接手
+const zombieDocRef = doc(db, 'fps_zombies', 'state');
+
+function isHost() {
+  if (!player.alive || !myDocRef) return false;
+  const now = Date.now();
+  for (const [id, r] of remotePlayers) {
+    if (r.alive && now - r.lastUpdatedMs <= STALE_MS && id < myDocRef.id) return false;
+  }
+  return true;
+}
+
+async function ensureZombieDoc() {
+  try {
+    const snap = await getDoc(zombieDocRef);
+    if (!snap.exists()) {
+      const init = { updated_at: serverTimestamp() };
+      zombies.forEach((z, i) => { init['z' + i] = { x: z.x, z: z.z, hp: ZOMBIE_HP, alive: true }; });
+      await setDoc(zombieDocRef, init);
+    }
+  } catch (err) {}
+}
+
+// 殭屍狀態監聽：血量一律以伺服器為準；非主機另外接收位置與存活狀態
+onSnapshot(zombieDocRef, snap => {
+  if (!snap.exists()) return;
+  const d = snap.data();
+  const host = isHost();
+  for (let i = 0; i < ZOMBIE_COUNT; i++) {
+    const s = d['z' + i];
+    if (!s) continue;
+    const z = zombies[i];
+    z.hp = s.hp;
+    if (host) {
+      if (z.alive && z.hp <= 0) {
+        z.alive = false; z.group.visible = false;
+        z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
+      }
+    } else {
+      const wasAlive = z.alive;
+      z.alive = s.alive && s.hp > 0;
+      z.group.visible = z.alive;
+      z.target.x = s.x; z.target.z = s.z;
+      if (!wasAlive && z.alive) { z.x = s.x; z.z = s.z; } // 重生直接跳到新位置，不要滑過去
+    }
+  }
+});
+
+// 主機定期把殭屍位置/存活寫回（血量不寫，血量只靠大家的 increment 扣）
+setInterval(() => {
+  if (!running || !isHost()) return;
+  const upd = { updated_at: serverTimestamp() };
+  zombies.forEach((z, i) => {
+    upd['z' + i + '.x'] = z.x;
+    upd['z' + i + '.z'] = z.z;
+    upd['z' + i + '.alive'] = z.alive;
+  });
+  updateDoc(zombieDocRef, upd).catch(()=>{});
+}, NETWORK_SYNC_MS);
 
 function zombieBitePlayer() {
   player.hp = Math.max(0, player.hp - 1);
@@ -836,18 +926,43 @@ function zombieBitePlayer() {
   if (player.hp <= 0) eliminatePlayer();
 }
 
+// 主機視角的攻擊目標：自己＋所有存活的遠端隊友（答題中的隊友不會被咬）
+function zombieTargets() {
+  const list = [];
+  if (player.alive) list.push({ x: player.x, z: player.z, self: true, busy: paused });
+  const now = Date.now();
+  for (const [id, r] of remotePlayers) {
+    if (r.alive && now - r.lastUpdatedMs <= STALE_MS) {
+      list.push({ x: r.group.position.x, z: r.group.position.z, id, busy: !!r.busy });
+    }
+  }
+  return list;
+}
+
 function updateZombies(dt) {
   const now = performance.now();
+  const targets = zombieTargets();
   for (let i = 0; i < zombies.length; i++) {
     const z = zombies[i];
     if (!z.alive) {
-      if (now > z.respawnAt) spawnZombie(i);
+      if (now > z.respawnAt) {
+        spawnZombie(i);
+        updateDoc(zombieDocRef, {
+          ['z' + i + '.x']: z.x, ['z' + i + '.z']: z.z,
+          ['z' + i + '.hp']: ZOMBIE_HP, ['z' + i + '.alive']: true
+        }).catch(()=>{});
+      }
       continue;
     }
-    const distToPlayer = player.alive ? Math.hypot(player.x - z.x, player.z - z.z) : Infinity;
+    // 找最近的目標玩家
+    let nearest = null, nearestDist = Infinity;
+    for (const t of targets) {
+      const d = Math.hypot(t.x - z.x, t.z - z.z);
+      if (d < nearestDist) { nearestDist = d; nearest = t; }
+    }
     let dir;
-    if (distToPlayer < ZOMBIE_DETECT_DIST) {
-      dir = Math.atan2(player.x - z.x, player.z - z.z);
+    if (nearest && nearestDist < ZOMBIE_DETECT_DIST) {
+      dir = Math.atan2(nearest.x - z.x, nearest.z - z.z);
     } else {
       z.wanderTimer -= dt;
       if (z.wanderTimer <= 0) { z.wanderAngle = Math.random() * Math.PI * 2; z.wanderTimer = 2 + Math.random() * 3; }
@@ -861,13 +976,29 @@ function updateZombies(dt) {
     if (!collidesAt(z.x, nz, 0.4)) { z.z = nz; blocked = false; }
     if (blocked) { z.wanderAngle = Math.random() * Math.PI * 2; z.wanderTimer = 1.5; }
 
-    if (player.alive && distToPlayer < ZOMBIE_BITE_DIST && now - z.lastBiteAt > ZOMBIE_BITE_COOLDOWN_MS) {
+    // 咬最近的目標（答題中的隊友豁免）
+    if (nearest && !nearest.busy && nearestDist < ZOMBIE_BITE_DIST && now - z.lastBiteAt > ZOMBIE_BITE_COOLDOWN_MS) {
       z.lastBiteAt = now;
-      zombieBitePlayer();
+      if (nearest.self) zombieBitePlayer();
+      else updateDoc(doc(collection(db, 'fps_players'), nearest.id), { hp: increment(-1) }).catch(()=>{});
     }
 
     z.group.position.set(z.x, Math.abs(Math.sin(now * 0.006 + i)) * 0.07, z.z);
     z.group.rotation.y = dir + Math.PI; // 手臂朝移動方向
+    z.bodyMat.emissive.setHex(now < z.hitFlashUntil ? 0xff3333 : 0x000000);
+  }
+}
+
+// 非主機：把殭屍平滑移向主機同步過來的位置
+function lerpZombies() {
+  const now = performance.now();
+  for (let i = 0; i < zombies.length; i++) {
+    const z = zombies[i];
+    if (!z.alive) continue;
+    const dx = z.target.x - z.x, dz = z.target.z - z.z;
+    z.x += dx * 0.15; z.z += dz * 0.15;
+    z.group.position.set(z.x, Math.abs(Math.sin(now * 0.006 + i)) * 0.07, z.z);
+    if (Math.hypot(dx, dz) > 0.05) z.group.rotation.y = Math.atan2(dx, dz) + Math.PI;
     z.bodyMat.emissive.setHex(now < z.hitFlashUntil ? 0xff3333 : 0x000000);
   }
 }
@@ -960,6 +1091,7 @@ onSnapshot(collection(db, 'fps_players'), snapshot => {
     r.name = data.name || 'Guest';
     r.hue = data.hue || 0;
     r.hp = typeof data.hp === 'number' ? data.hp : MAX_HP;
+    r.busy = !!data.busy;
     drawNameplate(r.nameplate, r.name, Math.max(0, r.hp));
     const updatedMs = data.updated_at?.toMillis?.() ?? now;
     r.lastUpdatedMs = updatedMs;
@@ -984,7 +1116,7 @@ function syncToFirestore() {
   if (!myDocRef || !player.alive) return;
   updateDoc(myDocRef, {
     name: player.name, hue: player.hue, alive: player.alive, ammo: player.ammo,
-    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw,
+    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, busy: paused,
     updated_at: serverTimestamp()
   }).catch(()=>{});
 }
@@ -1004,8 +1136,8 @@ function tryShoot() {
   camera.getWorldDirection(dir);
   raycaster.set(camera.position, dir);
 
+  // 合作模式：子彈不會傷害隊友，只打殭屍（隊友的身體不列入目標，子彈直接穿過）
   const targets = [];
-  for (const r of remotePlayers.values()) if (r.alive) targets.push(r.body, r.head);
   for (const z of zombies) if (z.alive) targets.push(z.body, z.head);
   const hits = raycaster.intersectObjects([...solidMeshes, ...targets], false);
 
@@ -1013,20 +1145,18 @@ function tryShoot() {
   if (hits.length > 0) {
     const hit = hits[0];
     endPoint = hit.point;
-    const docId = hit.object.userData?.docId;
     const zi = hit.object.userData?.zombieIndex;
-    if (docId) {
-      registerHit(docId);
-      showHitMarker();
-    } else if (zi !== undefined) {
+    if (zi !== undefined) {
       const z = zombies[zi];
-      z.hp--;
+      z.hp--; // 本地先扣，畫面即時反應
       z.hitFlashUntil = performance.now() + 160;
       showHitMarker();
+      updateDoc(zombieDocRef, { ['z' + zi + '.hp']: increment(-1) }).catch(()=>{}); // 傷害同步給全班
       if (z.hp <= 0) {
+        player.kills++; // 擊倒殭屍數
         z.alive = false;
         z.group.visible = false;
-        z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
+        if (isHost()) z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
       }
     } else {
       spawnSpark(hit.point);
@@ -1036,10 +1166,6 @@ function tryShoot() {
   drawTracer(gunOrigin, endPoint);
   spawnProjectile(gunOrigin, endPoint);
   spawnMuzzleFlash(gunOrigin);
-}
-function registerHit(targetId) {
-  const targetRef = doc(collection(db, 'fps_players'), targetId);
-  updateDoc(targetRef, { hp: increment(-1) }).catch(()=>{});
 }
 function drawTracer(from, to) {
   const geo = new THREE.BufferGeometry().setFromPoints([from, to]);
@@ -1204,15 +1330,31 @@ function animate() {
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
 
-    // 彈匣拾取判定
+    // 彈匣拾取判定：走過去直接補 5 發，不用解題
     if (!paused) {
+      const now = performance.now();
       for (const crate of ammoCrates) {
-        if (!crate.available && performance.now() > crate.cooldownUntil) {
+        if (!crate.available && now > crate.cooldownUntil) {
           crate.available = true; crate.mesh.visible = true;
         }
-        if (crate.available && performance.now() > crate.cooldownUntil) {
+        if (crate.available) {
           const dist = Math.hypot(crate.x - player.x, crate.z - player.z);
-          if (dist < AMMO_PICKUP_DIST) { showQuestion(crate); break; }
+          if (dist < AMMO_PICKUP_DIST) {
+            crate.available = false;
+            crate.mesh.visible = false;
+            crate.cooldownUntil = now + AMMO_RESPAWN_MS;
+            player.ammo += 5;
+          }
+        }
+      }
+      // 醫療包拾取判定：血量沒滿才觸發數學題
+      for (const pack of healthPacks) {
+        if (!pack.available && now > pack.cooldownUntil) {
+          pack.available = true; pack.mesh.visible = true;
+        }
+        if (pack.available && now > pack.cooldownUntil && player.hp < MAX_HP) {
+          const dist = Math.hypot(pack.x - player.x, pack.z - player.z);
+          if (dist < AMMO_PICKUP_DIST) { showQuestion(pack); break; }
         }
       }
     }
@@ -1222,8 +1364,9 @@ function animate() {
     camera.rotation.x = pitch;
   }
 
-  // 彈匣旋轉動畫
+  // 彈匣與醫療包旋轉動畫
   ammoCrates.forEach(c => { c.mesh.rotation.y += dt * 1.2; });
+  healthPacks.forEach(p => { p.mesh.rotation.y += dt * 0.8; });
 
   // 遠端玩家插值移動
   for (const r of remotePlayers.values()) {
@@ -1232,8 +1375,13 @@ function animate() {
     r.group.rotation.y = r.target.rotY;
   }
 
-  // 殭屍（答題暫停時也跟著暫停，避免解題時被咬）
-  if (!paused) updateZombies(dt);
+  // 殭屍：主機玩家負責模擬並同步；其他人平滑跟隨主機的位置
+  // （答題中的玩家不會被咬——zombieTargets 會標記 busy）
+  if (isHost()) {
+    if (!paused) updateZombies(dt);
+  } else {
+    lerpZombies();
+  }
 
   // 雲朵緩慢漂移
   for (const c of clouds) {
@@ -1267,14 +1415,16 @@ window.startGame = async function startGame() {
   spawnPlayerAt();
   player.hp = MAX_HP;
   player.ammo = 0;
+  player.kills = 0;
   player.alive = true;
 
   const payload = {
     name: player.name, hue: player.hue, alive: true, hp: player.hp, ammo: player.ammo,
-    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, updated_at: serverTimestamp()
+    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, busy: false, updated_at: serverTimestamp()
   };
   if (!myDocRef) myDocRef = doc(collection(db, 'fps_players'));
   await setDoc(myDocRef, payload).catch(()=>{});
+  ensureZombieDoc();
   startNetworkSync();
 
   running = true;
