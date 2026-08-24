@@ -449,8 +449,9 @@
 
             CATEGORIES.forEach(cat => {
                 const count = allFiles.filter(f => f.categoryId === cat.id).length;
-                if (count === 0) return;
-                nav.appendChild(makeCatButton(cat.id, cat.name, cat.icon, cat.color, count));
+                const btn = makeCatButton(cat.id, cat.name, cat.icon, cat.color, count);
+                if (count === 0) btn.style.opacity = '0.55';
+                nav.appendChild(btn);
             });
         }
 
