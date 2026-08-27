@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校考試儀表板</title>
+    <style>
+        /* --- 全局黑板風格與重置 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* 防止投影時反白文字 */
+        }
+
+        body {
+            background-color: #1e3a29; /* 深黑板綠 */
+            color: #f4f4f0; /* 粉筆白 */
+            font-family: 'Noto Sans TC', sans-serif;
+            min-height: 100vh;
+            background-attachment: fixed; /* 讓背景滑動時固定 */
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px; /* 微微的黑板網格質感 */
+        }
+
+        h1, h2, h3 {
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 2px;
+        }
+
+        /* 粉筆邊框共用樣式 */
+        .chalk-border {
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2), 0 0 5px rgba(255,255,255,0.1);
+        }
+
+        /* 隱藏元素 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- 第一頁：設定畫面 --- */
+        #setup-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh; /* 讓畫面可以上下滑動 */
+            padding: 40px;
+        }
+
+        .setup-container {
+            width: 80%;
+            max-width: 900px;
+            padding: 40px;
+            background-color: rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+        }
+
+        .setup-section {
+            margin-bottom: 30px;
+        }
+
+        .setup-section h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #ffd700; /* 粉筆黃 */
+            border-bottom: 2px dashed rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+
+        /* 科目選擇按鈕 */
+        .subjects-grid {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .subject-btn {
+            background: transparent;
+            color: white;
+            font-size: 1.5rem;
+            padding: 15px 30px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+
+        .subject-btn:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+        .subject-btn.selected {
+            background-color: rgba(255, 215, 0, 0.2);
+            border-color: #ffd700;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .subject-btn .order-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        /* 人數與班級設定盒 */
+        .attendance-setup {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .number-box-wrapper {
+            text-align: center;
+        }
+
+        .number-box-wrapper label {
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .number-box {
+            width: 120px;
+            height: 80px;
+            font-size: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: rgba(0,0,0,0.3);
+            transition: background 0.2s;
+        }
+
+        .number-box:hover {
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .number-box.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        /* 啟動與統計按鈕 */
+        .start-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            font-size: 2rem;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .start-btn:hover:not(:disabled) {
+            background-color: rgba(255, 215, 0, 0.2);
+            transform: scale(1.05);
+        }
+
+        .start-btn:disabled {
+            color: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.3);
+            cursor: not-allowed;
+        }
+
+        .stats-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #8be9fd; /* 粉筆藍 */
+            border-color: rgba(139, 233, 253, 0.6);
+            font-size: 2rem;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .stats-btn:hover {
+            background-color: rgba(139, 233, 253, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* --- 數字鍵盤 (側邊浮動面板，不遮擋畫面) --- */
+        #numpad-modal {
+            position: fixed;
+            top: 50%;
+            right: 20px; /* 靠右對齊 */
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .numpad-container {
+            background-color: #1e3a29;
+            padding: 20px;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            box-shadow: -10px 10px 40px rgba(0,0,0,0.9); /* 立體浮動感 */
+        }
+
+        .numpad-btn {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 2rem;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .numpad-btn:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .numpad-btn.action {
+            font-size: 1.5rem;
+            background: rgba(255, 215, 0, 0.1);
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+        
+        .numpad-btn.zero {
+            grid-column: span 2;
+        }
+
+        /* --- 第二頁：儀表板 (全自動響應式調整) --- */
+        #dashboard-page {
+            height: 100vh; /* 投影畫面鎖定高度 */
+            width: 100vw;
+            overflow: hidden; /* 投影畫面防捲動 */
+            padding: 2vmin;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: 4.5fr 4fr 1.2fr; /* 稍微加高底部進度條空間 */
+            gap: 2vmin;
+            position: relative;
+        }
+
+        /* 回到設定按鈕 */
+        .back-btn {
+            position: absolute;
+            top: 2vh;
+            right: 2vh;
+            background-color: rgba(0, 0, 0, 0.4);
+            color: rgba(255, 255, 255, 0.7);
+            border: 2px dashed rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            padding: 8px 16px;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            border-color: #ffd700;
+        }
+
+        .panel {
+            padding: 2vmin;
+            display: flex;
+            flex-direction: column;
+            background-color: rgba(0, 0, 0, 0.15);
+        }
+
+        .panel-title {
+            font-size: clamp(1.5rem, 3.5vmin, 3.5rem);
+            color: #ffd700;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.5);
+            padding-bottom: 0.5vmin;
+            margin-bottom: 1.5vmin;
+            text-align: center;
+        }
+
+        /* A區: 今日考程 */
+        .area-a { grid-column: span 3; }
+        .schedule-list {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: clamp(1.5rem, 4vmin, 4rem);
+            padding: 1vmin 2vmin;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .schedule-item.active {
+            background-color: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            font-weight: bold;
+            border: 2px dashed #ffd700;
+        }
+        .schedule-item.past {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: line-through;
+        }
+
+        /* B區: 現在時間 */
+        .area-b { 
+            grid-column: span 2; 
+            justify-content: center;
+            align-items: center;
+        }
+        .clock-display {
+            font-size: clamp(4rem, 10vmin, 15rem);
+            font-weight: 900;
+            font-family: monospace;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            line-height: 1;
+        }
+        .date-display {
+            font-size: clamp(1.2rem, 3vmin, 4rem);
+            text-align: center;
+            margin-top: 2vmin;
+            color: #bbb;
+        }
+
+        /* C區: 人數統計 */
+        .area-c { grid-column: span 2; }
+        .attendance-stats {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 0 10%;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline; /* 讓不同大小的字體能切齊底線 */
+            font-size: clamp(1.5rem, 4.5vmin, 5rem);
+        }
+        .stat-row.absent {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        /* 新增：將人數統計的數字放大近一倍 */
+        .stat-number {
+            font-size: 1.8em; 
+            font-weight: 900;
+            margin-right: 8px;
+        }
+
+        /* D區: 考生提醒 */
+        .area-d { 
+            grid-column: span 3; 
+            justify-content: center;
+            position: relative;
+        }
+        .reminder-content {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: clamp(2.5rem, 6.5vmin, 7.5rem); /* 字體放大一些 */
+            padding: 0 2vmin;
+            line-height: 1.4;
+            color: #8be9fd; 
+            animation: fadeInOut 20s infinite;
+        }
+        @keyframes fadeInOut {
+            0%, 5% { opacity: 0; transform: scale(0.95); }
+            10%, 90% { opacity: 1; transform: scale(1); }
+            95%, 100% { opacity: 0; transform: scale(0.95); }
+        }
+
+        /* E區: 考試進度條與烏龜 */
+        .area-e { 
+            grid-column: span 5; 
+            flex-direction: row;
+            align-items: center;
+            gap: 2vmin;
+            padding: 1vmin 2vmin;
+        }
+        .progress-label {
+            font-size: clamp(1.5rem, 3vmin, 3.5rem);
+            white-space: nowrap;
+        }
+        .progress-bar-container {
+            flex-grow: 1;
+            height: 5vmin;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #50fa7b; 
+            border-radius: 20px;
+            transition: width 1s linear;
+        }
+        
+        /* 可愛烏龜動畫設定 */
+        .turtle {
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(2.5rem, 5vmin, 6rem);
+            transition: left 1s linear;
+            z-index: 10;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            animation: turtleCrawl 1s infinite alternate ease-in-out;
+        }
+        @keyframes turtleCrawl {
+            0% { transform: translate(-50%, -50%) rotate(-15deg); }
+            100% { transform: translate(-50%, -50%) rotate(15deg); }
+        }
+
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: clamp(1.2rem, 2.5vmin, 3rem);
+            font-weight: bold;
+            color: #ffffff; 
+            text-shadow: 1px 1px 4px rgba(0,0,0,0.8);
+            z-index: 5;
+            pointer-events: none;
+        }
+        .progress-status {
+            font-size: clamp(1.5rem, 3vmin, 3.5rem);
+            min-width: 15vw;
+            text-align: right;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 第一頁：設定畫面 ==================== -->
+    <div id="setup-page">
+        <div class="setup-container chalk-border">
+            <h1 style="text-align: center; font-size: 3rem; margin-bottom: 40px;">考試儀表板設定</h1>
+            
+            <div class="setup-section">
+                <h2>1. 選擇考試科目 (依順序勾選，最多4科)</h2>
+                <div class="subjects-grid" id="subjects-container">
+                    <!-- JavaScript 動態產生按鈕 -->
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h2>2. 班級設定 (點擊數字盒輸入)</h2>
+                <div class="attendance-setup">
+                    <div class="number-box-wrapper">
+                        <label>年級</label>
+                        <div class="number-box chalk-border" id="box-grade" onclick="openNumpad('grade')">0</div>
+                    </div>
+                    <div class="number-box-wrapper">
+                        <label>班級</label>
+                        <div class="number-box chalk-border" id="box-classNum" onclick="openNumpad('classNum')">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-section">
+                <h2>3. 人數設定 (點擊數字盒輸入)</h2>
+                <div class="attendance-setup">
+                    <div class="number-box-wrapper">
+                        <label>應到人數</label>
+                        <div class="number-box chalk-border" id="box-expected" onclick="openNumpad('expected')">0</div>
+                    </div>
+                    <div class="number-box-wrapper">
+                        <label>實到人數</label>
+                        <div class="number-box chalk-border" id="box-actual" onclick="openNumpad('actual')">0</div>
+                    </div>
+                    <div class="number-box-wrapper" style="opacity: 0.7;">
+                        <label>缺考自動計算</label>
+                        <div class="number-box chalk-border" id="box-absent" style="cursor: default; border-style: dashed;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <button class="start-btn chalk-border" id="btn-start" disabled onclick="submitToSheetAndStart()">開始提醒畫面/上傳考生人數</button>
+                <button class="stats-btn chalk-border" onclick="window.open('https://docs.google.com/spreadsheets/d/1ipGh3LuITJYRZzC6BDPqTVA1SG7uWUleBo3Lg8l8OIY/preview', '_blank')">📊 目前人數統計</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 數字鍵盤 Modal -->
+    <div id="numpad-modal" class="hidden">
+        <div class="numpad-container chalk-border">
+            <button class="numpad-btn" onclick="pressNumpad(1)">1</button>
+            <button class="numpad-btn" onclick="pressNumpad(2)">2</button>
+            <button class="numpad-btn" onclick="pressNumpad(3)">3</button>
+            <button class="numpad-btn" onclick="pressNumpad(4)">4</button>
+            <button class="numpad-btn" onclick="pressNumpad(5)">5</button>
+            <button class="numpad-btn" onclick="pressNumpad(6)">6</button>
+            <button class="numpad-btn" onclick="pressNumpad(7)">7</button>
+            <button class="numpad-btn" onclick="pressNumpad(8)">8</button>
+            <button class="numpad-btn" onclick="pressNumpad(9)">9</button>
+            <button class="numpad-btn action" onclick="pressNumpad('clear')">清除</button>
+            <button class="numpad-btn zero" onclick="pressNumpad(0)">0</button>
+            <button class="numpad-btn action" style="grid-column: span 3; background-color: rgba(80, 250, 123, 0.2);" onclick="closeNumpad()">確定</button>
+        </div>
+    </div>
+
+    <!-- ==================== 第二頁：儀表板畫面 ==================== -->
+    <div id="dashboard-page" class="hidden">
+        
+        <!-- 回到設定按鈕 -->
+        <button class="back-btn" onclick="backToSetup()">⚙️ 回到設定</button>
+
+        <!-- A區: 今日考程 -->
+        <div class="panel chalk-border area-a">
+            <div class="panel-title">📝 今日考程</div>
+            <div class="schedule-list" id="display-schedule">
+                <!-- JavaScript 動態產生考程 -->
+            </div>
+        </div>
+
+        <!-- B區: 現在時間 -->
+        <div class="panel chalk-border area-b">
+            <div class="panel-title">⏱️ 現在時間</div>
+            <div class="clock-display" id="display-clock">00:00:00</div>
+            <div class="date-display" id="display-date">年/月/日 (星期)</div>
+        </div>
+
+        <!-- C區: 人數統計 -->
+        <div class="panel chalk-border area-c">
+            <div class="panel-title">👥 人數統計</div>
+            <div class="attendance-stats">
+                <div class="stat-row">
+                    <span>應到：</span>
+                    <div><span id="display-expected" class="stat-number">0</span>人</div>
+                </div>
+                <div class="stat-row">
+                    <span>實到：</span>
+                    <div><span id="display-actual" class="stat-number">0</span>人</div>
+                </div>
+                <div class="stat-row absent">
+                    <span>缺考：</span>
+                    <div><span id="display-absent" class="stat-number">0</span>人</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- D區: 考生提醒 -->
+        <div class="panel chalk-border area-d">
+            <div class="panel-title">💡 考生提醒</div>
+            <div class="reminder-content" id="display-reminder">
+                <!-- JavaScript 輪播內容 -->
+            </div>
+        </div>
+
+        <!-- E區: 考試進度條 -->
+        <div class="panel chalk-border area-e">
+            <div class="progress-label">考試進度</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-fill"></div>
+                <div class="turtle" id="progress-turtle">🐢</div>
+                <div class="progress-text" id="progress-text">準備中...</div>
+            </div>
+            <div class="progress-status" id="progress-status">等待考試</div>
+        </div>
+
+    </div>
+
+    <!-- ==================== JavaScript 邏輯 ==================== -->
+    <script>
+        // =========================================================================
+        // 【重要設定區】您的 Google Apps Script 網址
+        // =========================================================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbn6r3G6nUweVwA3RfNlxyxSU1mR0PWpXQNGoNhqvs9R9zHfG8kcx6mP4thMuHGt-w/exec";
+
+        // --- 核心資料設定 ---
+        const ALL_SUBJECTS = ["國語", "數學", "自然", "社會", "英文"];
+        const EXAM_TIMES = [
+            { start: "08:40", end: "09:20" },
+            { start: "09:35", end: "10:15" },
+            { start: "10:30", end: "11:10" },
+            { start: "11:20", end: "12:00" }
+        ];
+        const REMINDERS = [
+            "拿到考卷先寫名字",
+            "桌上只有鉛筆、橡皮擦、考卷",
+            "不會的題目先跳過",
+            "寫完一定要再檢查一遍看看有無沒寫",
+            "有問題請舉手",
+            "不要看別人，不要唱歌和製造聲音"
+        ];
+
+        // --- 狀態變數 ---
+        let selectedSubjects = [];
+        let classInfo = { grade: 0, classNum: 0 };
+        let attendance = { expected: 0, actual: 0 };
+        let activeNumpadTarget = null;
+        let dashboardIntervals = [];
+
+        // --- 初始化設定畫面 ---
+        function initSetup() {
+            const container = document.getElementById('subjects-container');
+            ALL_SUBJECTS.forEach(subject => {
+                const btn = document.createElement('button');
+                btn.className = 'subject-btn chalk-border';
+                btn.innerText = subject;
+                btn.onclick = () => toggleSubject(subject, btn);
+                container.appendChild(btn);
+            });
+            updateStartButtonState();
+        }
+
+        // --- 科目選擇邏輯 ---
+        function toggleSubject(subject, btnElement) {
+            const index = selectedSubjects.indexOf(subject);
+            if (index > -1) {
+                selectedSubjects.splice(index, 1);
+                btnElement.classList.remove('selected');
+                const badge = btnElement.querySelector('.order-badge');
+                if (badge) badge.remove();
+            } else {
+                if (selectedSubjects.length >= 4) {
+                    alert("考試時間段只有四節，最多只能選擇四個科目！");
+                    return;
+                }
+                selectedSubjects.push(subject);
+                btnElement.classList.add('selected');
+            }
+            
+            document.querySelectorAll('.subject-btn').forEach(btn => {
+                const subj = btn.innerText.replace(/[0-9]/g, '');
+                const currentIdx = selectedSubjects.indexOf(btn.childNodes[0].nodeValue.trim());
+                
+                const oldBadge = btn.querySelector('.order-badge');
+                if (oldBadge) oldBadge.remove();
+
+                if (currentIdx > -1) {
+                    const badge = document.createElement('div');
+                    badge.className = 'order-badge';
+                    badge.innerText = currentIdx + 1;
+                    btn.appendChild(badge);
+                }
+            });
+
+            updateStartButtonState();
+        }
+
+        function updateStartButtonState() {
+            const btn = document.getElementById('btn-start');
+            const hasSubject = selectedSubjects.length > 0;
+            const validClass = classInfo.grade > 0 && classInfo.classNum > 0;
+            const validExpected = attendance.expected >= 1 && attendance.expected <= 40;
+            const validActual = attendance.actual >= 1 && attendance.actual <= 40;
+            const validAbsent = attendance.expected >= attendance.actual;
+
+            btn.disabled = !hasSubject || !validClass || !validExpected || !validActual || !validAbsent;
+        }
+
+        // --- 數字鍵盤邏輯 ---
+        function openNumpad(target) {
+            activeNumpadTarget = target;
+            document.getElementById('numpad-modal').classList.remove('hidden');
+            
+            document.getElementById('box-expected').classList.remove('active');
+            document.getElementById('box-actual').classList.remove('active');
+            document.getElementById('box-grade').classList.remove('active');
+            document.getElementById('box-classNum').classList.remove('active');
+            document.getElementById(`box-${target}`).classList.add('active');
+        }
+
+        function closeNumpad() {
+            document.getElementById('numpad-modal').classList.add('hidden');
+            document.getElementById('box-expected').classList.remove('active');
+            document.getElementById('box-actual').classList.remove('active');
+            document.getElementById('box-grade').classList.remove('active');
+            document.getElementById('box-classNum').classList.remove('active');
+            
+            if (classInfo.grade > 6) {
+                alert("年級範圍只能設定 1~6，請重新輸入。");
+                classInfo.grade = 0;
+                document.getElementById('box-grade').innerText = 0;
+            }
+            if (classInfo.classNum > 11) {
+                alert("班級範圍只能設定 1~11，請重新輸入。");
+                classInfo.classNum = 0;
+                document.getElementById('box-classNum').innerText = 0;
+            }
+            if (activeNumpadTarget === 'expected' && (attendance.expected < 1 || attendance.expected > 40)) {
+                alert("應到人數範圍只能設定 1~40，請重新輸入。");
+                attendance.expected = 0;
+                document.getElementById('box-expected').innerText = 0;
+            }
+            if (activeNumpadTarget === 'actual' && (attendance.actual < 1 || attendance.actual > 40)) {
+                alert("實到人數範圍只能設定 1~40，請重新輸入。");
+                attendance.actual = 0;
+                document.getElementById('box-actual').innerText = 0;
+            }
+            if (attendance.expected > 0 && attendance.actual > attendance.expected) {
+                alert("錯誤：缺考人數不能為負數（實到人數不可大於應到人數），請重新輸入。");
+                attendance.actual = attendance.expected;
+                document.getElementById('box-actual').innerText = attendance.actual;
+            }
+            
+            const absent = Math.max(0, attendance.expected - attendance.actual);
+            document.getElementById('box-absent').innerText = absent;
+            
+            updateStartButtonState();
+            activeNumpadTarget = null;
+        }
+
+        function pressNumpad(val) {
+            if (!activeNumpadTarget) return;
+
+            if (activeNumpadTarget === 'grade' || activeNumpadTarget === 'classNum') {
+                let currentValStr = classInfo[activeNumpadTarget].toString();
+                if (val === 'clear') {
+                    currentValStr = "0";
+                } else {
+                    if (currentValStr === "0") {
+                        currentValStr = val.toString();
+                    } else {
+                        currentValStr += val.toString();
+                        if(currentValStr.length > 2) currentValStr = currentValStr.substring(0,2);
+                    }
+                }
+                const newVal = parseInt(currentValStr, 10);
+                classInfo[activeNumpadTarget] = newVal;
+                document.getElementById(`box-${activeNumpadTarget}`).innerText = newVal;
+            } else {
+                let currentValStr = attendance[activeNumpadTarget].toString();
+                if (val === 'clear') {
+                    currentValStr = "0";
+                } else {
+                    if (currentValStr === "0") {
+                        currentValStr = val.toString();
+                    } else {
+                        currentValStr += val.toString();
+                        if(currentValStr.length > 3) currentValStr = currentValStr.substring(0,3);
+                    }
+                }
+                const newVal = parseInt(currentValStr, 10);
+                attendance[activeNumpadTarget] = newVal;
+                
+                document.getElementById(`box-${activeNumpadTarget}`).innerText = newVal;
+                
+                const absent = Math.max(0, attendance.expected - attendance.actual);
+                document.getElementById('box-absent').innerText = absent;
+            }
+
+            updateStartButtonState();
+        }
+
+        // --- 資料上傳與切換至儀表板 ---
+        async function submitToSheetAndStart() {
+            if (attendance.expected < 1 || attendance.expected > 40 || attendance.actual < 1 || attendance.actual > 40 || attendance.actual > attendance.expected) {
+                alert("人數設定超出範圍，系統已阻擋上傳，請重新確認！");
+                return;
+            }
+
+            const btn = document.getElementById('btn-start');
+            btn.innerText = "資料上傳中...";
+            btn.disabled = true;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            let currentSubject = "無考試進行中";
+            
+            for (let i = 0; i < selectedSubjects.length; i++) {
+                const s = { start: EXAM_TIMES[i].start, end: EXAM_TIMES[i].end, subject: selectedSubjects[i] };
+                const startMins = timeToMins(s.start);
+                const endMins = timeToMins(s.end);
+                if (currentMins >= startMins && currentMins <= endMins) {
+                    currentSubject = s.subject;
+                    break;
+                }
+            }
+
+            const className = `${classInfo.grade}年${classInfo.classNum}班`;
+            const absentCount = Math.max(0, attendance.expected - attendance.actual);
+            const uploadTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const formData = new FormData();
+            formData.append("date", dateStr);
+            formData.append("subject", currentSubject);
+            formData.append("className", className);
+            formData.append("expected", attendance.expected);
+            formData.append("actual", attendance.actual);
+            formData.append("absent", absentCount);
+            formData.append("uploadTime", uploadTime);
+
+            if (SCRIPT_URL && !SCRIPT_URL.includes("請將這段文字替換為")) {
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: "POST",
+                        body: formData,
+                        mode: "no-cors"
+                    });
+                    console.log("資料發送完畢");
+                } catch (error) {
+                    console.error("上傳失敗", error);
+                }
+            }
+
+            btn.innerText = "開始提醒畫面/上傳考生人數";
+            btn.disabled = false;
+            startDashboard();
+        }
+
+        // --- 返回設定畫面 ---
+        function backToSetup() {
+            dashboardIntervals.forEach(clearInterval);
+            dashboardIntervals = [];
+
+            document.getElementById('dashboard-page').classList.add('hidden');
+            document.getElementById('setup-page').classList.remove('hidden');
+        }
+
+        // --- 切換至儀表板 ---
+        function startDashboard() {
+            document.getElementById('setup-page').classList.add('hidden');
+            document.getElementById('dashboard-page').classList.remove('hidden');
+            
+            initDashboard();
+        }
+
+        // ==================== 儀表板邏輯 ====================
+
+        function initDashboard() {
+            document.getElementById('display-expected').innerText = attendance.expected;
+            document.getElementById('display-actual').innerText = attendance.actual;
+            document.getElementById('display-absent').innerText = Math.max(0, attendance.expected - attendance.actual);
+
+            const scheduleData = selectedSubjects.map((subj, index) => ({
+                subject: subj,
+                start: EXAM_TIMES[index].start,
+                end: EXAM_TIMES[index].end
+            }));
+
+            updateClockAndProgress(scheduleData);
+            const clockTimer = setInterval(() => updateClockAndProgress(scheduleData), 1000);
+            
+            startReminders();
+
+            dashboardIntervals.push(clockTimer);
+        }
+
+        function updateClockAndProgress(schedule) {
+            const now = new Date();
+            
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('display-clock').innerText = `${hours}:${minutes}:${seconds}`;
+
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} (星期${days[now.getDay()]})`;
+            document.getElementById('display-date').innerText = dateStr;
+
+            const currentMins = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+
+            let activeExamIndex = -1;
+            let nextExamIndex = -1;
+
+            for (let i = 0; i < schedule.length; i++) {
+                const s = schedule[i];
+                const startMins = timeToMins(s.start);
+                const endMins = timeToMins(s.end);
+
+                if (currentMins >= startMins && currentMins <= endMins) {
+                    activeExamIndex = i;
+                    break;
+                } else if (currentMins < startMins && nextExamIndex === -1) {
+                    nextExamIndex = i;
+                }
+            }
+
+            const scheduleContainer = document.getElementById('display-schedule');
+            scheduleContainer.innerHTML = ''; 
+            
+            schedule.forEach((s, index) => {
+                const div = document.createElement('div');
+                div.className = 'schedule-item';
+                div.innerHTML = `<span>第 ${index + 1} 節 &nbsp; ${s.start} - ${s.end}</span> <span>${s.subject}</span>`;
+                
+                const endMins = timeToMins(s.end);
+                if (index === activeExamIndex) {
+                    div.classList.add('active');
+                } else if (currentMins > endMins) {
+                    div.classList.add('past');
+                } else if (activeExamIndex === -1 && index === nextExamIndex) {
+                    div.style.borderLeft = "4px solid #ffd700";
+                    div.style.paddingLeft = "16px";
+                }
+                
+                scheduleContainer.appendChild(div);
+            });
+
+            const fill = document.getElementById('progress-fill');
+            const turtle = document.getElementById('progress-turtle');
+            const text = document.getElementById('progress-text');
+            const status = document.getElementById('progress-status');
+
+            if (activeExamIndex !== -1) {
+                const s = schedule[activeExamIndex];
+                const startMins = timeToMins(s.start);
+                const endMins = timeToMins(s.end);
+                const totalMins = endMins - startMins;
+                const passedMins = currentMins - startMins;
+                
+                let percent = (passedMins / totalMins) * 100;
+                percent = Math.min(100, Math.max(0, percent));
+                
+                fill.style.width = `${percent}%`;
+                turtle.style.left = `${percent}%`; 
+                turtle.style.display = 'block'; 
+                
+                fill.style.backgroundColor = percent > 80 ? '#ff5555' : '#50fa7b'; 
+                
+                const remainMins = Math.ceil(totalMins - passedMins);
+                text.innerText = `[${s.subject}] 進行中`;
+                status.innerText = `剩餘 ${remainMins} 分鐘`;
+                status.style.color = percent > 80 ? '#ff5555' : '#ffd700';
+
+            } else {
+                fill.style.width = '0%';
+                turtle.style.left = '0%';
+                
+                if (nextExamIndex !== -1) {
+                    turtle.style.display = 'none'; 
+                    const nextStartMins = timeToMins(schedule[nextExamIndex].start);
+                    const waitMins = Math.ceil(nextStartMins - currentMins);
+                    if (nextExamIndex === 0) {
+                        text.innerText = "早修/準備時間";
+                        status.innerText = `距第一節 ${waitMins} 分鐘`;
+                    } else {
+                        text.innerText = "下課休息時間";
+                        status.innerText = `距下節 ${waitMins} 分鐘`;
+                    }
+                    status.style.color = '#8be9fd';
+                } else {
+                    if (schedule.length > 0 && currentMins > timeToMins(schedule[schedule.length-1].end)) {
+                        text.innerText = "今日考程已全部結束";
+                        fill.style.width = '100%';
+                        turtle.style.left = '100%';
+                        turtle.style.display = 'block'; 
+                        fill.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                        status.innerText = "考試結束";
+                    } else {
+                        text.innerText = "等待中...";
+                        status.innerText = "--";
+                        turtle.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function startReminders() {
+            const displayObj = document.getElementById('display-reminder');
+            let currentIndex = 0;
+            
+            displayObj.innerText = REMINDERS[currentIndex];
+
+            const reminderTimer = setInterval(() => {
+                currentIndex = (currentIndex + 1) % REMINDERS.length;
+                displayObj.innerText = REMINDERS[currentIndex];
+            }, 20000); 
+
+            dashboardIntervals.push(reminderTimer);
+        }
+
+        function timeToMins(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        window.onload = initSetup;
+
+    </script>
+</body>
+</html>

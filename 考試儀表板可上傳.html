@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校考試儀表板</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Mali:wght@400;700&family=Noto+Sans+TC:wght@400;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Blackboard Theme (Default) */
+            --bg-color: #2b3a2a;
+            --panel-bg: rgba(0, 0, 0, 0.5);
+            --text-color: #f8f9fa;
+            --text-highlight: #ffd54f;
+            --border-color: #e0e0e0;
+            --border-style: dashed;
+            --font-main: 'Noto Sans TC', sans-serif;
+            --progress-color: #4caf50;
+            --progress-danger: #f44336;
+            --progress-icon: "✏️";
+            --card-radius: 12px;
+            --shadow: 4px 4px 15px rgba(0,0,0,0.4);
+            --btn-bg: #4caf50;
+            --btn-text: #fff;
+        }
+
+        [data-theme="sakura"] {
+            --bg-color: #fff0f5;
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --text-color: #5c3a41;
+            --text-highlight: #d81b60;
+            --border-color: #f48fb1;
+            --border-style: solid;
+            --font-main: 'Noto Sans TC', serif;
+            --progress-color: #f06292;
+            --progress-danger: #c2185b;
+            --progress-icon: "🌸";
+            --card-radius: 20px;
+            --shadow: 0 8px 32px rgba(240, 98, 146, 0.2);
+            --btn-bg: #f06292;
+            --btn-text: #fff;
+        }
+
+        [data-theme="minecraft"] {
+            --bg-color: #5d4037;
+            --panel-bg: #8d6e63;
+            --text-color: #ffffff;
+            --text-highlight: #ffff00;
+            --border-color: #3e2723;
+            --border-style: solid;
+            --font-main: 'DotGothic16', monospace;
+            --progress-color: #8bc34a;
+            --progress-danger: #d32f2f;
+            --progress-icon: "⛏️";
+            --card-radius: 0px;
+            --shadow: inset -4px -4px 0px rgba(0,0,0,0.5), inset 4px 4px 0px rgba(255,255,255,0.3), 6px 6px 0px rgba(0,0,0,0.6);
+            --btn-bg: #7cb342;
+            --btn-text: #fff;
+        }
+
+        [data-theme="scifi"] {
+            --bg-color: #0b0c10;
+            --panel-bg: rgba(31, 40, 51, 0.8);
+            --text-color: #66fcf1;
+            --text-highlight: #c5c6c7;
+            --border-color: #45a29e;
+            --border-style: solid;
+            --font-main: 'Orbitron', sans-serif;
+            --progress-color: #66fcf1;
+            --progress-danger: #ff003c;
+            --progress-icon: "🚀";
+            --card-radius: 5px;
+            --shadow: 0 0 15px rgba(102, 252, 241, 0.5);
+            --btn-bg: #1f2833;
+            --btn-text: #66fcf1;
+        }
+
+        [data-theme="cute"] {
+            --bg-color: #fff9c4;
+            --panel-bg: #ffffff;
+            --text-color: #5d4037;
+            --text-highlight: #ff9800;
+            --border-color: #ffcc80;
+            --border-style: dotted;
+            --font-main: 'Mali', cursive;
+            --progress-color: #ffb74d;
+            --progress-danger: #f44336;
+            --progress-icon: "🐾";
+            --card-radius: 30px;
+            --shadow: 5px 5px 0px #ffe0b2;
+            --btn-bg: #ffb74d;
+            --btn-text: #fff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.4s ease;
+            overflow: hidden; /* Manage overflow per page */
+        }
+
+        .page {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+        }
+        .page.active { display: block; }
+
+        #page-settings {
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+        }
+        .settings-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            padding: 2rem;
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            border: 3px var(--border-style) var(--border-color);
+        }
+        h1, h2 { text-align: center; margin-bottom: 1.5rem; color: var(--text-highlight); }
+        h2 { font-size: 1.5rem; margin-top: 2rem; text-align: left; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        
+        .grid-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        .checkbox-label input { width: 1.2rem; height: 1.2rem; cursor: pointer; }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .num-box-container { display: flex; align-items: center; gap: 0.5rem; }
+        .num-box {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            min-width: 60px;
+            text-align: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .num-box:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .num-box.active { border-color: var(--text-highlight); box-shadow: 0 0 10px var(--text-highlight); }
+
+        .theme-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+        .theme-btn {
+            padding: 0.8rem 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--card-radius);
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .theme-btn:hover { background: var(--border-color); color: var(--bg-color); }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 3rem;
+            justify-content: center;
+        }
+        .btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: var(--card-radius);
+            cursor: pointer;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            box-shadow: var(--shadow);
+            transition: transform 0.1s;
+            font-family: inherit;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-outline { background: transparent; border: 2px solid var(--btn-bg); color: var(--text-color); }
+
+        .reminders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 1rem; }
+        @media (max-width: 600px) { .reminders-grid { grid-template-columns: 1fr; } }
+
+        #numpad {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-color);
+            border: 3px var(--border-style) var(--border-color);
+            padding: 1rem;
+            border-radius: var(--card-radius);
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.8);
+            z-index: 100;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #numpad.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .numpad-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            font-family: inherit;
+            border: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            color: var(--text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+        .numpad-btn:active { transform: scale(0.9); }
+        .numpad-btn.action { background: var(--text-highlight); color: var(--bg-color); font-weight: bold; }
+
+        #page-dashboard {
+            display: flex;
+            flex-direction: column;
+            padding: 2vmin;
+            gap: 2vmin;
+        }
+        .dashboard-grid {
+            flex: 1;
+            display: grid;
+            /* Staggered asymmetric grid layout */
+            grid-template-columns: 1.3fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            grid-template-areas:
+                "A B"
+                "C D";
+            gap: 3vmin;
+            height: calc(100vh - 12vh - 4vmin); /* Reserve space for bottom progress bar */
+        }
+        
+        .dash-block {
+            background: var(--panel-bg);
+            border: 3px var(--border-style) var(--border-color);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3vmin;
+            text-align: center;
+            position: relative;
+        }
+
+        /* Block A: Current Subject */
+        #block-a { grid-area: A; justify-content: center; }
+        .curr-time-slot { font-size: clamp(1.5rem, 4vmin, 3rem); color: var(--text-highlight); font-weight: bold; margin-bottom: 1vmin; }
+        .curr-subject { font-size: clamp(4rem, 10vmin, 15rem); font-weight: 900; line-height: 1.1; }
+
+        /* Block B: Clock */
+        #block-b { grid-area: B; }
+        .clock-time { font-size: clamp(5.5rem, 12vmin, 18rem); font-weight: bold; font-variant-numeric: tabular-nums; line-height: 1; color: var(--text-highlight); }
+        .clock-date { font-size: clamp(1.5rem, 3.5vmin, 4rem); margin-top: 1vmin; opacity: 0.9; }
+
+        /* Block C: Attendance Stats */
+        #block-c { grid-area: C; flex-direction: row; justify-content: space-around; align-items: flex-end; padding-bottom: 5vmin; }
+        .stat-item { display: flex; flex-direction: column; align-items: center; }
+        .stat-label { font-size: clamp(1.5rem, 3vmin, 3.5rem); opacity: 0.8; margin-bottom: 0.5vmin; }
+        /* Align numbers with baseline */
+        .stat-value { font-size: clamp(4rem, 9vmin, 12rem); font-weight: bold; line-height: 0.8; color: var(--text-highlight); transition: transform 0.2s; }
+        .stat-value.editable { cursor: pointer; text-decoration: underline dashed; text-underline-offset: 10px; }
+        .stat-value.editable:hover { transform: scale(1.1); filter: brightness(1.2); }
+        .stat-value.danger { color: var(--progress-danger); }
+
+        /* Block D: Reminders Carousel */
+        #block-d { grid-area: D; overflow: hidden; }
+        #reminder-text {
+            font-size: clamp(2.5rem, 6vmin, 8rem);
+            font-weight: bold;
+            transition: opacity 0.8s ease-in-out;
+            width: 100%;
+            word-break: keep-all;
+        }
+
+        /* Block E: Progress Bar */
+        .progress-wrapper {
+            height: 10vh;
+            background: var(--panel-bg);
+            border: 3px var(--border-style) var(--border-color);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: var(--progress-color);
+            transition: width 1s linear, background-color 0.5s ease;
+            z-index: 1;
+        }
+        .progress-fill::after {
+            content: var(--progress-icon);
+            position: absolute;
+            right: -2vh; /* Slightly offset */
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 6vh;
+            z-index: 3;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+        }
+        .progress-fill.warning { background: var(--progress-danger); }
+        
+        .progress-text {
+            position: relative;
+            z-index: 2;
+            font-size: clamp(1.5rem, 4vmin, 4rem);
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 2vmin;
+            right: 2vmin;
+            padding: 1vmin 2vmin;
+            font-size: clamp(1rem, 2vmin, 2rem);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 50;
+            font-family: inherit;
+        }
+        .back-btn:hover { background: #fff; color: #000; }
+
+        /* Toast Warning */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(244, 67, 54, 0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: opacity 0.3s;
+        }
+        #toast.hidden { opacity: 0; pointer-events: none; }
+    </style>
+</head>
+<body data-theme="blackboard">
+
+    <div id="page-settings" class="page active">
+        <div class="settings-container">
+            <h1>🏫 學校考試儀表板設定</h1>
+            
+            <h2>1. 選擇考試科目 (最多6科，按順序安排節次)</h2>
+            <div class="grid-options" id="subject-list">
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="國語"> 國語</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="數學"> 數學</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="自然"> 自然</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="社會"> 社會</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="英文"> 英文</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="地理"> 地理</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="歷史"> 歷史</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="物理"> 物理</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="化學"> 化學</label>
+                <label class="checkbox-label"><input type="checkbox" name="subject" value="生物"> 生物</label>
+            </div>
+            <p style="font-size: 0.9em; opacity: 0.8; margin-top: 5px;">*節次時間: 1(08:40-09:20), 2(09:30-10:10), 3(10:20-11:00), 4(11:10-11:50), 5(12:00-12:40), 6(13:00-13:40)</p>
+
+            <h2>2. 班級與人數設定</h2>
+            <div class="input-group">
+                <div class="num-box-container">
+                    <span style="font-size: 1.2rem;">年級</span>
+                    <div class="num-box" id="val-grade" data-type="grade" onclick="openNumpad(this, 2, 1, 10)">-</div>
+                </div>
+                <div class="num-box-container">
+                    <span style="font-size: 1.2rem;">班級</span>
+                    <div class="num-box" id="val-class" data-type="class" onclick="openNumpad(this, 2, 1, 99)">-</div>
+                </div>
+            </div>
+            <div class="input-group" style="margin-top: 1.5rem;">
+                <div class="num-box-container">
+                    <span style="font-size: 1.2rem;">應到人數</span>
+                    <div class="num-box" id="val-expected" data-type="exp" onclick="openNumpad(this, 2, 1, 50)">-</div>
+                </div>
+                <div class="num-box-container">
+                    <span style="font-size: 1.2rem;">實到人數</span>
+                    <div class="num-box" id="val-actual" data-type="act" onclick="openNumpad(this, 2, 0, 50)">-</div>
+                </div>
+                <div class="num-box-container" style="margin-left: auto;">
+                    <span style="font-size: 1.2rem; color: var(--progress-danger); font-weight: bold;">缺考人數: <span id="val-absent">-</span></span>
+                </div>
+            </div>
+
+            <h2>3. 選擇儀表板風格</h2>
+            <div class="theme-buttons">
+                <button class="theme-btn" onclick="setTheme('blackboard')">✏️ 黑板</button>
+                <button class="theme-btn" onclick="setTheme('sakura')">🌸 櫻花</button>
+                <button class="theme-btn" onclick="setTheme('minecraft')">⛏️ Minecraft</button>
+                <button class="theme-btn" onclick="setTheme('scifi')">🚀 科技</button>
+                <button class="theme-btn" onclick="setTheme('cute')">🐾 可愛</button>
+            </div>
+
+            <h2>4. 考生提醒事項 (輪播)</h2>
+            <div class="reminders-grid" id="reminder-list">
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="考試期間嚴禁交談" checked> 考試期間嚴禁交談</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="手機請關機並放至教室前後" checked> 手機請關機並放至教室前後</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="請核對答案卡班級座號" checked> 請核對答案卡班級座號</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="文具掉落請舉手由監考老師撿拾" checked> 文具掉落請舉手由老師處理</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="考試結束鐘響請立即停筆" checked> 考試結束鐘響請立即停筆</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="嚴禁作弊，違者記過處分" checked> 嚴禁作弊，違者記過處分</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="若有身體不適請立即舉手" checked> 若有身體不適請立即舉手</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="桌面僅限放置應考文具" checked> 桌面僅限放置應考文具</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="提前交卷請輕步離開教室" checked> 提前交卷請輕步離開教室</label>
+                <label class="checkbox-label"><input type="checkbox" name="reminder" value="保持平常心，發揮實力" checked> 保持平常心，發揮實力</label>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn" onclick="validateAndStart()">開始提醒畫面 / 上傳人數</button>
+                <button class="btn btn-outline" onclick="window.open('https://docs.google.com/spreadsheets/d/1CrSxazwVk6urS-yUUUsHOma8yjqzR4bMR5Cb81HkjYU/preview', '_blank')">📊 目前人數統計</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="numpad" class="hidden">
+        <button class="numpad-btn" onclick="numPress('1')">1</button>
+        <button class="numpad-btn" onclick="numPress('2')">2</button>
+        <button class="numpad-btn" onclick="numPress('3')">3</button>
+        <button class="numpad-btn" onclick="numPress('4')">4</button>
+        <button class="numpad-btn" onclick="numPress('5')">5</button>
+        <button class="numpad-btn" onclick="numPress('6')">6</button>
+        <button class="numpad-btn" onclick="numPress('7')">7</button>
+        <button class="numpad-btn" onclick="numPress('8')">8</button>
+        <button class="numpad-btn" onclick="numPress('9')">9</button>
+        <button class="numpad-btn action" onclick="numClear()">C</button>
+        <button class="numpad-btn" onclick="numPress('0')">0</button>
+        <button class="numpad-btn action" onclick="numOK()">OK</button>
+    </div>
+
+    <div id="page-dashboard" class="page">
+        <button class="back-btn" onclick="backToSettings()">✖ 回到設定</button>
+        
+        <div class="dashboard-grid">
+            <!-- A: Current Exam -->
+            <div id="block-a" class="dash-block">
+                <div class="curr-time-slot" id="dash-slot">準備中</div>
+                <div class="curr-subject" id="dash-subject">等待開始</div>
+            </div>
+            
+            <!-- B: Clock -->
+            <div id="block-b" class="dash-block">
+                <div class="clock-time" id="dash-clock">00:00:00</div>
+                <div class="clock-date" id="dash-date">YYYY/MM/DD 星期X</div>
+            </div>
+            
+            <!-- D: Reminders (Swapped position for layout) -->
+            <div id="block-d" class="dash-block">
+                <div id="reminder-text">祝各位考生考試順利！</div>
+            </div>
+
+            <!-- C: Attendance -->
+            <div id="block-c" class="dash-block">
+                <div class="stat-item" title="點擊直接修改人數">
+                    <span class="stat-label">應到</span>
+                    <span class="stat-value editable" id="dash-exp" data-type="exp" onclick="openNumpad(this, 2, 1, 50)">-</span>
+                </div>
+                <div class="stat-item" title="點擊直接修改人數">
+                    <span class="stat-label">實到</span>
+                    <span class="stat-value editable" id="dash-act" data-type="act" onclick="openNumpad(this, 2, 0, 50)">-</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">缺考</span>
+                    <span class="stat-value danger" id="dash-abs">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- E: Progress Bar -->
+        <div class="progress-wrapper">
+            <div class="progress-fill" id="dash-progress-fill"></div>
+            <div class="progress-text" id="dash-progress-text">準備考試中...</div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden">警告訊息</div>
+
+    <!-- 加入隱藏的 iframe 用於表單送出，100% 避開 CORS 問題 -->
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
+    <script>
+        // --- State Variables ---
+        let currentNumpadTarget = null;
+        let numpadMaxLength = 2;
+        let numpadMin = 0;
+        let numpadMax = 99;
+        
+        let examSchedule = [];
+        let dashboardInterval;
+        let reminderInterval;
+        let clockInterval;
+        let activeReminders = [];
+        let currentReminderIndex = 0;
+
+        // Fixed Time Slots (Start and End in format "HH:MM")
+        const TIME_SLOTS = [
+            { start: "08:40", end: "09:20" },
+            { start: "09:30", end: "10:10" },
+            { start: "10:20", end: "11:00" },
+            { start: "11:10", end: "11:50" },
+            { start: "12:00", end: "12:40" },
+            { start: "13:00", end: "13:40" }
+        ];
+
+        // --- Theme Switching ---
+        function setTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+        }
+
+        // --- Toast Notification ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        function openNumpad(element, maxLen, minVal, maxVal) {
+            // Remove active class from previous
+            if(currentNumpadTarget) currentNumpadTarget.classList.remove('active');
+            
+            currentNumpadTarget = element;
+            numpadMaxLength = maxLen;
+            numpadMin = minVal;
+            numpadMax = maxVal;
+            
+            element.classList.add('active');
+            element.innerText = ''; // Clear for new input
+            document.getElementById('numpad').classList.remove('hidden');
+        }
+
+        function numPress(numStr) {
+            if(!currentNumpadTarget) return;
+            let currentVal = currentNumpadTarget.innerText;
+            if(currentVal === '-') currentVal = '';
+            
+            if(currentVal.length < numpadMaxLength) {
+                currentNumpadTarget.innerText = currentVal + numStr;
+            }
+        }
+
+        function numClear() {
+            if(currentNumpadTarget) currentNumpadTarget.innerText = '';
+        }
+
+        function numOK() {
+            if(!currentNumpadTarget) return;
+            
+            let val = parseInt(currentNumpadTarget.innerText);
+            if(isNaN(val)) {
+                currentNumpadTarget.innerText = '-';
+                val = '-';
+            } else {
+                // Bounds check
+                if(val < numpadMin) val = numpadMin;
+                if(val > numpadMax) val = numpadMax;
+                currentNumpadTarget.innerText = val;
+            }
+            
+            // 同步設定頁與儀表板的數值
+            const type = currentNumpadTarget.dataset.type;
+            if (type === 'exp') {
+                document.getElementById('val-expected').innerText = val;
+                document.getElementById('dash-exp').innerText = val;
+            } else if (type === 'act') {
+                document.getElementById('val-actual').innerText = val;
+                document.getElementById('dash-act').innerText = val;
+            } else if (type === 'grade') {
+                document.getElementById('val-grade').innerText = val;
+            } else if (type === 'class') {
+                document.getElementById('val-class').innerText = val;
+            }
+
+            currentNumpadTarget.classList.remove('active');
+            document.getElementById('numpad').classList.add('hidden');
+            currentNumpadTarget = null;
+            
+            calcAbsent(); // Automatically calculate absent whenever numpad closes
+            checkAndAutoUpload(); // 檢查並觸發自動上傳
+        }
+
+        function checkAndAutoUpload() {
+            const grade = document.getElementById('val-grade').innerText;
+            const cls = document.getElementById('val-class').innerText;
+            const expStr = document.getElementById('val-expected').innerText;
+            const actStr = document.getElementById('val-actual').innerText;
+
+            // 只要班級、應到、實到都有輸入，就直接上傳
+            if (grade !== '-' && cls !== '-' && expStr !== '-' && actStr !== '-') {
+                const exp = parseInt(expStr);
+                const act = parseInt(actStr);
+                
+                if (act <= exp) {
+                    let subj = "非考試期間修改";
+                    const activeSubject = document.getElementById('dash-subject') ? document.getElementById('dash-subject').innerText : "";
+                    
+                    // 根據畫面狀態判斷目前科目 (若無則取勾選項)
+                    if (document.getElementById('page-dashboard').classList.contains('active') && activeSubject && activeSubject !== '等待開始') {
+                        subj = activeSubject;
+                    } else {
+                        const checkedSubjects = document.querySelectorAll('input[name="subject"]:checked');
+                        if (checkedSubjects.length > 0) subj = checkedSubjects[0].value;
+                    }
+
+                    uploadDataToGAS(grade, cls, exp, act, exp - act, subj);
+                    showToast("✅ 人數變更已自動上傳至試算表！");
+                }
+            }
+        }
+
+        function calcAbsent() {
+            const expStr = document.getElementById('val-expected').innerText;
+            const actStr = document.getElementById('val-actual').innerText;
+            const absEl = document.getElementById('val-absent');
+            const dashAbsEl = document.getElementById('dash-abs');
+            
+            if(expStr !== '-' && actStr !== '-') {
+                const exp = parseInt(expStr);
+                const act = parseInt(actStr);
+                if(act > exp) {
+                    showToast("防呆阻擋：實到人數不可大於應到人數！");
+                    document.getElementById('val-actual').innerText = exp; // reset to max
+                    if (document.getElementById('dash-act')) document.getElementById('dash-act').innerText = exp;
+                    absEl.innerText = '0';
+                    if (dashAbsEl) dashAbsEl.innerText = '0';
+                } else {
+                    absEl.innerText = exp - act;
+                    if (dashAbsEl) dashAbsEl.innerText = exp - act;
+                }
+            } else {
+                absEl.innerText = '-';
+                if (dashAbsEl) dashAbsEl.innerText = '-';
+            }
+        }
+
+        // Limit subject selection to 6
+        document.querySelectorAll('input[name="subject"]').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const checked = document.querySelectorAll('input[name="subject"]:checked');
+                if(checked.length > 6) {
+                    this.checked = false;
+                    showToast("最多只能選擇 6 個科目");
+                }
+            });
+        });
+
+        function validateAndStart() {
+            // 1. Subjects
+            const checkedSubjects = document.querySelectorAll('input[name="subject"]:checked');
+            if(checkedSubjects.length === 0) {
+                showToast("請至少選擇 1 個考試科目"); return;
+            }
+            
+            // Build schedule
+            examSchedule = Array.from(checkedSubjects).map((cb, index) => {
+                return {
+                    subject: cb.value,
+                    period: index + 1,
+                    start: TIME_SLOTS[index].start,
+                    end: TIME_SLOTS[index].end
+                };
+            });
+
+            // 2. Class & Grade
+            const grade = document.getElementById('val-grade').innerText;
+            const cls = document.getElementById('val-class').innerText;
+            if(grade === '-' || cls === '-') {
+                showToast("請設定年級與班級"); return;
+            }
+
+            // 3. Attendance
+            const exp = document.getElementById('val-expected').innerText;
+            const act = document.getElementById('val-actual').innerText;
+            if(exp === '-' || act === '-') {
+                showToast("請設定應到與實到人數"); return;
+            }
+            
+            const expNum = parseInt(exp);
+            const actNum = parseInt(act);
+            if(actNum > expNum) {
+                showToast("防呆阻擋：實到人數大於應到人數"); return;
+            }
+
+            // 4. Reminders
+            const checkedReminders = document.querySelectorAll('input[name="reminder"]:checked');
+            activeReminders = Array.from(checkedReminders).map(cb => cb.value);
+            if(activeReminders.length === 0) activeReminders = ["祝各位考生考試順利！"];
+
+            // 5. Send Data 
+            uploadDataToGAS(grade, cls, expNum, actNum, expNum - actNum, examSchedule[0].subject);
+
+            // 6. Switch Page & Initialize Dashboard
+            document.getElementById('page-settings').classList.remove('active');
+            document.getElementById('page-dashboard').classList.add('active');
+            
+            initDashboard(expNum, actNum, expNum - actNum);
+        }
+
+        function uploadDataToGAS(grade, cls, exp, act, abs, currentSubj) {
+            // 您的 Google Apps Script 網址
+            const gasUrl = "https://script.google.com/macros/s/AKfycbxFjlyuSBkBNKzWmhM_C26UuB6Vq8Svd5gBptUhwg7wf0sw7_3I_EAJNP0_UJseSqZndQ/exec"; 
+            
+            const now = new Date();
+            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
+            const dateStr = now.getFullYear() + "/" + (now.getMonth()+1) + "/" + now.getDate();
+
+            // 使用隱藏的 Form 提交，100% 避開所有瀏覽器的 CORS 與跳轉限制
+            let form = document.getElementById('gas-form');
+            if (!form) {
+                form = document.createElement('form');
+                form.id = 'gas-form';
+                form.method = 'POST';
+                form.target = 'hidden_iframe';
+                form.style.display = 'none';
+                document.body.appendChild(form);
+            }
+
+            form.action = gasUrl;
+            form.innerHTML = `
+                <input type="hidden" name="date" value="${dateStr}">
+                <input type="hidden" name="subject" value="${currentSubj}">
+                <input type="hidden" name="className" value="${grade}年${cls}班">
+                <input type="hidden" name="expected" value="${exp}">
+                <input type="hidden" name="actual" value="${act}">
+                <input type="hidden" name="absent" value="${abs}">
+                <input type="hidden" name="uploadTime" value="${timeStr}">
+            `;
+            form.submit();
+        }
+
+        function parseTime(hhmm) {
+            const parts = hhmm.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('dash-clock').innerText = `${h}:${m}:${s}`;
+            
+            if(now.getSeconds() === 0 || !document.getElementById('dash-date').dataset.init) {
+                const y = now.getFullYear();
+                const mo = String(now.getMonth()+1).padStart(2, '0');
+                const d = String(now.getDate()).padStart(2, '0');
+                const days = ["日", "一", "二", "三", "四", "五", "六"];
+                document.getElementById('dash-date').innerText = `${y}/${mo}/${d} 星期${days[now.getDay()]}`;
+                document.getElementById('dash-date').dataset.init = "true";
+            }
+        }
+
+        function updateDashboardStatus() {
+            const now = new Date();
+            // For testing: allow manually overriding time by uncommenting below
+            // now.setHours(9); now.setMinutes(25);
+            
+            const currentMins = now.getHours() * 60 + now.getMinutes();
+            
+            let currentState = null;
+            let nextExam = null;
+
+            // Determine state based on schedule
+            for (let i = 0; i < examSchedule.length; i++) {
+                const exam = examSchedule[i];
+                const startMins = parseTime(exam.start);
+                const endMins = parseTime(exam.end);
+
+                if (currentMins >= startMins && currentMins < endMins) {
+                    // Currently in this exam
+                    currentState = { type: 'exam', data: exam, startMins, endMins };
+                    break;
+                } else if (currentMins < startMins) {
+                    // Waiting for this exam
+                    currentState = { type: 'wait', data: exam, startMins };
+                    break;
+                }
+            }
+
+            if (!currentState && examSchedule.length > 0) {
+                // Passed all exams
+                currentState = { type: 'finished' };
+            }
+
+            // UI Updates based on state
+            const slotEl = document.getElementById('dash-slot');
+            const subjEl = document.getElementById('dash-subject');
+            const fillEl = document.getElementById('dash-progress-fill');
+            const textEl = document.getElementById('dash-progress-text');
+
+            if (currentState.type === 'exam') {
+                const e = currentState.data;
+                slotEl.innerText = `第 ${e.period} 節 ${e.start} - ${e.end}`;
+                subjEl.innerText = e.subject;
+                
+                const totalDur = currentState.endMins - currentState.startMins;
+                const elapsed = currentMins - currentState.startMins;
+                // Add seconds to make progress bar super smooth
+                const exactElapsed = elapsed + (now.getSeconds() / 60);
+                let progressPercent = (exactElapsed / totalDur) * 100;
+                if(progressPercent > 100) progressPercent = 100;
+
+                const minsLeft = currentState.endMins - currentMins;
+
+                fillEl.style.width = `${progressPercent}%`;
+                textEl.innerText = `${e.subject} 進行中，剩餘 ${minsLeft} 分鐘`;
+
+                if (progressPercent > 80) { // Less than 20% time left
+                    fillEl.classList.add('warning');
+                    if(minsLeft <= 5) {
+                        textEl.innerText = `⚠️ ${e.subject} 即將結束，剩餘 ${minsLeft} 分鐘！`;
+                        textEl.style.color = "#ffeb3b";
+                    }
+                } else {
+                    fillEl.classList.remove('warning');
+                    textEl.style.color = "#fff";
+                }
+
+            } else if (currentState.type === 'wait') {
+                const e = currentState.data;
+                slotEl.innerText = `休息時間 (下一節 ${e.start})`;
+                subjEl.innerText = `即將開始: ${e.subject}`;
+                
+                fillEl.style.width = `0%`;
+                fillEl.classList.remove('warning');
+                const minsToStart = currentState.startMins - currentMins;
+                textEl.innerText = `距離 ${e.subject} 開始還有 ${minsToStart} 分鐘`;
+                textEl.style.color = "#fff";
+
+            } else if (currentState.type === 'finished') {
+                slotEl.innerText = `今日考程結束`;
+                subjEl.innerText = `辛苦了！`;
+                fillEl.style.width = `100%`;
+                fillEl.classList.remove('warning');
+                textEl.innerText = `所有科目已結束`;
+            }
+        }
+
+        function initDashboard(exp, act, abs) {
+            // Set stats
+            document.getElementById('dash-exp').innerText = exp;
+            document.getElementById('dash-act').innerText = act;
+            document.getElementById('dash-abs').innerText = abs;
+
+            // Start Clock
+            updateClock();
+            clockInterval = setInterval(updateClock, 1000);
+
+            // Start Status Checker (updates progress bar smoothly)
+            updateDashboardStatus();
+            dashboardInterval = setInterval(updateDashboardStatus, 1000);
+
+            // Start Reminders Carousel
+            currentReminderIndex = 0;
+            const reminderEl = document.getElementById('reminder-text');
+            reminderEl.innerText = activeReminders[0];
+            reminderEl.style.opacity = 1;
+            
+            if(activeReminders.length > 1) {
+                reminderInterval = setInterval(() => {
+                    reminderEl.style.opacity = 0; // Fade out
+                    setTimeout(() => {
+                        currentReminderIndex = (currentReminderIndex + 1) % activeReminders.length;
+                        reminderEl.innerText = activeReminders[currentReminderIndex];
+                        reminderEl.style.opacity = 1; // Fade in
+                    }, 800); // Wait for CSS transition
+                }, 10000); // 10 seconds per reminder
+            }
+        }
+
+        function backToSettings() {
+            // Clear all intervals to save performance
+            clearInterval(clockInterval);
+            clearInterval(dashboardInterval);
+            clearInterval(reminderInterval);
+            
+            document.getElementById('page-dashboard').classList.remove('active');
+            document.getElementById('page-settings').classList.add('active');
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校考試儀表板</title>
+    <style>
+        :root {
+            /* 預設黑板風格變數 */
+            --bg-color: #2c3e50;
+            --surface-color: #34495e;
+            --text-main: #ecf0f1;
+            --text-muted: #bdc3c7;
+            --primary: #f1c40f;
+            --secondary: #27ae60;
+            --danger: #e74c3c;
+            --border-radius: 8px;
+            --border-style: 2px solid #7f8c8d;
+            --font-family: '微軟正黑體', 'Microsoft JhengHei', sans-serif;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+            --progress-icon: "✏️";
+        }
+
+        .theme-sakura {
+            --bg-color: #fff0f5;
+            --surface-color: #ffffff;
+            --text-main: #5d4037;
+            --text-muted: #8d6e63;
+            --primary: #ff80ab;
+            --secondary: #81c784;
+            --danger: #ff5252;
+            --border-radius: 20px;
+            --border-style: 2px solid #ffb2cb;
+            --font-family: '標楷體', 'DFKai-SB', serif;
+            --shadow: 0 4px 15px rgba(255, 128, 171, 0.2);
+            --progress-icon: "🌸";
+        }
+
+        .theme-minecraft {
+            --bg-color: #555555;
+            --surface-color: #8b8b8b;
+            --text-main: #ffffff;
+            --text-muted: #cccccc;
+            --primary: #55ff55;
+            --secondary: #55ffff;
+            --danger: #ff5555;
+            --border-radius: 0px;
+            --border-style: 4px solid #000000;
+            --font-family: 'Courier New', Courier, monospace;
+            --shadow: 4px 4px 0px #000000;
+            --progress-icon: "⛏️";
+        }
+
+        .theme-tech {
+            --bg-color: #0b0c10;
+            --surface-color: #1f2833;
+            --text-main: #66fcf1;
+            --text-muted: #45a29e;
+            --primary: #c5c6c7;
+            --secondary: #66fcf1;
+            --danger: #f000ff;
+            --border-radius: 4px;
+            --border-style: 1px solid #45a29e;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --shadow: 0 0 10px #66fcf1;
+            --progress-icon: "🚀";
+        }
+
+        .theme-cute {
+            --bg-color: #fff9c4;
+            --surface-color: #ffffff;
+            --text-main: #37474f;
+            --text-muted: #546e7a;
+            --primary: #4fc3f7;
+            --secondary: #ffd54f;
+            --danger: #ff8a65;
+            --border-radius: 40px;
+            --border-style: 4px dashed #4fc3f7;
+            --font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            --shadow: 0 8px 0px #e0e0e0;
+            --progress-icon: "🐾";
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.4s ease, color 0.4s ease, border 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* 自訂 Toast 提示 (取代 alert) */
+        #toast {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--danger);
+            color: white;
+            padding: 15px 30px;
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 9999;
+            box-shadow: var(--shadow);
+            transition: top 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        #toast.show { top: 20px; }
+
+        #settings-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            min-height: 100vh;
+            transition: padding-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #settings-page.numpad-active {
+            padding-right: 280px; /* 留空間給右側浮動鍵盤 */
+        }
+
+        h1, h2, h3 { margin-bottom: 15px; color: var(--primary); }
+
+        .card {
+            background-color: var(--surface-color);
+            border: var(--border-style);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        /* 網格選項 (科目、提醒事項) */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .reminders-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: var(--border-radius);
+            user-select: none;
+        }
+        
+        .checkbox-label:hover { background: rgba(0,0,0,0.2); }
+        .checkbox-label input { margin-right: 10px; transform: scale(1.2); cursor: pointer;}
+
+        /* 輸入框 (綁定數字鍵盤) */
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .input-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fake-input {
+            background-color: rgba(255,255,255,0.1);
+            border: var(--border-style);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            cursor: pointer;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fake-input.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        /* 主題按鈕 */
+        .theme-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: var(--surface-color);
+            color: var(--text-main);
+            border: var(--border-style);
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        
+        .btn:hover { background-color: var(--primary); color: #000; }
+        .btn.active-theme { background-color: var(--primary); color: #000; }
+        
+        .start-btn {
+            background-color: var(--secondary);
+            color: #000;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        #numpad {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%) translateX(50px);
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background-color: var(--surface-color);
+            border: var(--border-style);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: grid;
+            grid-template-columns: repeat(3, 70px);
+            gap: 10px;
+            z-index: 100;
+        }
+
+        #numpad.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+
+        .num-key {
+            background-color: rgba(255,255,255,0.1);
+            border: 1px solid var(--text-muted);
+            border-radius: calc(var(--border-radius) / 2);
+            color: var(--text-main);
+            font-size: 1.5rem;
+            padding: 15px 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        
+        .num-key:hover { background-color: var(--primary); color: #000; }
+        .num-key:active { transform: scale(0.95); }
+        .key-clear { background-color: var(--danger); color: white; border: none; }
+        .key-enter { background-color: var(--secondary); color: black; border: none; grid-column: span 2; }
+
+        #dashboard-page {
+            display: none; /* 預設隱藏 */
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            position: relative;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            padding: 3vmin;
+            /* 錯落排版配置 (4視窗大小不同，創造層次感) */
+            grid-template-columns: 3fr 3.5fr 3.5fr;
+            grid-template-rows: 2.5fr 2.2fr 0.8fr;
+            grid-template-areas: 
+                "area-a area-a area-b"
+                "area-c area-d area-d"
+                "area-e area-e area-e";
+            gap: 3vmin;
+        }
+
+        .dash-panel {
+            background-color: var(--surface-color);
+            border: var(--border-style);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3vmin;
+            position: relative;
+        }
+
+        /* 標題共用風格 */
+        .dash-title {
+            position: absolute;
+            top: 2vmin;
+            left: 3vmin;
+            font-size: clamp(1.2rem, 2.5vmin, 2.5rem);
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        /* 區塊 A: 今日考程 */
+        #area-a { grid-area: area-a; align-items: center; text-align: center; }
+        .exam-status { font-size: clamp(2rem, 5vmin, 5rem); font-weight: bold; color: var(--primary); margin-bottom: 1vmin;}
+        .exam-time { font-size: clamp(1.5rem, 4vmin, 4rem); }
+
+        /* 區塊 B: 現在時間 */
+        #area-b { grid-area: area-b; align-items: flex-end; text-align: right; }
+        .clock-time { font-size: clamp(5.5rem, 13vmin, 18rem); font-weight: bold; line-height: 1; margin-bottom: 1vmin; color: var(--secondary); font-variant-numeric: tabular-nums; }
+        .clock-date { font-size: clamp(1.5rem, 4vmin, 4rem); color: var(--text-main); }
+
+        /* 區塊 C: 人數統計 */
+        #area-c { grid-area: area-c; justify-content: center; }
+        #area-c .dash-title { top: 2vmin; left: 3vmin; position: absolute; }
+        .stat-container { margin-top: 5vmin; display: flex; flex-direction: column; gap: 1.5vmin; }
+        .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 0 1vmin; }
+        .stat-label { font-size: clamp(1.2rem, 2.5vmin, 3.5rem); }
+        .stat-num { font-size: clamp(3rem, 6vmin, 8rem); font-weight: bold; color: var(--primary); line-height: 0.8;}
+        .stat-num.danger-text { color: var(--danger); }
+
+        /* 區塊 D: 考生提醒 */
+        #area-d { grid-area: area-d; justify-content: center; align-items: center; text-align: center; }
+        #reminder-text {
+            font-size: clamp(2.5rem, 6vmin, 7rem);
+            font-weight: bold;
+            line-height: 1.3;
+            transition: opacity 0.5s ease-in-out;
+            color: var(--text-main);
+        }
+        #reminder-text.fade-out { opacity: 0; }
+
+        /* 區塊 E: 考試進度條 */
+        #area-e { grid-area: area-e; justify-content: center; overflow: visible;}
+        .progress-container {
+            width: 100%;
+            height: clamp(20px, 4vmin, 40px);
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 999px;
+            position: relative;
+            margin-top: 1vmin;
+            border: 2px solid var(--text-muted);
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%; /* 動態控制 */
+            background-color: var(--secondary);
+            border-radius: 999px;
+            transition: width 1s linear, background-color 0.5s ease;
+            position: relative;
+        }
+        .progress-bar.danger { background-color: var(--danger); }
+        
+        /* 替換進度條頭部的圖示 */
+        .progress-icon {
+            position: absolute;
+            right: -2vmin;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: clamp(1.5rem, 4vmin, 3rem);
+            content: var(--progress-icon); /* 僅備用，實作以 JS 插入以確保兼容 */
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+        .progress-text { font-size: clamp(1.2rem, 2.5vmin, 3rem); margin-bottom: 1vmin; display: flex; justify-content: space-between;}
+
+        /* 回到設定按鈕 */
+        .btn-back {
+            position: absolute;
+            top: 2vmin;
+            right: 2vmin;
+            z-index: 10;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid white;
+            padding: 1vmin 2vmin;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: clamp(1rem, 2vmin, 2rem);
+        }
+        .btn-back:hover { background: var(--danger); }
+
+        /* 響應式微調 */
+        @media (max-width: 768px) {
+            #settings-page { padding-right: 20px; }
+            #settings-page.numpad-active { padding-bottom: 300px; padding-right: 20px; }
+            #numpad { top: auto; bottom: 0; right: 0; width: 100%; transform: translateY(100%); display: flex; flex-wrap: wrap; justify-content: center; padding: 10px; border-radius: 20px 20px 0 0;}
+            #numpad.show { transform: translateY(0); }
+            .num-key { width: calc(25% - 10px); padding: 10px 0;}
+            .key-enter { width: calc(50% - 10px); }
+        }
+
+    </style>
+</head>
+<body class="theme-blackboard">
+
+    <!-- 自訂提示框 -->
+    <div id="toast">提示訊息</div>
+
+    <div id="settings-page">
+        <h1>⚙️ 學校考試儀表板設定</h1>
+
+        <div class="card">
+            <h2>1. 選擇考試科目 (最多 6 科)</h2>
+            <p style="margin-bottom:10px; color:var(--text-muted);">系統會自動按勾選順序分配節次 (08:40, 09:30, 10:20, 11:10, 12:00)</p>
+            <div class="checkbox-grid" id="subject-container">
+                <!-- 由 JS 動態生成 -->
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. 班級設定</h2>
+            <div class="input-group">
+                <div class="input-box">
+                    <label>年級 (1-10)</label>
+                    <div class="fake-input" id="input-grade" onclick="activateInput('grade')"></div>
+                </div>
+                <div class="input-box">
+                    <label>班級 (1-99)</label>
+                    <div class="fake-input" id="input-classNum" onclick="activateInput('classNum')"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>3. 人數設定</h2>
+            <div class="input-group">
+                <div class="input-box">
+                    <label>應到人數 (1-50)</label>
+                    <div class="fake-input" id="input-expected" onclick="activateInput('expected')"></div>
+                </div>
+                <div class="input-box">
+                    <label>實到人數 (1-50)</label>
+                    <div class="fake-input" id="input-actual" onclick="activateInput('actual')"></div>
+                </div>
+                <div class="input-box">
+                    <label>缺考人數 (自動計算)</label>
+                    <div class="fake-input" id="input-absent" style="background:rgba(0,0,0,0.3); border-color:transparent; cursor:default;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>4. 選擇儀表板風格</h2>
+            <div class="theme-buttons">
+                <button class="btn active-theme" onclick="changeTheme('theme-blackboard', this)">預設黑板 ✏️</button>
+                <button class="btn" onclick="changeTheme('theme-sakura', this)">日系櫻花 🌸</button>
+                <button class="btn" onclick="changeTheme('theme-minecraft', this)">Minecraft ⛏️</button>
+                <button class="btn" onclick="changeTheme('theme-tech', this)">科技風格 🚀</button>
+                <button class="btn" onclick="changeTheme('theme-cute', this)">可愛風格 🐾</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>5. 考生提醒事項 (輪播顯示)</h2>
+            <div class="reminders-grid" id="reminder-container">
+                <!-- JS 生成 -->
+            </div>
+        </div>
+
+        <button class="btn start-btn" onclick="startDashboard()">🚀 開始投影儀表板</button>
+    </div>
+
+    <div id="numpad">
+        <button class="num-key" onclick="numpadPress(1)">1</button>
+        <button class="num-key" onclick="numpadPress(2)">2</button>
+        <button class="num-key" onclick="numpadPress(3)">3</button>
+        <button class="num-key" onclick="numpadPress(4)">4</button>
+        <button class="num-key" onclick="numpadPress(5)">5</button>
+        <button class="num-key" onclick="numpadPress(6)">6</button>
+        <button class="num-key" onclick="numpadPress(7)">7</button>
+        <button class="num-key" onclick="numpadPress(8)">8</button>
+        <button class="num-key" onclick="numpadPress(9)">9</button>
+        <button class="num-key key-clear" onclick="numpadPress('C')">清除</button>
+        <button class="num-key" onclick="numpadPress(0)">0</button>
+        <button class="num-key key-enter" onclick="numpadPress('E')">確定</button>
+    </div>
+
+    <div id="dashboard-page">
+        <button class="btn-back" onclick="stopDashboard()">🔙 回到設定</button>
+        <div class="dashboard-grid">
+            
+            <div id="area-a" class="dash-panel">
+                <div class="dash-title">今日考程</div>
+                <div class="exam-status" id="dash-status">準備中</div>
+                <div class="exam-time" id="dash-time-range">--:-- - --:--</div>
+            </div>
+
+            <div id="area-b" class="dash-panel">
+                <div class="dash-title" id="dash-class-name">X年X班</div>
+                <div class="clock-time" id="dash-clock">00:00:00</div>
+                <div class="clock-date" id="dash-date">YYYY/MM/DD 星期X</div>
+            </div>
+
+            <div id="area-c" class="dash-panel">
+                <div class="dash-title">出缺席統計</div>
+                <div class="stat-container">
+                    <div class="stat-row">
+                        <span class="stat-label">應到人數</span>
+                        <span class="stat-num" id="dash-expected">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">實到人數</span>
+                        <span class="stat-num" id="dash-actual">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">缺考人數</span>
+                        <span class="stat-num danger-text" id="dash-absent">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="area-d" class="dash-panel">
+                <div class="dash-title">考生提醒</div>
+                <div id="reminder-text">祝各位考生考試順利！</div>
+            </div>
+
+            <div id="area-e" class="dash-panel">
+                <div class="progress-text">
+                    <span id="dash-progress-title">目前無考試進行中</span>
+                    <span id="dash-progress-countdown">剩餘 0 分鐘</span>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="dash-progress-bar">
+                        <div class="progress-icon" id="dash-progress-icon">✏️</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 核心狀態 ---
+        const state = {
+            theme: 'theme-blackboard',
+            subjects: [], // 勾選的科目
+            inputs: {
+                grade: '', classNum: '', expected: '', actual: ''
+            },
+            activeInput: null,
+            reminders: [],
+            // 固定節次時間設定
+            scheduleSlots: [
+                { start: '08:40', end: '09:20' },
+                { start: '09:30', end: '10:10' },
+                { start: '10:20', end: '11:00' },
+                { start: '11:10', end: '11:50' },
+                { start: '12:00', end: '12:40' }
+            ],
+            examSchedule: [], // 組合科目與時間
+            intervals: { clock: null, reminder: null, progress: null },
+            reminderIndex: 0
+        };
+
+        const subjectList = ['國語', '數學', '自然', '社會', '英文', '地理', '歷史', '物理', '化學', '生物'];
+        const defaultReminders = [
+            "考試期間請保持安靜，切勿交談",
+            "有任何問題請舉手，等待監考老師前往",
+            "請確認桌面清空，非考試文具請收至書包",
+            "作答完畢請安靜檢查，勿發出聲響干擾他人",
+            "鐘聲響起請立即停筆，雙手離開桌面",
+            "請核對試卷與答案卡是否為本人",
+            "考試中禁止使用手機或穿戴式裝置",
+            "提早交卷請安靜離開試場，勿在走廊逗留",
+            "請將水壺放在教室前後，避免打翻",
+            "祝各位考生考試順利，發揮最佳實力！"
+        ];
+        const themeIcons = {
+            'theme-blackboard': '✏️',
+            'theme-sakura': '🌸',
+            'theme-minecraft': '⛏️',
+            'theme-tech': '🚀',
+            'theme-cute': '🐾'
+        };
+
+        // --- 初始化頁面 ---
+        function init() {
+            // 產生科目勾選框
+            const subjContainer = document.getElementById('subject-container');
+            subjectList.forEach((sub, idx) => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                label.innerHTML = `<input type="checkbox" value="${sub}" onchange="handleSubjectChange(this)"> ${sub}`;
+                subjContainer.appendChild(label);
+            });
+
+            // 產生提醒事項勾選框 (預設全選)
+            const remContainer = document.getElementById('reminder-container');
+            defaultReminders.forEach((rem, idx) => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-label';
+                label.innerHTML = `<input type="checkbox" value="${rem}" checked> ${rem}`;
+                remContainer.appendChild(label);
+            });
+            
+            // 監聽全域點擊事件以關閉數字鍵盤
+            document.addEventListener('click', (e) => {
+                const numpad = document.getElementById('numpad');
+                if (numpad.classList.contains('show')) {
+                    if (!e.target.closest('#numpad') && !e.target.closest('.fake-input')) {
+                        closeNumpad();
+                    }
+                }
+            });
+        }
+
+        // --- 自訂提示框 (取代 alert) ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function handleSubjectChange(cb) {
+            const checkedBoxes = document.querySelectorAll('#subject-container input:checked');
+            if (checkedBoxes.length > 6) {
+                cb.checked = false;
+                showToast("⚠️ 最多只能選擇 6 個科目！");
+            }
+        }
+
+        function changeTheme(themeName, btnElement) {
+            document.body.className = themeName;
+            state.theme = themeName;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.theme-buttons .btn').forEach(btn => btn.classList.remove('active-theme'));
+            btnElement.classList.add('active-theme');
+            
+            // 更新進度條圖示
+            document.getElementById('dash-progress-icon').innerText = themeIcons[themeName];
+        }
+
+        function activateInput(inputId) {
+            // 移除所有 active
+            document.querySelectorAll('.fake-input').forEach(el => el.classList.remove('active'));
+            state.activeInput = inputId;
+            document.getElementById(`input-${inputId}`).classList.add('active');
+            
+            // 顯示數字鍵盤
+            document.getElementById('numpad').classList.add('show');
+            document.getElementById('settings-page').classList.add('numpad-active');
+        }
+
+        function closeNumpad() {
+            document.getElementById('numpad').classList.remove('show');
+            document.getElementById('settings-page').classList.remove('numpad-active');
+            document.querySelectorAll('.fake-input').forEach(el => el.classList.remove('active'));
+            state.activeInput = null;
+        }
+
+        function numpadPress(val) {
+            if (!state.activeInput) return;
+            const inputEl = document.getElementById(`input-${state.activeInput}`);
+            
+            if (val === 'C') {
+                state.inputs[state.activeInput] = '';
+            } else if (val === 'E') {
+                // 自動跳下一個輸入框，若為最後一個則關閉鍵盤
+                const flow = ['grade', 'classNum', 'expected', 'actual'];
+                const nextIdx = flow.indexOf(state.activeInput) + 1;
+                if (nextIdx < flow.length) activateInput(flow[nextIdx]);
+                else closeNumpad();
+            } else {
+                // 限制長度
+                if (state.inputs[state.activeInput].length < 2) {
+                    state.inputs[state.activeInput] += val;
+                }
+            }
+            
+            inputEl.innerText = state.inputs[state.activeInput];
+            validateAndCalculate();
+        }
+
+        function validateAndCalculate() {
+            const exp = parseInt(state.inputs.expected) || 0;
+            const act = parseInt(state.inputs.actual) || 0;
+            
+            // 防呆：實到不可大於應到
+            if (act > exp && exp > 0) {
+                showToast("❌ 實到人數不可大於應到人數！");
+                state.inputs.actual = '';
+                document.getElementById('input-actual').innerText = '';
+                document.getElementById('input-absent').innerText = '0';
+                return;
+            }
+            
+            // 計算缺考
+            if (state.inputs.expected !== '' && state.inputs.actual !== '') {
+                document.getElementById('input-absent').innerText = exp - act;
+            } else {
+                document.getElementById('input-absent').innerText = '0';
+            }
+        }
+
+        function startDashboard() {
+            // 1. 蒐集選擇科目
+            const checkedSubj = document.querySelectorAll('#subject-container input:checked');
+            if (checkedSubj.length === 0) {
+                showToast("請至少選擇一個科目！");
+                return;
+            }
+            state.subjects = Array.from(checkedSubj).map(cb => cb.value);
+            
+            // 組裝課表
+            state.examSchedule = state.subjects.map((sub, idx) => ({
+                subject: sub,
+                start: state.scheduleSlots[idx].start,
+                end: state.scheduleSlots[idx].end,
+                period: idx + 1
+            }));
+
+            // 2. 驗證資料
+            if(!state.inputs.grade || !state.inputs.classNum || !state.inputs.expected || !state.inputs.actual) {
+                showToast("請填寫完整的班級與人數資料！");
+                return;
+            }
+
+            // 3. 蒐集提醒事項
+            const checkedRem = document.querySelectorAll('#reminder-container input:checked');
+            if (checkedRem.length === 0) {
+                state.reminders = ["祝各位考生考試順利！"];
+            } else {
+                state.reminders = Array.from(checkedRem).map(cb => cb.value);
+            }
+
+            // 4. 綁定資料到第二頁 DOM
+            document.getElementById('dash-class-name').innerText = `${state.inputs.grade} 年 ${state.inputs.classNum} 班`;
+            document.getElementById('dash-expected').innerText = state.inputs.expected;
+            document.getElementById('dash-actual').innerText = state.inputs.actual;
+            document.getElementById('dash-absent').innerText = parseInt(state.inputs.expected) - parseInt(state.inputs.actual);
+            document.getElementById('dash-progress-icon').innerText = themeIcons[state.theme];
+
+            // 5. 切換畫面
+            document.getElementById('settings-page').style.display = 'none';
+            document.getElementById('numpad').style.display = 'none';
+            document.getElementById('dashboard-page').style.display = 'block';
+
+            // 6. 啟動計時器與輪播
+            startLoops();
+        }
+
+        function stopDashboard() {
+            document.getElementById('settings-page').style.display = 'block';
+            
+            // 確保回到設定頁時數字鍵盤為隱藏狀態
+            closeNumpad();
+            
+            document.getElementById('dashboard-page').style.display = 'none';
+            
+            // 清除計時器
+            clearInterval(state.intervals.clock);
+            clearInterval(state.intervals.reminder);
+            clearInterval(state.intervals.progress);
+        }
+
+        function startLoops() {
+            updateClockAndStatus(); // 立即執行一次
+            state.intervals.clock = setInterval(updateClockAndStatus, 1000); // 時鐘每秒
+            
+            state.reminderIndex = 0;
+            updateReminder();
+            state.intervals.reminder = setInterval(updateReminder, 10000); // 提醒每10秒
+        }
+
+        function updateReminder() {
+            const remEl = document.getElementById('reminder-text');
+            remEl.classList.add('fade-out');
+            
+            setTimeout(() => {
+                remEl.innerText = state.reminders[state.reminderIndex];
+                remEl.classList.remove('fade-out');
+                state.reminderIndex = (state.reminderIndex + 1) % state.reminders.length;
+            }, 500); // 等待淡出動畫一半後切換文字
+        }
+
+        function updateClockAndStatus() {
+            const now = new Date();
+            
+            // 更新時間
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('dash-clock').innerText = `${hh}:${mm}:${ss}`;
+            
+            // 更新日期星期
+            const days = ['日', '一', '二', '三', '四', '五', '六'];
+            const yyyy = now.getFullYear();
+            const mo = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            document.getElementById('dash-date').innerText = `${yyyy}/${mo}/${dd} 星期${days[now.getDay()]}`;
+
+            // --- 判斷目前考試狀態 ---
+            let currentStatus = "休息時間";
+            let timeRange = "--:-- - --:--";
+            let progressText = "目前無考試進行中";
+            let progressRemain = "";
+            let percent = 0;
+            let isDanger = false;
+            
+            // 轉換目前時間為分鐘，方便比較 (例如 08:40 = 8*60+40 = 520)
+            const currentMins = now.getHours() * 60 + now.getMinutes() + (now.getSeconds() / 60);
+
+            // 尋找當前或下一個考試
+            let activeExam = null;
+            let nextExam = null;
+
+            for (let i = 0; i < state.examSchedule.length; i++) {
+                const ex = state.examSchedule[i];
+                const startArr = ex.start.split(':').map(Number);
+                const endArr = ex.end.split(':').map(Number);
+                const startMins = startArr[0] * 60 + startArr[1];
+                const endMins = endArr[0] * 60 + endArr[1];
+
+                if (currentMins >= startMins && currentMins < endMins) {
+                    activeExam = { ...ex, startMins, endMins };
+                    break;
+                }
+                if (currentMins < startMins && !nextExam) {
+                    nextExam = ex;
+                }
+            }
+
+            if (activeExam) {
+                // 考試進行中
+                currentStatus = `第 ${activeExam.period} 節：${activeExam.subject}`;
+                timeRange = `${activeExam.start} - ${activeExam.end}`;
+                
+                const totalDur = activeExam.endMins - activeExam.startMins;
+                const elapsed = currentMins - activeExam.startMins;
+                const remainMins = Math.ceil(totalDur - elapsed);
+                
+                percent = (elapsed / totalDur) * 100;
+                progressText = `[${activeExam.subject}] 進行中`;
+                progressRemain = `剩餘 ${remainMins} 分鐘`;
+                
+                if (percent >= 80) isDanger = true; // 剩下 20% 時間變紅
+            } else if (nextExam) {
+                // 休息中，等待下一節
+                currentStatus = `即將開始：第 ${nextExam.period} 節 ${nextExam.subject}`;
+                timeRange = `${nextExam.start} - ${nextExam.end}`;
+                percent = 0;
+            } else {
+                // 全部結束或尚未開始
+                const firstEx = state.examSchedule[0];
+                const firstMins = firstEx.start.split(':').map(Number)[0] * 60 + firstEx.start.split(':').map(Number)[1];
+                if (currentMins < firstMins) {
+                    currentStatus = "今日考試尚未開始";
+                    timeRange = `第一節 ${firstEx.start} 開始`;
+                } else {
+                    currentStatus = "今日考試已全數結束";
+                    timeRange = "辛苦了！";
+                }
+                percent = 0;
+            }
+
+            // 更新 UI
+            document.getElementById('dash-status').innerText = currentStatus;
+            document.getElementById('dash-time-range').innerText = timeRange;
+            document.getElementById('dash-progress-title').innerText = progressText;
+            document.getElementById('dash-progress-countdown').innerText = progressRemain;
+            
+            const bar = document.getElementById('dash-progress-bar');
+            bar.style.width = `${percent}%`;
+            if (isDanger) bar.classList.add('danger');
+            else bar.classList.remove('danger');
+        }
+
+        // 啟動初始化
+        window.onload = init;
+
+    </script>
+</body>
+</html>
