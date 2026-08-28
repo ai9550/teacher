@@ -452,7 +452,8 @@
 
             <div class="action-buttons">
                 <button class="btn" onclick="validateAndStart()">開始提醒畫面 / 上傳人數</button>
-                <button class="btn btn-outline" onclick="window.open('https://docs.google.com/spreadsheets/d/1CrSxazwVk6urS-yUUUsHOma8yjqzR4bMR5Cb81HkjYU/preview', '_blank')">📊 目前人數統計</button>
+                <button class="btn btn-outline" onclick="window.open('https://docs.google.com/spreadsheets/d/170SpL91Zf9uVfBp8jyaoUVj9d2JLyn6ohWIGjslKP5A/edit?usp=sharing', '_blank')">📊 目前人數統計 (Google 試算表)</button>
+                <button class="btn btn-outline" style="padding: 0.8rem 1.2rem; font-size: 1rem;" onclick="openGasSettings()">⚙️ 試算表連線設定</button>
             </div>
         </div>
     </div>
@@ -740,15 +741,68 @@
             initDashboard(expNum, actNum, expNum - actNum);
         }
 
+        // 預設 Google Apps Script 網址 (連接試算表: 170SpL91Zf9uVfBp8jyaoUVj9d2JLyn6ohWIGjslKP5A)
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxFjlyuSBkBNKzWmhM_C26UuB6Vq8Svd5gBptUhwg7wf0sw7_3I_EAJNP0_UJseSqZndQ/exec";
+
+        function getGasUrl() {
+            return localStorage.getItem('custom_gas_url') || DEFAULT_GAS_URL;
+        }
+
+        function openGasSettings() {
+            const currentUrl = getGasUrl();
+            const newUrl = prompt("請輸入或確認 Google Apps Script Web App 網址：\n(若留空將恢復預設網址)", currentUrl);
+            if (newUrl !== null) {
+                if (newUrl.trim() === "" || newUrl.trim() === DEFAULT_GAS_URL) {
+                    localStorage.removeItem('custom_gas_url');
+                    showToast("✅ 已恢復為預設 Google Apps Script 網址！");
+                } else if (newUrl.startsWith("http")) {
+                    localStorage.setItem('custom_gas_url', newUrl.trim());
+                    showToast("✅ 試算表 API 網址已更新並儲存！");
+                } else {
+                    showToast("⚠️ 請輸入有效的 URL 網址！");
+                }
+            }
+        }
+
         function uploadDataToGAS(grade, cls, exp, act, abs, currentSubj) {
-            // 您的 Google Apps Script 網址
-            const gasUrl = "https://script.google.com/macros/s/AKfycbxFjlyuSBkBNKzWmhM_C26UuB6Vq8Svd5gBptUhwg7wf0sw7_3I_EAJNP0_UJseSqZndQ/exec"; 
+            const gasUrl = getGasUrl();
             
             const now = new Date();
-            const timeStr = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
-            const dateStr = now.getFullYear() + "/" + (now.getMonth()+1) + "/" + now.getDate();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
 
-            // 使用隱藏的 Form 提交，100% 避開所有瀏覽器的 CORS 與跳轉限制
+            const dateStr = `${y}/${m}/${d}`;
+            const timeStr = `${hh}:${mm}:${ss}`;
+            const fullDateTime = `${dateStr} ${timeStr}`;
+
+            // 取得目前的考試節次或時間區間
+            let examTimeSlot = "";
+            const activeSlotEl = document.getElementById('dash-slot');
+            if (activeSlotEl && activeSlotEl.innerText && activeSlotEl.innerText !== "準備中") {
+                examTimeSlot = activeSlotEl.innerText;
+            } else if (examSchedule && examSchedule.length > 0) {
+                examTimeSlot = `第 ${examSchedule[0].period} 節 (${examSchedule[0].start}-${examSchedule[0].end})`;
+            }
+
+            const payload = {
+                className: `${grade}年${cls}班`,
+                grade: `${grade}年級`,
+                class: `${cls}班`,
+                subject: currentSubj || "未指定科目",
+                expected: exp,
+                actual: act,
+                absent: abs,
+                examTime: examTimeSlot,
+                uploadTime: fullDateTime,
+                time: timeStr,
+                date: dateStr
+            };
+
+            // 1. 使用隱藏的 Form 提交，100% 避開所有瀏覽器的 CORS 與跳轉限制
             let form = document.getElementById('gas-form');
             if (!form) {
                 form = document.createElement('form');
@@ -761,15 +815,32 @@
 
             form.action = gasUrl;
             form.innerHTML = `
-                <input type="hidden" name="date" value="${dateStr}">
-                <input type="hidden" name="subject" value="${currentSubj}">
-                <input type="hidden" name="className" value="${grade}年${cls}班">
-                <input type="hidden" name="expected" value="${exp}">
-                <input type="hidden" name="actual" value="${act}">
-                <input type="hidden" name="absent" value="${abs}">
-                <input type="hidden" name="uploadTime" value="${timeStr}">
+                <input type="hidden" name="className" value="${payload.className}">
+                <input type="hidden" name="subject" value="${payload.subject}">
+                <input type="hidden" name="expected" value="${payload.expected}">
+                <input type="hidden" name="actual" value="${payload.actual}">
+                <input type="hidden" name="absent" value="${payload.absent}">
+                <input type="hidden" name="examTime" value="${payload.examTime}">
+                <input type="hidden" name="uploadTime" value="${payload.uploadTime}">
+                <input type="hidden" name="date" value="${payload.date}">
             `;
             form.submit();
+
+            // 2. 同時使用 fetch no-cors 雙重發送保障
+            try {
+                const formData = new URLSearchParams();
+                for (const key in payload) {
+                    formData.append(key, payload[key]);
+                }
+                fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                }).catch(e => console.log('Fetch notification:', e));
+            } catch(err) {
+                console.log('GAS fetch fallback:', err);
+            }
         }
 
         function parseTime(hhmm) {
