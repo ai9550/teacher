@@ -1,0 +1,1601 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒五上生字猜謎遊戲四宮格</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+      gap: 30px;
+      position: relative;
+    }
+
+    /* Home Navigation Button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1.05rem;
+      transition: all 0.25s ease;
+      z-index: 99999;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+    .home-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      border-color: #ffffff;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .lesson-sidebar {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.4) transparent;
+      z-index: 100;
+    }
+
+    .lesson-sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .lesson-sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.4);
+      border-radius: 10px;
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #ffeaa7;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .lesson-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      font-family: inherit;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .lesson-btn:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateX(4px);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+      color: #2d3436;
+      border: 2px solid #fdcb6e;
+      box-shadow: 0 4px 15px rgba(253, 203, 110, 0.5);
+      transform: scale(1.04);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      max-width: 650px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .header h1 {
+      font-size: 2.3rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.35);
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      font-size: 1.15rem;
+      opacity: 0.92;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .question-counter {
+      color: #ffeaa7;
+      font-weight: 900;
+      margin-left: 8px;
+    }
+
+    .game-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 15px auto;
+      border-radius: 24px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      border: 8px solid #FFFDF6;
+    }
+
+    .character-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19rem;
+      font-weight: normal;
+      color: #2d3436;
+      font-family: '標楷體', 'DFKai-SB', 'BiauKai', serif;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.08);
+      user-select: none;
+    }
+
+    .overlay-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+    }
+
+    .overlay-block {
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .overlay-block:hover {
+      transform: scale(0.96);
+      filter: brightness(1.12);
+    }
+
+    .overlay-block.clicked {
+      opacity: 0;
+      transform: scale(0.7);
+      pointer-events: none;
+    }
+
+    .block-1 { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+    .block-2 { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+    .block-3 { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); color: #2d3436; }
+    .block-4 { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+
+    .block-number {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      color: white;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+      color: #2d3436;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(253, 203, 110, 0.45);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.22);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .completion-message {
+      background: rgba(46, 213, 115, 0.95);
+      padding: 22px 30px;
+      border-radius: 20px;
+      text-align: center;
+      margin-top: 18px;
+      backdrop-filter: blur(10px);
+      display: none;
+      max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .completion-message.show {
+      display: block;
+      animation: celebration 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes celebration {
+      0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+        gap: 15px;
+        padding-top: 60px;
+      }
+
+      .lesson-sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+        width: 100%;
+        padding: 12px;
+        max-height: none;
+      }
+
+      .sidebar-title {
+        display: none;
+      }
+
+      .lesson-btn {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+
+      .game-container {
+        width: 270px;
+        height: 270px;
+      }
+
+      .character-card {
+        font-size: 16rem;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .overlay-block {
+        font-size: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+  <div class="lesson-sidebar">
+    <div class="sidebar-title">📚 選擇課程</div>
+    <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1')">第一課</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2')">第二課</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3')">第三課</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4')">第四課</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5')">第五課</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6')">第六課</button>
+    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7')">第七課</button>
+    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8')">第八課</button>
+    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9')">第九課</button>
+    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10')">第十課</button>
+    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11')">第十一課</button>
+    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12')">第十二課</button>
+    
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1 id="mainTitle">🎯 康軒五上第一課生字猜謎</h1>
+      <p>點擊彩色區塊，逐步揭示隱藏的生字！<span id="questionCounter" class="question-counter">(第 1 題 / 共 0 題)</span></p>
+    </div>
+
+    <div class="game-container">
+      <div class="character-card" id="characterCard">字</div>
+      <div class="overlay-grid">
+        <div class="overlay-block block-1" onclick="revealBlock(1)">
+          <div class="block-number">1</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-2" onclick="revealBlock(2)">
+          <div class="block-number">2</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-3" onclick="revealBlock(3)">
+          <div class="block-number">3</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-4" onclick="revealBlock(4)">
+          <div class="block-number">4</div>
+          <div>點我</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" onclick="resetGame()">🔄 蓋上區塊</button>
+      <button class="btn btn-primary" onclick="revealAll()">👁️ 全部顯示</button>
+      <button class="btn btn-secondary" onclick="newCharacter()">🎲 下一題</button>
+    </div>
+
+    <div class="completion-message" id="completionMessage"></div>
+  </div>
+
+  <script>
+    // 回首頁跳轉處理
+    function goHome(e) {
+      if (e) e.preventDefault();
+      let target = 'index.html';
+      if (window.location.protocol === 'file:') {
+        target = 'index.html';
+      } else if (window.location.hostname.includes('github.io')) {
+        target = 'https://ai9550.github.io/teacher/';
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = target;
+          return;
+        }
+      } catch (err) {}
+      window.location.href = target;
+    }
+
+    // 生字資料庫
+    const lessonData = {
+  "1": {
+    "name": "第一課",
+    "title": "🎯 康軒五上第一課生字猜謎",
+    "items": [
+      {
+        "char": "蚊",
+        "meaning": "蚊子、防蚊"
+      },
+      {
+        "char": "帳",
+        "meaning": "帳篷、蚊帳"
+      },
+      {
+        "char": "洲",
+        "meaning": "非洲、大洋洲"
+      },
+      {
+        "char": "瘧",
+        "meaning": "瘧疾、瘧蚊"
+      },
+      {
+        "char": "疾",
+        "meaning": "疾病、痛心疾首"
+      },
+      {
+        "char": "死",
+        "meaning": "死亡、生死"
+      },
+      {
+        "char": "叮",
+        "meaning": "叮咬、叮嚀"
+      },
+      {
+        "char": "存",
+        "meaning": "存在、存款"
+      },
+      {
+        "char": "募",
+        "meaning": "募集、募捐"
+      },
+      {
+        "char": "集",
+        "meaning": "集合、集體"
+      },
+      {
+        "char": "寄",
+        "meaning": "寄信、寄託"
+      },
+      {
+        "char": "贈",
+        "meaning": "贈送、贈品"
+      },
+      {
+        "char": "獎",
+        "meaning": "獎品、獲獎"
+      },
+      {
+        "char": "狀",
+        "meaning": "獎狀、形狀"
+      },
+      {
+        "char": "藏",
+        "meaning": "收藏、隱藏"
+      },
+      {
+        "char": "誌",
+        "meaning": "雜誌、標誌"
+      },
+      {
+        "char": "基",
+        "meaning": "基礎、基層"
+      },
+      {
+        "char": "赴",
+        "meaning": "赴約、全力以赴"
+      }
+    ]
+  },
+  "2": {
+    "name": "第二課",
+    "title": "🎯 康軒五上第二課生字猜謎",
+    "items": [
+      {
+        "char": "德",
+        "meaning": "道德、品德"
+      },
+      {
+        "char": "乎",
+        "meaning": "在乎、幾乎"
+      },
+      {
+        "char": "血",
+        "meaning": "血液、流血"
+      },
+      {
+        "char": "攝",
+        "meaning": "拍攝、攝取"
+      },
+      {
+        "char": "颱",
+        "meaning": "颱風、強颱"
+      },
+      {
+        "char": "錄",
+        "meaning": "記錄、錄影"
+      },
+      {
+        "char": "哀",
+        "meaning": "悲哀、哀悼"
+      },
+      {
+        "char": "巒",
+        "meaning": "山巒、峰巒"
+      },
+      {
+        "char": "縱",
+        "meaning": "縱橫、放縱"
+      },
+      {
+        "char": "臍",
+        "meaning": "肚臍、臍帶"
+      },
+      {
+        "char": "禍",
+        "meaning": "災禍、車禍"
+      },
+      {
+        "char": "殘",
+        "meaning": "殘忍、殘留"
+      },
+      {
+        "char": "檳",
+        "meaning": "檳榔、檳城"
+      },
+      {
+        "char": "榔",
+        "meaning": "檳榔、榔頭"
+      },
+      {
+        "char": "降",
+        "meaning": "降落、下降"
+      },
+      {
+        "char": "鏟",
+        "meaning": "鏟子、鏟除"
+      },
+      {
+        "char": "汙",
+        "meaning": "汙染、泥汙"
+      },
+      {
+        "char": "斷",
+        "meaning": "斷開、打斷"
+      }
+    ]
+  },
+  "3": {
+    "name": "第三課",
+    "title": "🎯 康軒五上第三課生字猜謎",
+    "items": [
+      {
+        "char": "峭",
+        "meaning": "陡峭、懸崖峭壁"
+      },
+      {
+        "char": "勁",
+        "meaning": "勁力、強勁"
+      },
+      {
+        "char": "聳",
+        "meaning": "高聳、聳立"
+      },
+      {
+        "char": "飢",
+        "meaning": "飢餓、飢寒交迫"
+      },
+      {
+        "char": "隱",
+        "meaning": "隱藏、隱蔽"
+      },
+      {
+        "char": "扯",
+        "meaning": "拉扯、牽扯"
+      },
+      {
+        "char": "銳",
+        "meaning": "銳利、敏銳"
+      },
+      {
+        "char": "箭",
+        "meaning": "弓箭、火箭"
+      },
+      {
+        "char": "韌",
+        "meaning": "堅韌、韌性"
+      },
+      {
+        "char": "虯",
+        "meaning": "虯龍、虯鬚"
+      },
+      {
+        "char": "鬚",
+        "meaning": "鬍鬚、根鬚"
+      },
+      {
+        "char": "茂",
+        "meaning": "茂盛、茂密"
+      },
+      {
+        "char": "止",
+        "meaning": "停止、止步"
+      },
+      {
+        "char": "蔓",
+        "meaning": "蔓延、藤蔓"
+      },
+      {
+        "char": "藉",
+        "meaning": "憑藉、藉口"
+      },
+      {
+        "char": "豐",
+        "meaning": "豐富、豐收"
+      },
+      {
+        "char": "挫",
+        "meaning": "挫折、受挫"
+      },
+      {
+        "char": "折",
+        "meaning": "折疊、折斷"
+      }
+    ]
+  },
+  "4": {
+    "name": "第四課",
+    "title": "🎯 康軒五上第四課生字猜謎",
+    "items": [
+      {
+        "char": "恆",
+        "meaning": "永恆、持之以恆"
+      },
+      {
+        "char": "澄",
+        "meaning": "澄清、清澄"
+      },
+      {
+        "char": "穗",
+        "meaning": "麥穗、稻穗"
+      },
+      {
+        "char": "養",
+        "meaning": "養育、培養"
+      },
+      {
+        "char": "源",
+        "meaning": "源頭、資源"
+      },
+      {
+        "char": "藝",
+        "meaning": "藝術、手藝"
+      },
+      {
+        "char": "樸",
+        "meaning": "樸素、純樸"
+      },
+      {
+        "char": "堆",
+        "meaning": "土堆、堆積"
+      },
+      {
+        "char": "撿",
+        "meaning": "撿起、撿拾"
+      },
+      {
+        "char": "巾",
+        "meaning": "毛巾、手巾"
+      },
+      {
+        "char": "痠",
+        "meaning": "痠痛、腰痠"
+      },
+      {
+        "char": "素",
+        "meaning": "樸素、素質"
+      },
+      {
+        "char": "尊",
+        "meaning": "尊敬、尊嚴"
+      },
+      {
+        "char": "嚴",
+        "meaning": "嚴格、嚴肅"
+      },
+      {
+        "char": "勞",
+        "meaning": "勞動、辛勞"
+      },
+      {
+        "char": "怨",
+        "meaning": "抱怨、怨言"
+      },
+      {
+        "char": "慷",
+        "meaning": "慷慨、慷慨解囊"
+      },
+      {
+        "char": "慨",
+        "meaning": "感慨、慷慨"
+      },
+      {
+        "char": "滋",
+        "meaning": "滋味、滋潤"
+      }
+    ]
+  },
+  "5": {
+    "name": "第五課",
+    "title": "🎯 康軒五上第五課生字猜謎",
+    "items": [
+      {
+        "char": "譽",
+        "meaning": "名譽、榮譽"
+      },
+      {
+        "char": "務",
+        "meaning": "服務、任務"
+      },
+      {
+        "char": "聯",
+        "meaning": "聯合、聯絡"
+      },
+      {
+        "char": "核",
+        "meaning": "核對、核心"
+      },
+      {
+        "char": "申",
+        "meaning": "申請、申報"
+      },
+      {
+        "char": "局",
+        "meaning": "局面、局長"
+      },
+      {
+        "char": "松",
+        "meaning": "松樹、放鬆"
+      },
+      {
+        "char": "註",
+        "meaning": "註冊、標註"
+      },
+      {
+        "char": "冊",
+        "meaning": "手冊、冊子"
+      },
+      {
+        "char": "企",
+        "meaning": "企業、企圖"
+      },
+      {
+        "char": "毅",
+        "meaning": "堅毅、毅力"
+      },
+      {
+        "char": "歷",
+        "meaning": "歷史、經歷"
+      },
+      {
+        "char": "英",
+        "meaning": "英勇、英雄"
+      },
+      {
+        "char": "銷",
+        "meaning": "銷售、促銷"
+      },
+      {
+        "char": "售",
+        "meaning": "販售、出售"
+      },
+      {
+        "char": "勝",
+        "meaning": "勝利、獲勝"
+      },
+      {
+        "char": "霸",
+        "meaning": "霸氣、爭霸"
+      },
+      {
+        "char": "項",
+        "meaning": "項目、選項"
+      }
+    ]
+  },
+  "6": {
+    "name": "第六課",
+    "title": "🎯 康軒五上第六課生字猜謎",
+    "items": [
+      {
+        "char": "娛",
+        "meaning": "娛樂、文娛"
+      },
+      {
+        "char": "汽",
+        "meaning": "汽車、汽水"
+      },
+      {
+        "char": "哨",
+        "meaning": "哨子、口哨"
+      },
+      {
+        "char": "典",
+        "meaning": "經典、字典"
+      },
+      {
+        "char": "框",
+        "meaning": "相框、框架"
+      },
+      {
+        "char": "劇",
+        "meaning": "戲劇、劇場"
+      },
+      {
+        "char": "父",
+        "meaning": "父親、祖父"
+      },
+      {
+        "char": "責",
+        "meaning": "責任、負責"
+      },
+      {
+        "char": "判",
+        "meaning": "判斷、裁判"
+      },
+      {
+        "char": "鳴",
+        "meaning": "鳥鳴、鳴叫"
+      },
+      {
+        "char": "穎",
+        "meaning": "聰穎、新穎"
+      },
+      {
+        "char": "獲",
+        "meaning": "獲得、獲獎"
+      },
+      {
+        "char": "佳",
+        "meaning": "佳話、最佳"
+      },
+      {
+        "char": "膩",
+        "meaning": "油膩、細膩"
+      },
+      {
+        "char": "效",
+        "meaning": "效果、效率"
+      },
+      {
+        "char": "隊",
+        "meaning": "隊伍、隊長"
+      },
+      {
+        "char": "益",
+        "meaning": "益處、效益"
+      },
+      {
+        "char": "貌",
+        "meaning": "禮貌、容貌"
+      },
+      {
+        "char": "官",
+        "meaning": "官員、器官"
+      },
+      {
+        "char": "增",
+        "meaning": "增加、增長"
+      }
+    ]
+  },
+  "7": {
+    "name": "第七課",
+    "title": "🎯 康軒五上第七課生字猜謎",
+    "items": [
+      {
+        "char": "逆",
+        "meaning": "逆風、逆境"
+      },
+      {
+        "char": "穩",
+        "meaning": "穩定、穩健"
+      },
+      {
+        "char": "憐",
+        "meaning": "可憐、憐愛"
+      },
+      {
+        "char": "競",
+        "meaning": "競爭、競技"
+      },
+      {
+        "char": "抗",
+        "meaning": "抗議、抵抗"
+      },
+      {
+        "char": "逸",
+        "meaning": "安逸、逃逸"
+      },
+      {
+        "char": "鄰",
+        "meaning": "鄰居、相鄰"
+      },
+      {
+        "char": "脈",
+        "meaning": "山脈、血脈"
+      },
+      {
+        "char": "絡",
+        "meaning": "網絡、絡繹不絕"
+      },
+      {
+        "char": "緻",
+        "meaning": "精緻、細緻"
+      },
+      {
+        "char": "弱",
+        "meaning": "弱小、軟弱"
+      },
+      {
+        "char": "噴",
+        "meaning": "噴水、噴霧"
+      },
+      {
+        "char": "嚏",
+        "meaning": "打噴嚏、嚏噴"
+      },
+      {
+        "char": "織",
+        "meaning": "編織、紡織"
+      },
+      {
+        "char": "碌",
+        "meaning": "忙碌、勞碌"
+      },
+      {
+        "char": "盎",
+        "meaning": "生機盎然、盎司"
+      },
+      {
+        "char": "膽",
+        "meaning": "膽量、勇敢"
+      },
+      {
+        "char": "圈",
+        "meaning": "圓圈、花圈"
+      },
+      {
+        "char": "疲",
+        "meaning": "疲倦、疲勞"
+      }
+    ]
+  },
+  "8": {
+    "name": "第八課",
+    "title": "🎯 康軒五上第八課生字猜謎",
+    "items": [
+      {
+        "char": "坦",
+        "meaning": "坦白、平坦"
+      },
+      {
+        "char": "性",
+        "meaning": "性格、性質"
+      },
+      {
+        "char": "恐",
+        "meaning": "恐懼、恐怖"
+      },
+      {
+        "char": "怖",
+        "meaning": "恐怖、恐慌"
+      },
+      {
+        "char": "組",
+        "meaning": "組織、分組"
+      },
+      {
+        "char": "占",
+        "meaning": "占據、占領"
+      },
+      {
+        "char": "播",
+        "meaning": "廣播、播種"
+      },
+      {
+        "char": "控",
+        "meaning": "控制、操控"
+      },
+      {
+        "char": "制",
+        "meaning": "制定、制度"
+      },
+      {
+        "char": "傷",
+        "meaning": "受傷、傷心"
+      },
+      {
+        "char": "攻",
+        "meaning": "攻擊、攻守"
+      },
+      {
+        "char": "擊",
+        "meaning": "敲擊、打擊"
+      },
+      {
+        "char": "權",
+        "meaning": "權利、權威"
+      },
+      {
+        "char": "脅",
+        "meaning": "威脅、迫脅"
+      },
+      {
+        "char": "復",
+        "meaning": "復習、恢復"
+      },
+      {
+        "char": "武",
+        "meaning": "武器、武術"
+      },
+      {
+        "char": "撼",
+        "meaning": "震撼、搖撼"
+      },
+      {
+        "char": "懼",
+        "meaning": "懼怕、恐懼"
+      }
+    ]
+  },
+  "9": {
+    "name": "第九課",
+    "title": "🎯 康軒五上第九課生字猜謎",
+    "items": [
+      {
+        "char": "維",
+        "meaning": "維護、維修"
+      },
+      {
+        "char": "戰",
+        "meaning": "戰爭、挑戰"
+      },
+      {
+        "char": "崎",
+        "meaning": "崎嶇、山崎"
+      },
+      {
+        "char": "嶇",
+        "meaning": "崎嶇不平"
+      },
+      {
+        "char": "拳",
+        "meaning": "拳頭、拳擊"
+      },
+      {
+        "char": "癌",
+        "meaning": "癌症、胃癌"
+      },
+      {
+        "char": "症",
+        "meaning": "症狀、病症"
+      },
+      {
+        "char": "銅",
+        "meaning": "銅牌、青銅"
+      },
+      {
+        "char": "牌",
+        "meaning": "獎牌、招牌"
+      },
+      {
+        "char": "屢",
+        "meaning": "屢次、屢見不鮮"
+      },
+      {
+        "char": "減",
+        "meaning": "減少、減法"
+      },
+      {
+        "char": "予",
+        "meaning": "給予、授予"
+      },
+      {
+        "char": "幼",
+        "meaning": "幼兒、幼稚"
+      },
+      {
+        "char": "椰",
+        "meaning": "椰子、椰林"
+      },
+      {
+        "char": "即",
+        "meaning": "即使、立即"
+      },
+      {
+        "char": "腐",
+        "meaning": "豆腐、腐爛"
+      },
+      {
+        "char": "衝",
+        "meaning": "衝動、衝刺"
+      },
+      {
+        "char": "鍛",
+        "meaning": "鍛鍊、鍛造"
+      },
+      {
+        "char": "鍊",
+        "meaning": "鍛鍊、鐵鍊"
+      }
+    ]
+  },
+  "10": {
+    "name": "第十課",
+    "title": "🎯 康軒五上第十課生字猜謎",
+    "items": [
+      {
+        "char": "唐",
+        "meaning": "唐代、唐詩"
+      },
+      {
+        "char": "恬",
+        "meaning": "恬靜、恬淡"
+      },
+      {
+        "char": "罷",
+        "meaning": "罷工、罷免"
+      },
+      {
+        "char": "暮",
+        "meaning": "日暮、暮色"
+      },
+      {
+        "char": "掩",
+        "meaning": "掩護、掩飾"
+      },
+      {
+        "char": "柴",
+        "meaning": "木柴、柴火"
+      },
+      {
+        "char": "扉",
+        "meaning": "心扉、柴扉"
+      },
+      {
+        "char": "歸",
+        "meaning": "回家、歸來"
+      },
+      {
+        "char": "畢",
+        "meaning": "畢業、畢生"
+      },
+      {
+        "char": "陋",
+        "meaning": "簡陋、醜陋"
+      },
+      {
+        "char": "傍",
+        "meaning": "傍晚、依山傍水"
+      },
+      {
+        "char": "確",
+        "meaning": "確定、確實"
+      },
+      {
+        "char": "閒",
+        "meaning": "休閒、清閒"
+      },
+      {
+        "char": "詠",
+        "meaning": "吟詠、歌詠"
+      },
+      {
+        "char": "幽",
+        "meaning": "幽默、幽靜"
+      },
+      {
+        "char": "眠",
+        "meaning": "冬眠、睡眠"
+      },
+      {
+        "char": "職",
+        "meaning": "職業、職務"
+      },
+      {
+        "char": "吟",
+        "meaning": "吟唱、吟詩"
+      },
+      {
+        "char": "曠",
+        "meaning": "心曠神怡、空曠"
+      }
+    ]
+  },
+  "11": {
+    "name": "第十一課",
+    "title": "🎯 康軒五上第十一課生字猜謎",
+    "items": [
+      {
+        "char": "駭",
+        "meaning": "驚駭、駭人聽聞"
+      },
+      {
+        "char": "疤",
+        "meaning": "傷疤、疤痕"
+      },
+      {
+        "char": "痕",
+        "meaning": "痕跡、痕紋"
+      },
+      {
+        "char": "罐",
+        "meaning": "罐頭、茶罐"
+      },
+      {
+        "char": "咚",
+        "meaning": "咚咚作響"
+      },
+      {
+        "char": "碰",
+        "meaning": "碰見、碰撞"
+      },
+      {
+        "char": "傾",
+        "meaning": "傾斜、傾聽"
+      },
+      {
+        "char": "寮",
+        "meaning": "草寮、工寮"
+      },
+      {
+        "char": "營",
+        "meaning": "經營、露營"
+      },
+      {
+        "char": "殺",
+        "meaning": "殺菌、格殺"
+      },
+      {
+        "char": "崇",
+        "meaning": "崇高、崇敬"
+      },
+      {
+        "char": "置",
+        "meaning": "佈置、安置"
+      },
+      {
+        "char": "奄",
+        "meaning": "奄奄一息"
+      },
+      {
+        "char": "翼",
+        "meaning": "小心翼翼、羽翼"
+      },
+      {
+        "char": "祈",
+        "meaning": "祈求、祈禱"
+      },
+      {
+        "char": "禱",
+        "meaning": "禱告、祈禱"
+      },
+      {
+        "char": "吼",
+        "meaning": "大吼、怒吼"
+      },
+      {
+        "char": "喉",
+        "meaning": "喉嚨、歌喉"
+      },
+      {
+        "char": "嚨",
+        "meaning": "喉嚨、嚨音"
+      }
+    ]
+  },
+  "12": {
+    "name": "第十二課",
+    "title": "🎯 康軒五上第十二課生字猜謎",
+    "items": [
+      {
+        "char": "烈",
+        "meaning": "熱烈、強烈"
+      },
+      {
+        "char": "暈",
+        "meaning": "頭暈、暈車"
+      },
+      {
+        "char": "昏",
+        "meaning": "黃昏、昏倒"
+      },
+      {
+        "char": "艙",
+        "meaning": "機艙、船艙"
+      },
+      {
+        "char": "途",
+        "meaning": "旅途、用途"
+      },
+      {
+        "char": "捲",
+        "meaning": "捲起、花捲"
+      },
+      {
+        "char": "喪",
+        "meaning": "沮喪、喪失"
+      },
+      {
+        "char": "獸",
+        "meaning": "野獸、怪獸"
+      },
+      {
+        "char": "渾",
+        "meaning": "渾身、渾水"
+      },
+      {
+        "char": "擱",
+        "meaning": "擱置、擱淺"
+      },
+      {
+        "char": "礁",
+        "meaning": "珊瑚礁、暗礁"
+      },
+      {
+        "char": "筏",
+        "meaning": "竹筏、皮筏"
+      },
+      {
+        "char": "塌",
+        "meaning": "倒塌、塌陷"
+      },
+      {
+        "char": "捏",
+        "meaning": "捏造、捏泥人"
+      },
+      {
+        "char": "燒",
+        "meaning": "發燒、燃燒"
+      },
+      {
+        "char": "臼",
+        "meaning": "石臼、臼齒"
+      },
+      {
+        "char": "烤",
+        "meaning": "烤肉、烤箱"
+      },
+      {
+        "char": "爐",
+        "meaning": "火爐、烤爐"
+      },
+      {
+        "char": "欲",
+        "meaning": "欲望、隨心所欲"
+      }
+    ]
+  }
+};
+
+    let revealedBlocks = new Set();
+    let totalBlocks = 4;
+    let currentLessonKey = '1';
+    let characters = lessonData[currentLessonKey].items;
+    let currentCharacterIndex = 0;
+    let shuffledIndices = [];
+    let currentQuestionNumber = 0;
+
+    // 音效合成 (Web Audio API)
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      try {
+        if (!audioCtx && AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        if (type === 'pop') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'fanfare') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.4);
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 語音朗讀漢字
+    function speakChar(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.rate = 0.85;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+      }
+    }
+
+    // 初始化隨機順序
+    function initializeRandomOrder() {
+      shuffledIndices = [];
+      for (let i = 0; i < characters.length; i++) {
+        shuffledIndices.push(i);
+      }
+      // Fisher-Yates 洗牌
+      for (let i = shuffledIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+      }
+      currentQuestionNumber = 0;
+      currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+      updateDisplay();
+    }
+
+    function switchLesson(lessonKey) {
+      currentLessonKey = lessonKey;
+      characters = lessonData[lessonKey].items;
+
+      // 更新標題
+      document.getElementById('mainTitle').textContent = lessonData[lessonKey].title;
+
+      // 更新按鈕狀態
+      document.querySelectorAll('.lesson-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-lesson') === lessonKey) {
+          btn.classList.add('active');
+        }
+      });
+
+      // 重置並初始化
+      resetGame();
+      initializeRandomOrder();
+    }
+
+    function revealBlock(blockNumber) {
+      if (revealedBlocks.has(blockNumber)) return;
+
+      const block = document.querySelector(`.block-${blockNumber}`);
+      if (block) {
+        block.classList.add('clicked');
+        revealedBlocks.add(blockNumber);
+        playSound('pop');
+      }
+
+      if (revealedBlocks.size === totalBlocks) {
+        setTimeout(showCompletion, 300);
+      }
+    }
+
+    function showCompletion() {
+      const completionMsg = document.getElementById('completionMessage');
+      completionMsg.classList.add('show');
+      playSound('fanfare');
+      const item = characters[currentCharacterIndex];
+      speakChar(`${item.char}。${item.meaning}`);
+    }
+
+    function resetGame() {
+      revealedBlocks.clear();
+      for (let i = 1; i <= totalBlocks; i++) {
+        const block = document.querySelector(`.block-${i}`);
+        if (block) block.classList.remove('clicked');
+      }
+      document.getElementById('completionMessage').classList.remove('show');
+    }
+
+    function revealAll() {
+      for (let i = 1; i <= totalBlocks; i++) {
+        const block = document.querySelector(`.block-${i}`);
+        if (block) {
+          block.classList.add('clicked');
+          revealedBlocks.add(i);
+        }
+      }
+      setTimeout(showCompletion, 250);
+    }
+
+    function updateDisplay() {
+      const item = characters[currentCharacterIndex];
+      document.getElementById('characterCard').textContent = item.char;
+      document.getElementById('questionCounter').textContent = `(第 ${currentQuestionNumber + 1} 題 / 共 ${characters.length} 題)`;
+
+      const completionMsg = document.getElementById('completionMessage');
+      completionMsg.innerHTML = `
+        <h2>🎉 恭喜完成！</h2>
+        <p>成功揭示生字：<strong style="font-size: 2.3rem; color: #ffeaa7; margin: 0 4px;">${item.char}</strong></p>
+        <p style="font-size: 1.15rem; margin-top: 6px;">語詞範例 / 意思：<strong>${item.meaning}</strong></p>
+        <div style="margin-top: 15px;">
+          <button class="btn btn-primary" onclick="resetGame()" style="margin: 4px;">🔄 再猜一次</button>
+          <button class="btn btn-secondary" onclick="newCharacter()" style="margin: 4px;">🎲 下一題 ▶</button>
+        </div>
+      `;
+    }
+
+    function newCharacter() {
+      resetGame();
+
+      setTimeout(() => {
+        currentQuestionNumber++;
+        if (currentQuestionNumber >= characters.length) {
+          initializeRandomOrder();
+        } else {
+          currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+          updateDisplay();
+        }
+      }, 350);
+    }
+
+    // 鍵盤快捷鍵
+    document.addEventListener('keydown', function(event) {
+      switch(event.key) {
+        case '1': revealBlock(1); break;
+        case '2': revealBlock(2); break;
+        case '3': revealBlock(3); break;
+        case '4': revealBlock(4); break;
+        case 'r':
+        case 'R': resetGame(); break;
+        case ' ':
+          event.preventDefault();
+          revealAll();
+          break;
+        case 'n':
+        case 'N':
+        case 'Enter': newCharacter(); break;
+      }
+    });
+
+    // 啟動初始化
+    initializeRandomOrder();
+  </script>
+</body>
+</html>
