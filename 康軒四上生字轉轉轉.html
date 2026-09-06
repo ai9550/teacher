@@ -1,0 +1,3016 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒四上生字轉轉轉</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+      background: linear-gradient(135deg, #1E88E5 0%, #1565C0 50%, #4A148C 100%);
+      min-height: 100vh;
+      color: #333;
+      padding: 20px 15px;
+      padding-top: 55px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 25px;
+      position: relative;
+    }
+
+    /* Home Navigation Button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      color: #ffffff !important;
+      padding: 9px 18px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1rem;
+      transition: all 0.25s ease;
+      z-index: 99999;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+    .home-btn:hover {
+      background: rgba(0, 0, 0, 0.75);
+      border-color: #ffffff;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Left Lesson Sidebar */
+    .lesson-sidebar {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+      max-height: 86vh;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 250px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #ffeaa7;
+      text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .lesson-btn {
+      background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(247,250,252,0.95));
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #2d3748;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+      text-align: left;
+      line-height: 1.35;
+      user-select: none;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .lesson-btn:hover {
+      transform: translateX(4px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      background: #ffffff;
+    }
+
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+      color: #2d3436;
+      border: 2px solid #ffffff;
+      box-shadow: 0 6px 18px rgba(253, 203, 110, 0.6);
+      font-weight: 900;
+    }
+
+    .game-container {
+      max-width: 820px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 24px;
+      padding: 30px 35px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      text-align: center;
+    }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;
+      font-size: 2.3rem;
+      color: #2d3748;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .stage-info {
+      background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e293b;
+      border: 2px solid #cbd5e1;
+      display: inline-block;
+      max-width: 95%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .stage-info.stage-0 {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border-color: #93c5fd;
+      color: #1e40af;
+    }
+    .stage-info.stage-1 {
+      background: linear-gradient(135deg, #fefce8, #fef08a);
+      border-color: #fde047;
+      color: #854d0e;
+    }
+    .stage-info.stage-2 {
+      background: linear-gradient(135deg, #f0fdf4, #bbf7d0);
+      border-color: #86efac;
+      color: #166534;
+    }
+    .stage-info.stage-3 {
+      background: linear-gradient(135deg, #fdf2f8, #fbcfe8);
+      border-color: #f472b6;
+      color: #9d174d;
+    }
+
+    .game-area {
+      background: #f8fafc;
+      border-radius: 20px;
+      padding: 30px 20px;
+      margin: 22px 0;
+      min-height: 270px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      flex-wrap: wrap;
+      position: relative;
+      border: 3px dashed #cbd5e1;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+
+    .component-card {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 105px;
+      min-height: 105px;
+      padding: 12px 18px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      border: 3px solid #93c5fd;
+      font-size: 3.8rem;
+      font-weight: 900;
+      color: #1e40af;
+      font-family: '標楷體', 'DFKai-SB', 'BiauKai', serif;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.3s ease, color 0.2s ease, border-color 0.2s ease;
+      white-space: pre-line;
+      line-height: 1.05;
+    }
+
+    .component-card:hover {
+      transform: scale(1.08);
+      border-color: #3b82f6;
+      color: #1d4ed8;
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.25);
+    }
+
+    .component-card.merged {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-color: #f59e0b;
+      color: #b45309;
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+      animation: pulseMerge 0.5s ease-out;
+    }
+
+    @keyframes pulseMerge {
+      0% { transform: scale(0.7); opacity: 0.5; }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 旋轉動畫 */
+    .rotating {
+      animation: rotateAnim 3.5s linear infinite;
+    }
+
+    @keyframes rotateAnim {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .answer-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: celebratePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes celebratePop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .answer-char {
+      font-size: 7.5rem;
+      font-weight: 900;
+      color: #15803d;
+      font-family: '標楷體', 'DFKai-SB', 'BiauKai', serif;
+      line-height: 1.1;
+      text-shadow: 2px 4px 10px rgba(21, 128, 61, 0.25);
+    }
+
+    .answer-desc {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #334155;
+      margin-top: 10px;
+      padding: 6px 18px;
+      background: #dcfce7;
+      border-radius: 20px;
+      border: 2px solid #86efac;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0 10px;
+    }
+
+    .btn {
+      border: none;
+      padding: 12px 24px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .btn-nav {
+      background: linear-gradient(135deg, #64748b, #475569);
+      color: white;
+    }
+    .btn-nav:hover:not(:disabled) {
+      box-shadow: 0 6px 18px rgba(71, 85, 105, 0.4);
+    }
+
+    .btn-hint {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      min-width: 180px;
+    }
+    .btn-hint:hover:not(:disabled) {
+      box-shadow: 0 6px 20px rgba(217, 119, 6, 0.45);
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+    .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.45);
+    }
+
+    .btn:disabled {
+      background: #cbd5e1 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .question-counter {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #334155;
+      padding: 10px 18px;
+      background: #f1f5f9;
+      border-radius: 20px;
+      border: 2px solid #cbd5e1;
+      display: inline-block;
+    }
+
+    .keyboard-hint {
+      margin-top: 14px;
+      font-size: 0.92rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+      }
+      .lesson-sidebar {
+        width: 100%;
+        max-width: 820px;
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 12px 14px;
+        white-space: nowrap;
+      }
+      .lesson-btn {
+        flex-shrink: 0;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .game-container {
+        padding: 20px 16px;
+      }
+      .title {
+        font-size: 1.7rem;
+      }
+      .stage-info {
+        font-size: 0.95rem;
+        padding: 10px 14px;
+      }
+      .component-card {
+        min-width: 75px;
+        min-height: 75px;
+        font-size: 2.8rem;
+        padding: 8px 12px;
+      }
+      .answer-char {
+        font-size: 5.5rem;
+      }
+      .answer-desc {
+        font-size: 1.1rem;
+      }
+      .btn {
+        padding: 10px 18px;
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+  <!-- Left Sidebar -->
+  <div class="lesson-sidebar">
+    <div class="sidebar-title">📚 選擇課程</div>
+        <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1')">第一課 水陸小高手</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2')">第二課 放學後</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3')">第三課 我的籃球夢</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4')">第四課 永遠的馬偕</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5')">第五課 假如給我三天光明</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6')">第六課 攀登生命的高峰</button>
+    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7')">第七課 美味的一堂課</button>
+    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8')">第八課 建築界的長頸鹿</button>
+    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9')">第九課 請到我的家鄉來</button>
+    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10')">第十課 奇幻旋律</button>
+    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11')">第十一課 兔子先生等等我</button>
+    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12')">第十二課 老鞋匠和小精靈</button>
+  </div>
+
+  <main class="game-container">
+    <header class="header">
+      <h1 class="title" id="mainTitle">🧩 康軒四上生字轉轉轉</h1>
+      <div class="stage-info stage-0" id="stageInfo">
+        初始狀態：部件正在旋轉中，觀察散落的部件，猜猜看是什麼字？
+      </div>
+    </header>
+
+    <div class="game-area" id="gameArea">
+      <!-- 部件卡片由 JS 動態生成 -->
+    </div>
+
+    <div class="controls">
+      <div class="question-counter" id="questionCounter">
+        第 1 題 / 共 15 題
+      </div>
+      <button class="btn btn-nav" id="prevBtn" onclick="prevQuestion()">⬅️ 上一題</button>
+      <button class="btn btn-hint" id="hintBtn" onclick="nextHint()">💡 提示 1 (停止旋轉)</button>
+      <button class="btn btn-next" id="nextBtn" onclick="nextQuestion()">下一題 ➡️</button>
+    </div>
+
+    <div class="keyboard-hint">
+      ⌨️ 快捷鍵：空白鍵 / H (提示) ｜ ← / P (上一題) ｜ → / N / Enter (下一題) ｜ R (重新此題)
+    </div>
+  </main>
+
+  <script>
+    // 回首頁跳轉處理
+    function goHome(e) {
+      if (e) e.preventDefault();
+      let target = 'index.html';
+      if (window.location.protocol === 'file:') {
+        target = 'index.html';
+      } else if (window.location.hostname.includes('github.io')) {
+        target = 'https://ai9550.github.io/teacher/';
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = target;
+          return;
+        }
+      } catch (err) {}
+      window.location.href = target;
+    }
+
+    // 各課題目資料
+    const lessonsData = {
+  "1": {
+    "name": "第一課 水陸小高手",
+    "title": "🧩 第一課 水陸小高手 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "充",
+        "meaning": "充滿、充份",
+        "stage0_components": [
+          "亠",
+          "厶",
+          "儿"
+        ],
+        "stage2_components": [
+          "𠫓",
+          "儿"
+        ]
+      },
+      {
+        "answer": "滿",
+        "meaning": "滿滿、飽滿",
+        "stage0_components": [
+          "氵",
+          "艹",
+          "兩"
+        ],
+        "stage2_components": [
+          "氵",
+          "艹\n兩"
+        ]
+      },
+      {
+        "answer": "巷",
+        "meaning": "小巷、巷弄",
+        "stage0_components": [
+          "共",
+          "巳"
+        ],
+        "stage2_components": [
+          "共\n巳"
+        ]
+      },
+      {
+        "answer": "弄",
+        "meaning": "弄堂、擺弄",
+        "stage0_components": [
+          "王",
+          "廾"
+        ],
+        "stage2_components": [
+          "王\n廾"
+        ]
+      },
+      {
+        "answer": "矮",
+        "meaning": "矮小、矮牆",
+        "stage0_components": [
+          "矢",
+          "禾",
+          "女"
+        ],
+        "stage2_components": [
+          "矢",
+          "委"
+        ]
+      },
+      {
+        "answer": "側",
+        "meaning": "側面、身側",
+        "stage0_components": [
+          "亻",
+          "貝",
+          "刂"
+        ],
+        "stage2_components": [
+          "亻",
+          "則"
+        ]
+      },
+      {
+        "answer": "抹",
+        "meaning": "抹上、塗抹",
+        "stage0_components": [
+          "扌",
+          "一",
+          "木"
+        ],
+        "stage2_components": [
+          "扌",
+          "末"
+        ]
+      },
+      {
+        "answer": "斑",
+        "meaning": "斑點、斑紋",
+        "stage0_components": [
+          "王",
+          "文",
+          "王"
+        ],
+        "stage2_components": [
+          "玨",
+          "文"
+        ]
+      },
+      {
+        "answer": "駁",
+        "meaning": "斑駁、駁斥",
+        "stage0_components": [
+          "馬",
+          "爻"
+        ],
+        "stage2_components": [
+          "馬\n爻"
+        ]
+      },
+      {
+        "answer": "磚",
+        "meaning": "磚塊、紅磚",
+        "stage0_components": [
+          "石",
+          "甫",
+          "寸"
+        ],
+        "stage2_components": [
+          "石",
+          "專"
+        ]
+      },
+      {
+        "answer": "染",
+        "meaning": "渲染、染料",
+        "stage0_components": [
+          "氵",
+          "九",
+          "木"
+        ],
+        "stage2_components": [
+          "氵",
+          "杂"
+        ]
+      },
+      {
+        "answer": "透",
+        "meaning": "透明、穿透",
+        "stage0_components": [
+          "辶",
+          "禾",
+          "乃"
+        ],
+        "stage2_components": [
+          "辶",
+          "秀"
+        ]
+      },
+      {
+        "answer": "痕",
+        "meaning": "痕跡、印痕",
+        "stage0_components": [
+          "疒",
+          "艮"
+        ],
+        "stage2_components": [
+          "疒",
+          "艮"
+        ]
+      },
+      {
+        "answer": "跡",
+        "meaning": "古跡、奇蹟",
+        "stage0_components": [
+          "足",
+          "亦"
+        ],
+        "stage2_components": [
+          "足",
+          "亦"
+        ]
+      },
+      {
+        "answer": "印",
+        "meaning": "腳印、印刷",
+        "stage0_components": [
+          "爫",
+          "卩"
+        ],
+        "stage2_components": [
+          "爫",
+          "卩"
+        ]
+      }
+    ]
+  },
+  "2": {
+    "name": "第二課 放學後",
+    "title": "🧩 第二課 放學後 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "縣",
+        "meaning": "縣市、縣府",
+        "stage0_components": [
+          "目",
+          "𠃊",
+          "系"
+        ],
+        "stage2_components": [
+          "県",
+          "糸"
+        ]
+      },
+      {
+        "answer": "鄉",
+        "meaning": "鄉村、故鄉",
+        "stage0_components": [
+          "乡",
+          "白",
+          "匕",
+          "阝"
+        ],
+        "stage2_components": [
+          "鄕",
+          "阝"
+        ]
+      },
+      {
+        "answer": "梯",
+        "meaning": "梯田、階梯",
+        "stage0_components": [
+          "木",
+          "八",
+          "弟"
+        ],
+        "stage2_components": [
+          "木",
+          "第"
+        ]
+      },
+      {
+        "answer": "耕",
+        "meaning": "耕耘、耕種",
+        "stage0_components": [
+          "耒",
+          "井"
+        ],
+        "stage2_components": [
+          "耒",
+          "井"
+        ]
+      },
+      {
+        "answer": "依",
+        "meaning": "依照、依靠",
+        "stage0_components": [
+          "亻",
+          "亠",
+          "衣"
+        ],
+        "stage2_components": [
+          "亻",
+          "衣"
+        ]
+      },
+      {
+        "answer": "陡",
+        "meaning": "陡峭、陡坡",
+        "stage0_components": [
+          "阝",
+          "土",
+          "走"
+        ],
+        "stage2_components": [
+          "阝",
+          "走"
+        ]
+      },
+      {
+        "answer": "峭",
+        "meaning": "峭壁、高峭",
+        "stage0_components": [
+          "山",
+          "口",
+          "月"
+        ],
+        "stage2_components": [
+          "山",
+          "肖"
+        ]
+      },
+      {
+        "answer": "嶺",
+        "meaning": "山嶺、高嶺",
+        "stage0_components": [
+          "山",
+          "人",
+          "一",
+          "頁"
+        ],
+        "stage2_components": [
+          "山",
+          "領"
+        ]
+      },
+      {
+        "answer": "築",
+        "meaning": "建築、築起",
+        "stage0_components": [
+          "⺮",
+          "工",
+          "凡",
+          "木"
+        ],
+        "stage2_components": [
+          "⺮",
+          "筑"
+        ]
+      },
+      {
+        "answer": "層",
+        "meaning": "層次、樓層",
+        "stage0_components": [
+          "尸",
+          "丷",
+          "田",
+          "日"
+        ],
+        "stage2_components": [
+          "尸",
+          "曾"
+        ]
+      },
+      {
+        "answer": "沿",
+        "meaning": "沿著、沿海",
+        "stage0_components": [
+          "氵",
+          "八",
+          "口"
+        ],
+        "stage2_components": [
+          "氵",
+          "㕣"
+        ]
+      },
+      {
+        "answer": "引",
+        "meaning": "引用、引導",
+        "stage0_components": [
+          "弓",
+          "丨"
+        ],
+        "stage2_components": [
+          "弓",
+          "丨"
+        ]
+      },
+      {
+        "answer": "湧",
+        "meaning": "泉湧、湧現",
+        "stage0_components": [
+          "氵",
+          "甬"
+        ],
+        "stage2_components": [
+          "氵",
+          "甬"
+        ]
+      },
+      {
+        "answer": "源",
+        "meaning": "泉源、來源",
+        "stage0_components": [
+          "氵",
+          "厂",
+          "原"
+        ],
+        "stage2_components": [
+          "氵",
+          "原"
+        ]
+      },
+      {
+        "answer": "順",
+        "meaning": "順利、順流",
+        "stage0_components": [
+          "川",
+          "頁"
+        ],
+        "stage2_components": [
+          "川",
+          "頁"
+        ]
+      }
+    ]
+  },
+  "3": {
+    "name": "第三課 我的籃球夢",
+    "title": "🧩 第三課 我的籃球夢 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "晨",
+        "meaning": "清晨、早晨",
+        "stage0_components": [
+          "日",
+          "厂",
+          "辰"
+        ],
+        "stage2_components": [
+          "日",
+          "辰"
+        ]
+      },
+      {
+        "answer": "斜",
+        "meaning": "斜坡、傾斜",
+        "stage0_components": [
+          "余",
+          "斗"
+        ],
+        "stage2_components": [
+          "余",
+          "斗"
+        ]
+      },
+      {
+        "answer": "照",
+        "meaning": "照射、照光",
+        "stage0_components": [
+          "日",
+          "刀",
+          "口",
+          "灬"
+        ],
+        "stage2_components": [
+          "昭",
+          "灬"
+        ]
+      },
+      {
+        "answer": "淡",
+        "meaning": "清淡、淡水",
+        "stage0_components": [
+          "氵",
+          "火",
+          "火"
+        ],
+        "stage2_components": [
+          "氵",
+          "炎"
+        ]
+      },
+      {
+        "answer": "薄",
+        "meaning": "薄片、稀薄",
+        "stage0_components": [
+          "艹",
+          "氵",
+          "甫",
+          "寸"
+        ],
+        "stage2_components": [
+          "艹",
+          "溥"
+        ]
+      },
+      {
+        "answer": "紗",
+        "meaning": "紗布、薄紗",
+        "stage0_components": [
+          "糹",
+          "少"
+        ],
+        "stage2_components": [
+          "糹",
+          "少"
+        ]
+      },
+      {
+        "answer": "披",
+        "meaning": "披上、身披",
+        "stage0_components": [
+          "扌",
+          "皮"
+        ],
+        "stage2_components": [
+          "扌",
+          "皮"
+        ]
+      },
+      {
+        "answer": "朦",
+        "meaning": "朦朧、朦朧美",
+        "stage0_components": [
+          "月",
+          "艹",
+          "冖",
+          "豕"
+        ],
+        "stage2_components": [
+          "月",
+          "蒙"
+        ]
+      },
+      {
+        "answer": "朧",
+        "meaning": "月色朦朧",
+        "stage0_components": [
+          "月",
+          "龍"
+        ],
+        "stage2_components": [
+          "月",
+          "龍"
+        ]
+      },
+      {
+        "answer": "甦",
+        "meaning": "甦醒、復甦",
+        "stage0_components": [
+          "更",
+          "生"
+        ],
+        "stage2_components": [
+          "更\n生"
+        ]
+      },
+      {
+        "answer": "波",
+        "meaning": "波浪、微波",
+        "stage0_components": [
+          "氵",
+          "皮"
+        ],
+        "stage2_components": [
+          "氵",
+          "皮"
+        ]
+      },
+      {
+        "answer": "映",
+        "meaning": "倒映、反映",
+        "stage0_components": [
+          "日",
+          "央"
+        ],
+        "stage2_components": [
+          "日",
+          "央"
+        ]
+      },
+      {
+        "answer": "絢",
+        "meaning": "絢麗、絢爛",
+        "stage0_components": [
+          "糹",
+          "勹",
+          "日"
+        ],
+        "stage2_components": [
+          "糹",
+          "旬"
+        ]
+      },
+      {
+        "answer": "彩",
+        "meaning": "彩霞、色彩",
+        "stage0_components": [
+          "爫",
+          "木",
+          "彡"
+        ],
+        "stage2_components": [
+          "采",
+          "彡"
+        ]
+      }
+    ]
+  },
+  "4": {
+    "name": "第四課 永遠的馬偕",
+    "title": "🧩 第四課 永遠的馬偕 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "攀",
+        "meaning": "攀爬、攀登",
+        "stage0_components": [
+          "木",
+          "爻",
+          "爻",
+          "木",
+          "大",
+          "手"
+        ],
+        "stage2_components": [
+          "樊",
+          "手"
+        ]
+      },
+      {
+        "answer": "登",
+        "meaning": "登陸、登山",
+        "stage0_components": [
+          "癶",
+          "豆"
+        ],
+        "stage2_components": [
+          "癶",
+          "豆"
+        ]
+      },
+      {
+        "answer": "拔",
+        "meaning": "拔河、挺拔",
+        "stage0_components": [
+          "扌",
+          "犬",
+          "乂"
+        ],
+        "stage2_components": [
+          "扌",
+          "犮"
+        ]
+      },
+      {
+        "answer": "峰",
+        "meaning": "山峰、高峰",
+        "stage0_components": [
+          "山",
+          "夂",
+          "丰"
+        ],
+        "stage2_components": [
+          "山",
+          "夆"
+        ]
+      },
+      {
+        "answer": "挑",
+        "meaning": "挑戰、挑選",
+        "stage0_components": [
+          "扌",
+          "儿",
+          "兆"
+        ],
+        "stage2_components": [
+          "扌",
+          "兆"
+        ]
+      },
+      {
+        "answer": "戰",
+        "meaning": "戰勝、作戰",
+        "stage0_components": [
+          "單",
+          "戈"
+        ],
+        "stage2_components": [
+          "單",
+          "戈"
+        ]
+      },
+      {
+        "answer": "冒",
+        "meaning": "冒險、冒雨",
+        "stage0_components": [
+          "冂",
+          "二",
+          "目"
+        ],
+        "stage2_components": [
+          "曰",
+          "目"
+        ]
+      },
+      {
+        "answer": "涉",
+        "meaning": "跋涉、涉及",
+        "stage0_components": [
+          "氵",
+          "止",
+          "少"
+        ],
+        "stage2_components": [
+          "氵",
+          "步"
+        ]
+      },
+      {
+        "answer": "險",
+        "meaning": "危險、冒險",
+        "stage0_components": [
+          "阝",
+          "人",
+          "一",
+          "口",
+          "僉"
+        ],
+        "stage2_components": [
+          "阝",
+          "僉"
+        ]
+      },
+      {
+        "answer": "陡",
+        "meaning": "陡坡、陡壁",
+        "stage0_components": [
+          "阝",
+          "土",
+          "走"
+        ],
+        "stage2_components": [
+          "阝",
+          "走"
+        ]
+      },
+      {
+        "answer": "窄",
+        "meaning": "狹窄、窄門",
+        "stage0_components": [
+          "穴",
+          "乍"
+        ],
+        "stage2_components": [
+          "穴",
+          "乍"
+        ]
+      },
+      {
+        "answer": "緩",
+        "meaning": "緩慢、平緩",
+        "stage0_components": [
+          "糹",
+          "爫",
+          "一",
+          "友"
+        ],
+        "stage2_components": [
+          "糹",
+          "爰"
+        ]
+      },
+      {
+        "answer": "巨",
+        "meaning": "巨人、巨大",
+        "stage0_components": [
+          "匚",
+          "𠄎"
+        ],
+        "stage2_components": [
+          "匚",
+          "𠄎"
+        ]
+      },
+      {
+        "answer": "俯",
+        "meaning": "俯瞰、俯視",
+        "stage0_components": [
+          "亻",
+          "广",
+          "寸"
+        ],
+        "stage2_components": [
+          "亻",
+          "府"
+        ]
+      },
+      {
+        "answer": "豪",
+        "meaning": "自豪、豪氣",
+        "stage0_components": [
+          "亠",
+          "口",
+          "豕"
+        ],
+        "stage2_components": [
+          "高",
+          "豕"
+        ]
+      }
+    ]
+  },
+  "5": {
+    "name": "第五課 假如給我三天光明",
+    "title": "🧩 第五課 假如給我三天光明 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "創",
+        "meaning": "創造、創新",
+        "stage0_components": [
+          "仓",
+          "刂"
+        ],
+        "stage2_components": [
+          "倉",
+          "刂"
+        ]
+      },
+      {
+        "answer": "意",
+        "meaning": "意思、靈感",
+        "stage0_components": [
+          "立",
+          "日",
+          "心"
+        ],
+        "stage2_components": [
+          "音",
+          "心"
+        ]
+      },
+      {
+        "answer": "廣",
+        "meaning": "廣告、寬廣",
+        "stage0_components": [
+          "广",
+          "廿",
+          "黃"
+        ],
+        "stage2_components": [
+          "广",
+          "黃"
+        ]
+      },
+      {
+        "answer": "告",
+        "meaning": "告訴、通告",
+        "stage0_components": [
+          "牛",
+          "口"
+        ],
+        "stage2_components": [
+          "牛\n口"
+        ]
+      },
+      {
+        "answer": "晰",
+        "meaning": "清晰、明晰",
+        "stage0_components": [
+          "日",
+          "木",
+          "斤"
+        ],
+        "stage2_components": [
+          "日",
+          "析"
+        ]
+      },
+      {
+        "answer": "標",
+        "meaning": "標誌、標題",
+        "stage0_components": [
+          "木",
+          "覀",
+          "示"
+        ],
+        "stage2_components": [
+          "木",
+          "票"
+        ]
+      },
+      {
+        "answer": "魅",
+        "meaning": "魅力、魅影",
+        "stage0_components": [
+          "鬼",
+          "未"
+        ],
+        "stage2_components": [
+          "鬼",
+          "未"
+        ]
+      },
+      {
+        "answer": "惑",
+        "meaning": "誘惑、疑惑",
+        "stage0_components": [
+          "戈",
+          "口",
+          "一",
+          "心"
+        ],
+        "stage2_components": [
+          "或",
+          "心"
+        ]
+      },
+      {
+        "answer": "構",
+        "meaning": "結構、構想",
+        "stage0_components": [
+          "木",
+          "冉",
+          "勾"
+        ],
+        "stage2_components": [
+          "木",
+          "冓"
+        ]
+      },
+      {
+        "answer": "思",
+        "meaning": "思想、思念",
+        "stage0_components": [
+          "田",
+          "心"
+        ],
+        "stage2_components": [
+          "田\n心"
+        ]
+      },
+      {
+        "answer": "幽",
+        "meaning": "幽默、清幽",
+        "stage0_components": [
+          "山",
+          "幺",
+          "幺"
+        ],
+        "stage2_components": [
+          "山",
+          "𢆶"
+        ]
+      },
+      {
+        "answer": "默",
+        "meaning": "默契、沉默",
+        "stage0_components": [
+          "黑",
+          "犬"
+        ],
+        "stage2_components": [
+          "黑",
+          "犬"
+        ]
+      },
+      {
+        "answer": "宣",
+        "meaning": "宣傳、宣布",
+        "stage0_components": [
+          "宀",
+          "一",
+          "旦"
+        ],
+        "stage2_components": [
+          "宀",
+          "亘"
+        ]
+      },
+      {
+        "answer": "傳",
+        "meaning": "傳遞、傳播",
+        "stage0_components": [
+          "亻",
+          "專"
+        ],
+        "stage2_components": [
+          "亻",
+          "專"
+        ]
+      },
+      {
+        "answer": "印",
+        "meaning": "印象、印章",
+        "stage0_components": [
+          "爫",
+          "卩"
+        ],
+        "stage2_components": [
+          "爫",
+          "卩"
+        ]
+      }
+    ]
+  },
+  "6": {
+    "name": "第六課 攀登生命的高峰",
+    "title": "🧩 第六課 攀登生命的高峰 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "演",
+        "meaning": "表演、演員",
+        "stage0_components": [
+          "氵",
+          "宀",
+          "一",
+          "由",
+          "八"
+        ],
+        "stage2_components": [
+          "氵",
+          "寅"
+        ]
+      },
+      {
+        "answer": "戲",
+        "meaning": "戲劇、演戲",
+        "stage0_components": [
+          "虚",
+          "戈"
+        ],
+        "stage2_components": [
+          "虚",
+          "戈"
+        ]
+      },
+      {
+        "answer": "偶",
+        "meaning": "木偶、偶爾",
+        "stage0_components": [
+          "亻",
+          "禺"
+        ],
+        "stage2_components": [
+          "亻",
+          "禺"
+        ]
+      },
+      {
+        "answer": "控",
+        "meaning": "操縱、控制",
+        "stage0_components": [
+          "扌",
+          "穴",
+          "工"
+        ],
+        "stage2_components": [
+          "扌",
+          "空"
+        ]
+      },
+      {
+        "answer": "制",
+        "meaning": "製造、制作",
+        "stage0_components": [
+          "牛",
+          "巾",
+          "刂"
+        ],
+        "stage2_components": [
+          "生",
+          "刂"
+        ]
+      },
+      {
+        "answer": "靈",
+        "meaning": "靈活、機靈",
+        "stage0_components": [
+          "雨",
+          "口",
+          "口",
+          "口",
+          "巫"
+        ],
+        "stage2_components": [
+          "霝",
+          "巫"
+        ]
+      },
+      {
+        "answer": "巧",
+        "meaning": "巧妙、巧思",
+        "stage0_components": [
+          "工",
+          "丂"
+        ],
+        "stage2_components": [
+          "工",
+          "丂"
+        ]
+      },
+      {
+        "answer": "劇",
+        "meaning": "劇院、短劇",
+        "stage0_components": [
+          "虍",
+          "豕",
+          "刂"
+        ],
+        "stage2_components": [
+          "劇(左)",
+          "刂"
+        ]
+      },
+      {
+        "answer": "角",
+        "meaning": "角色、角落",
+        "stage0_components": [
+          "⺈",
+          "用"
+        ],
+        "stage2_components": [
+          "⺈\n用"
+        ]
+      },
+      {
+        "answer": "色",
+        "meaning": "顏色、角色",
+        "stage0_components": [
+          "勹",
+          "巴"
+        ],
+        "stage2_components": [
+          "勹\n巴"
+        ]
+      },
+      {
+        "answer": "臺",
+        "meaning": "戲臺、舞臺",
+        "stage0_components": [
+          "吉",
+          "冖",
+          "至"
+        ],
+        "stage2_components": [
+          "士",
+          "臺底"
+        ]
+      },
+      {
+        "answer": "掌",
+        "meaning": "鼓掌、手掌",
+        "stage0_components": [
+          "⺌",
+          "冖",
+          "口",
+          "手"
+        ],
+        "stage2_components": [
+          "尚",
+          "手"
+        ]
+      },
+      {
+        "answer": "幕",
+        "meaning": "開幕、夜幕",
+        "stage0_components": [
+          "莫",
+          "巾"
+        ],
+        "stage2_components": [
+          "莫",
+          "巾"
+        ]
+      },
+      {
+        "answer": "精",
+        "meaning": "精彩、精靈",
+        "stage0_components": [
+          "米",
+          "靑"
+        ],
+        "stage2_components": [
+          "米",
+          "靑"
+        ]
+      }
+    ]
+  },
+  "7": {
+    "name": "第七課 美味的一堂課",
+    "title": "🧩 第七課 美味的一堂課 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "博",
+        "meaning": "博物館、博學",
+        "stage0_components": [
+          "十",
+          "甫",
+          "寸"
+        ],
+        "stage2_components": [
+          "十",
+          "專"
+        ]
+      },
+      {
+        "answer": "館",
+        "meaning": "圖書館、展覽館",
+        "stage0_components": [
+          "飠",
+          "宀",
+          "官"
+        ],
+        "stage2_components": [
+          "飠",
+          "官"
+        ]
+      },
+      {
+        "answer": "藏",
+        "meaning": "收藏、寶藏",
+        "stage0_components": [
+          "艹",
+          "厂",
+          "臣",
+          "戈"
+        ],
+        "stage2_components": [
+          "艹",
+          "臧"
+        ]
+      },
+      {
+        "answer": "珍",
+        "meaning": "珍貴、珍寶",
+        "stage0_components": [
+          "王",
+          "人",
+          "彡"
+        ],
+        "stage2_components": [
+          "王",
+          "㐱"
+        ]
+      },
+      {
+        "answer": "寶",
+        "meaning": "寶石、寶貝",
+        "stage0_components": [
+          "宀",
+          "玉",
+          "缶",
+          "貝"
+        ],
+        "stage2_components": [
+          "宀",
+          "珤"
+        ]
+      },
+      {
+        "answer": "雕",
+        "meaning": "雕刻、石雕",
+        "stage0_components": [
+          "周",
+          "隹"
+        ],
+        "stage2_components": [
+          "周",
+          "隹"
+        ]
+      },
+      {
+        "answer": "塑",
+        "meaning": "塑造、雕塑",
+        "stage0_components": [
+          "䒑",
+          "月",
+          "土"
+        ],
+        "stage2_components": [
+          "朔",
+          "土"
+        ]
+      },
+      {
+        "answer": "展",
+        "meaning": "展覽、展示",
+        "stage0_components": [
+          "尸",
+          "廿",
+          "衣"
+        ],
+        "stage2_components": [
+          "尸",
+          "㠭"
+        ]
+      },
+      {
+        "answer": "覽",
+        "meaning": "參覽、導覽",
+        "stage0_components": [
+          "臣",
+          "卜",
+          "皿",
+          "見"
+        ],
+        "stage2_components": [
+          "覽上",
+          "見"
+        ]
+      },
+      {
+        "answer": "銅",
+        "meaning": "青銅、黃銅",
+        "stage0_components": [
+          "金",
+          "同"
+        ],
+        "stage2_components": [
+          "金",
+          "同"
+        ]
+      },
+      {
+        "answer": "陶",
+        "meaning": "陶瓷、陶器",
+        "stage0_components": [
+          "阝",
+          "勹",
+          "缶"
+        ],
+        "stage2_components": [
+          "阝",
+          "匋"
+        ]
+      },
+      {
+        "answer": "瓷",
+        "meaning": "白瓷、瓷碗",
+        "stage0_components": [
+          "次",
+          "瓦"
+        ],
+        "stage2_components": [
+          "次",
+          "瓦"
+        ]
+      },
+      {
+        "answer": "畫",
+        "meaning": "圖畫、繪畫",
+        "stage0_components": [
+          "聿",
+          "田",
+          "一"
+        ],
+        "stage2_components": [
+          "聿",
+          "畫底"
+        ]
+      },
+      {
+        "answer": "品",
+        "meaning": "作品、藝術品",
+        "stage0_components": [
+          "口",
+          "口",
+          "口"
+        ],
+        "stage2_components": [
+          "口",
+          "吅"
+        ]
+      }
+    ]
+  },
+  "8": {
+    "name": "第八課 建築界的長頸鹿",
+    "title": "🧩 第八課 建築界的長頸鹿 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "藝",
+        "meaning": "藝術、才藝",
+        "stage0_components": [
+          "艹",
+          "埶",
+          "云"
+        ],
+        "stage2_components": [
+          "艹",
+          "埶"
+        ]
+      },
+      {
+        "answer": "術",
+        "meaning": "技術、魔術",
+        "stage0_components": [
+          "行",
+          "朮"
+        ],
+        "stage2_components": [
+          "彳",
+          "朮",
+          "亍"
+        ]
+      },
+      {
+        "answer": "巡",
+        "meaning": "巡迴、巡邏",
+        "stage0_components": [
+          "巛",
+          "辶"
+        ],
+        "stage2_components": [
+          "巛",
+          "辶"
+        ]
+      },
+      {
+        "answer": "迴",
+        "meaning": "迴旋、巡迴",
+        "stage0_components": [
+          "辶",
+          "回"
+        ],
+        "stage2_components": [
+          "辶",
+          "回"
+        ]
+      },
+      {
+        "answer": "表",
+        "meaning": "表演、表達",
+        "stage0_components": [
+          "一",
+          "土",
+          "衣"
+        ],
+        "stage2_components": [
+          "表上",
+          "衣"
+        ]
+      },
+      {
+        "answer": "演",
+        "meaning": "演出、演奏",
+        "stage0_components": [
+          "氵",
+          "宀",
+          "一",
+          "由",
+          "八"
+        ],
+        "stage2_components": [
+          "氵",
+          "寅"
+        ]
+      },
+      {
+        "answer": "舞",
+        "meaning": "舞蹈、舞步",
+        "stage0_components": [
+          "𠂉",
+          "一",
+          "夕",
+          "舛"
+        ],
+        "stage2_components": [
+          "𠂉\n夕",
+          "舛"
+        ]
+      },
+      {
+        "answer": "蹈",
+        "meaning": "舞蹈、躍蹈",
+        "stage0_components": [
+          "足",
+          "爫",
+          "臼"
+        ],
+        "stage2_components": [
+          "足",
+          "舀"
+        ]
+      },
+      {
+        "answer": "樂",
+        "meaning": "音樂、歡樂",
+        "stage0_components": [
+          "白",
+          "幺",
+          "幺",
+          "木"
+        ],
+        "stage2_components": [
+          "樂上",
+          "木"
+        ]
+      },
+      {
+        "answer": "器",
+        "meaning": "樂器、器材",
+        "stage0_components": [
+          "口",
+          "口",
+          "犬",
+          "口",
+          "口"
+        ],
+        "stage2_components": [
+          "吅",
+          "犬",
+          "吅"
+        ]
+      },
+      {
+        "answer": "奏",
+        "meaning": "演奏、奏樂",
+        "stage0_components": [
+          "龶",
+          "大",
+          "天"
+        ],
+        "stage2_components": [
+          "奏上",
+          "天"
+        ]
+      },
+      {
+        "answer": "劇",
+        "meaning": "話劇、戲劇",
+        "stage0_components": [
+          "虍",
+          "豕",
+          "刂"
+        ],
+        "stage2_components": [
+          "劇(左)",
+          "刂"
+        ]
+      },
+      {
+        "answer": "眾",
+        "meaning": "觀眾、大眾",
+        "stage0_components": [
+          "目",
+          "人",
+          "人",
+          "人"
+        ],
+        "stage2_components": [
+          "目",
+          "乑"
+        ]
+      },
+      {
+        "answer": "喝",
+        "meaning": "喝采、喝彩",
+        "stage0_components": [
+          "口",
+          "日",
+          "匂"
+        ],
+        "stage2_components": [
+          "口",
+          "曷"
+        ]
+      },
+      {
+        "answer": "采",
+        "meaning": "喝采、風采",
+        "stage0_components": [
+          "爫",
+          "木"
+        ],
+        "stage2_components": [
+          "爫\n木"
+        ]
+      }
+    ]
+  },
+  "9": {
+    "name": "第九課 請到我的家鄉來",
+    "title": "🧩 第九課 請到我的家鄉來 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "傳",
+        "meaning": "傳奇、傳說",
+        "stage0_components": [
+          "亻",
+          "專"
+        ],
+        "stage2_components": [
+          "亻",
+          "專"
+        ]
+      },
+      {
+        "answer": "統",
+        "meaning": "傳統、系統",
+        "stage0_components": [
+          "糹",
+          "充"
+        ],
+        "stage2_components": [
+          "糹",
+          "充"
+        ]
+      },
+      {
+        "answer": "節",
+        "meaning": "節日、節氣",
+        "stage0_components": [
+          "⺮",
+          "即"
+        ],
+        "stage2_components": [
+          "⺮",
+          "即"
+        ]
+      },
+      {
+        "answer": "慶",
+        "meaning": "慶祝、國慶",
+        "stage0_components": [
+          "广",
+          "鹿",
+          "心"
+        ],
+        "stage2_components": [
+          "广",
+          "慶底"
+        ]
+      },
+      {
+        "answer": "粽",
+        "meaning": "肉粽、粽子",
+        "stage0_components": [
+          "米",
+          "宗"
+        ],
+        "stage2_components": [
+          "米",
+          "宗"
+        ]
+      },
+      {
+        "answer": "糯",
+        "meaning": "糯米、軟糯",
+        "stage0_components": [
+          "米",
+          "雨",
+          "而"
+        ],
+        "stage2_components": [
+          "米",
+          "需"
+        ]
+      },
+      {
+        "answer": "餡",
+        "meaning": "餡料、內餡",
+        "stage0_components": [
+          "飠",
+          "⺈",
+          "臼"
+        ],
+        "stage2_components": [
+          "飠",
+          "臽"
+        ]
+      },
+      {
+        "answer": "葉",
+        "meaning": "竹葉、葉子",
+        "stage0_components": [
+          "艹",
+          "木",
+          "枼"
+        ],
+        "stage2_components": [
+          "艹",
+          "枼"
+        ]
+      },
+      {
+        "answer": "包",
+        "meaning": "包裹、包粽",
+        "stage0_components": [
+          "勹",
+          "巳"
+        ],
+        "stage2_components": [
+          "勹\n包"
+        ]
+      },
+      {
+        "answer": "綁",
+        "meaning": "綁緊、捆綁",
+        "stage0_components": [
+          "糹",
+          "邦"
+        ],
+        "stage2_components": [
+          "糹",
+          "邦"
+        ]
+      },
+      {
+        "answer": "煮",
+        "meaning": "水煮、煮飯",
+        "stage0_components": [
+          "者",
+          "灬"
+        ],
+        "stage2_components": [
+          "者",
+          "灬"
+        ]
+      },
+      {
+        "answer": "香",
+        "meaning": "香氣、香味",
+        "stage0_components": [
+          "禾",
+          "日"
+        ],
+        "stage2_components": [
+          "禾\n日"
+        ]
+      },
+      {
+        "answer": "味",
+        "meaning": "味道、美味",
+        "stage0_components": [
+          "口",
+          "未"
+        ],
+        "stage2_components": [
+          "口",
+          "未"
+        ]
+      },
+      {
+        "answer": "全",
+        "meaning": "全部、全家",
+        "stage0_components": [
+          "入",
+          "王"
+        ],
+        "stage2_components": [
+          "人\n王"
+        ]
+      },
+      {
+        "answer": "聚",
+        "meaning": "團聚、聚會",
+        "stage0_components": [
+          "耳",
+          "又",
+          "乑"
+        ],
+        "stage2_components": [
+          "耳",
+          "聚右"
+        ]
+      }
+    ]
+  },
+  "10": {
+    "name": "第十課 奇幻旋律",
+    "title": "🧩 第十課 奇幻旋律 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "科",
+        "meaning": "科學、科技",
+        "stage0_components": [
+          "禾",
+          "斗"
+        ],
+        "stage2_components": [
+          "禾",
+          "斗"
+        ]
+      },
+      {
+        "answer": "技",
+        "meaning": "技術、技能",
+        "stage0_components": [
+          "扌",
+          "支"
+        ],
+        "stage2_components": [
+          "扌",
+          "支"
+        ]
+      },
+      {
+        "answer": "創",
+        "meaning": "創新、創業",
+        "stage0_components": [
+          "仓",
+          "刂"
+        ],
+        "stage2_components": [
+          "倉",
+          "刂"
+        ]
+      },
+      {
+        "answer": "造",
+        "meaning": "造型、造就",
+        "stage0_components": [
+          "辶",
+          "告"
+        ],
+        "stage2_components": [
+          "辶",
+          "告"
+        ]
+      },
+      {
+        "answer": "未",
+        "meaning": "未來、未知",
+        "stage0_components": [
+          "一",
+          "木"
+        ],
+        "stage2_components": [
+          "一\n木"
+        ]
+      },
+      {
+        "answer": "來",
+        "meaning": "來往、來自",
+        "stage0_components": [
+          "木",
+          "从"
+        ],
+        "stage2_components": [
+          "十",
+          "夾"
+        ]
+      },
+      {
+        "answer": "智",
+        "meaning": "智慧、智能",
+        "stage0_components": [
+          "知",
+          "日"
+        ],
+        "stage2_components": [
+          "知\n日"
+        ]
+      },
+      {
+        "answer": "慧",
+        "meaning": "聰慧、智慧",
+        "stage0_components": [
+          "彗",
+          "心"
+        ],
+        "stage2_components": [
+          "彗\n心"
+        ]
+      },
+      {
+        "answer": "生",
+        "meaning": "生活、生命",
+        "stage0_components": [
+          "𠂉",
+          "土"
+        ],
+        "stage2_components": [
+          "𠂉\n土"
+        ]
+      },
+      {
+        "answer": "活",
+        "meaning": "活潑、活動",
+        "stage0_components": [
+          "氵",
+          "舌"
+        ],
+        "stage2_components": [
+          "氵",
+          "舌"
+        ]
+      },
+      {
+        "answer": "網",
+        "meaning": "網路、網頁",
+        "stage0_components": [
+          "糹",
+          "冂",
+          "爻",
+          "爻"
+        ],
+        "stage2_components": [
+          "糹",
+          "网"
+        ]
+      },
+      {
+        "answer": "路",
+        "meaning": "道路、路線",
+        "stage0_components": [
+          "足",
+          "各"
+        ],
+        "stage2_components": [
+          "足",
+          "各"
+        ]
+      },
+      {
+        "answer": "便",
+        "meaning": "便利、方便",
+        "stage0_components": [
+          "亻",
+          "更"
+        ],
+        "stage2_components": [
+          "亻",
+          "更"
+        ]
+      },
+      {
+        "answer": "捷",
+        "meaning": "快捷、捷運",
+        "stage0_components": [
+          "扌",
+          "疌"
+        ],
+        "stage2_components": [
+          "扌",
+          "疌"
+        ]
+      },
+      {
+        "answer": "訊",
+        "meaning": "資訊、訊息",
+        "stage0_components": [
+          "言",
+          "卂"
+        ],
+        "stage2_components": [
+          "言",
+          "卂"
+        ]
+      }
+    ]
+  },
+  "11": {
+    "name": "第十一課 兔子先生等等我",
+    "title": "🧩 第十一課 兔子先生等等我 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "環",
+        "meaning": "環境、環保",
+        "stage0_components": [
+          "王",
+          "罒",
+          "一",
+          "𧘇"
+        ],
+        "stage2_components": [
+          "王",
+          "睘"
+        ]
+      },
+      {
+        "answer": "保",
+        "meaning": "保護、守護",
+        "stage0_components": [
+          "亻",
+          "呆"
+        ],
+        "stage2_components": [
+          "亻",
+          "呆"
+        ]
+      },
+      {
+        "answer": "節",
+        "meaning": "節約、節省",
+        "stage0_components": [
+          "⺮",
+          "即"
+        ],
+        "stage2_components": [
+          "⺮",
+          "即"
+        ]
+      },
+      {
+        "answer": "能",
+        "meaning": "能量、能源",
+        "stage0_components": [
+          "厶",
+          "月",
+          "匕",
+          "匕"
+        ],
+        "stage2_components": [
+          "能左",
+          "匕匕"
+        ]
+      },
+      {
+        "answer": "減",
+        "meaning": "減少、減碳",
+        "stage0_components": [
+          "氵",
+          "咸"
+        ],
+        "stage2_components": [
+          "氵",
+          "咸"
+        ]
+      },
+      {
+        "answer": "碳",
+        "meaning": "碳排、木碳",
+        "stage0_components": [
+          "石",
+          "山",
+          "灰"
+        ],
+        "stage2_components": [
+          "石",
+          "炭"
+        ]
+      },
+      {
+        "answer": "資",
+        "meaning": "資源、資格",
+        "stage0_components": [
+          "次",
+          "貝"
+        ],
+        "stage2_components": [
+          "次\n貝"
+        ]
+      },
+      {
+        "answer": "源",
+        "meaning": "能源、源頭",
+        "stage0_components": [
+          "氵",
+          "厂",
+          "原"
+        ],
+        "stage2_components": [
+          "氵",
+          "原"
+        ]
+      },
+      {
+        "answer": "回",
+        "meaning": "回收、回來",
+        "stage0_components": [
+          "囗",
+          "口"
+        ],
+        "stage2_components": [
+          "囗\n口"
+        ]
+      },
+      {
+        "answer": "收",
+        "meaning": "收集、收入",
+        "stage0_components": [
+          "丩",
+          "攵"
+        ],
+        "stage2_components": [
+          "丩",
+          "攵"
+        ]
+      },
+      {
+        "answer": "綠",
+        "meaning": "綠色、綠化",
+        "stage0_components": [
+          "糹",
+          "彑",
+          "水"
+        ],
+        "stage2_components": [
+          "糹",
+          "彖"
+        ]
+      },
+      {
+        "answer": "化",
+        "meaning": "變化、造化",
+        "stage0_components": [
+          "亻",
+          "匕"
+        ],
+        "stage2_components": [
+          "亻",
+          "匕"
+        ]
+      },
+      {
+        "answer": "地",
+        "meaning": "地球、大地",
+        "stage0_components": [
+          "土",
+          "也"
+        ],
+        "stage2_components": [
+          "土",
+          "也"
+        ]
+      },
+      {
+        "answer": "球",
+        "meaning": "全球、足球",
+        "stage0_components": [
+          "王",
+          "求"
+        ],
+        "stage2_components": [
+          "王",
+          "求"
+        ]
+      },
+      {
+        "answer": "愛",
+        "meaning": "愛護、愛心",
+        "stage0_components": [
+          "爫",
+          "冖",
+          "心",
+          "夂"
+        ],
+        "stage2_components": [
+          "受",
+          "夂"
+        ]
+      }
+    ]
+  },
+  "12": {
+    "name": "第十二課 老鞋匠和小精靈",
+    "title": "🧩 第十二課 老鞋匠和小精靈 生字轉轉轉",
+    "questions": [
+      {
+        "answer": "探",
+        "meaning": "探索、探險",
+        "stage0_components": [
+          "扌",
+          "穴",
+          "木"
+        ],
+        "stage2_components": [
+          "扌",
+          "罙"
+        ]
+      },
+      {
+        "answer": "索",
+        "meaning": "索取、線索",
+        "stage0_components": [
+          "十",
+          "冖",
+          "糸"
+        ],
+        "stage2_components": [
+          "索上",
+          "糸"
+        ]
+      },
+      {
+        "answer": "宇",
+        "meaning": "宇宙、宇航",
+        "stage0_components": [
+          "宀",
+          "于"
+        ],
+        "stage2_components": [
+          "宀\n于"
+        ]
+      },
+      {
+        "answer": "宙",
+        "meaning": "宇宙、宙斯",
+        "stage0_components": [
+          "宀",
+          "由"
+        ],
+        "stage2_components": [
+          "宀\n由"
+        ]
+      },
+      {
+        "answer": "星",
+        "meaning": "星空、星球",
+        "stage0_components": [
+          "日",
+          "生"
+        ],
+        "stage2_components": [
+          "日\n生"
+        ]
+      },
+      {
+        "answer": "空",
+        "meaning": "天空、太空",
+        "stage0_components": [
+          "宀",
+          "八",
+          "工"
+        ],
+        "stage2_components": [
+          "穴",
+          "工"
+        ]
+      },
+      {
+        "answer": "奧",
+        "meaning": "深奧、奧祕",
+        "stage0_components": [
+          "冂",
+          "釆",
+          "大"
+        ],
+        "stage2_components": [
+          "奧上",
+          "大"
+        ]
+      },
+      {
+        "answer": "祕",
+        "meaning": "神祕、祕密",
+        "stage0_components": [
+          "示",
+          "必"
+        ],
+        "stage2_components": [
+          "示",
+          "必"
+        ]
+      },
+      {
+        "answer": "觀",
+        "meaning": "觀察、觀測",
+        "stage0_components": [
+          "雚",
+          "見"
+        ],
+        "stage2_components": [
+          "雚",
+          "見"
+        ]
+      },
+      {
+        "answer": "測",
+        "meaning": "測試、測量",
+        "stage0_components": [
+          "氵",
+          "則"
+        ],
+        "stage2_components": [
+          "氵",
+          "則"
+        ]
+      },
+      {
+        "answer": "遙",
+        "meaning": "遙遠、遙望",
+        "stage0_components": [
+          "辶",
+          "爫",
+          "缶"
+        ],
+        "stage2_components": [
+          "辶",
+          "䍃"
+        ]
+      },
+      {
+        "answer": "遠",
+        "meaning": "遠方、永遠",
+        "stage0_components": [
+          "辶",
+          "袁"
+        ],
+        "stage2_components": [
+          "辶",
+          "袁"
+        ]
+      },
+      {
+        "answer": "夢",
+        "meaning": "夢想、美夢",
+        "stage0_components": [
+          "艹",
+          "罒",
+          "冖",
+          "夕"
+        ],
+        "stage2_components": [
+          "夢上",
+          "夕"
+        ]
+      },
+      {
+        "answer": "想",
+        "meaning": "想像、思考",
+        "stage0_components": [
+          "木",
+          "目",
+          "心"
+        ],
+        "stage2_components": [
+          "相",
+          "心"
+        ]
+      },
+      {
+        "answer": "追",
+        "meaning": "追求、追逐",
+        "stage0_components": [
+          "辶",
+          "阜"
+        ],
+        "stage2_components": [
+          "辶",
+          "阜"
+        ]
+      }
+    ]
+  }
+};
+
+    let currentLessonKey = "1";
+    let questions = lessonsData[currentLessonKey].questions;
+    let currentIndex = 0;
+    let currentStage = 0; 
+    // 0: 初始旋轉
+    // 1: 停止旋轉
+    // 2: 合併部分部件
+    // 3: 揭曉完整答案
+
+    // Web Audio 音效產生器
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.1) {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playHintSound(stage) {
+      if (stage === 1) {
+        playTone(440, 'triangle', 0.18, 0.12);
+        setTimeout(() => playTone(554.37, 'triangle', 0.18, 0.12), 80);
+      } else if (stage === 2) {
+        playTone(523.25, 'sine', 0.15, 0.15);
+        setTimeout(() => playTone(659.25, 'sine', 0.15, 0.15), 90);
+        setTimeout(() => playTone(783.99, 'sine', 0.2, 0.15), 180);
+      } else if (stage === 3) {
+        playTone(523.25, 'triangle', 0.12, 0.15);
+        setTimeout(() => playTone(659.25, 'triangle', 0.12, 0.15), 100);
+        setTimeout(() => playTone(783.99, 'triangle', 0.12, 0.15), 200);
+        setTimeout(() => playTone(1046.5, 'triangle', 0.35, 0.18), 300);
+      }
+    }
+
+    // 語音朗讀生字與詞語
+    function speakWord(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-TW';
+        utterance.rate = 0.88;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // 切換課程
+    function switchLesson(key) {
+      if (!lessonsData[key]) return;
+      currentLessonKey = key;
+      questions = lessonsData[key].questions;
+      currentIndex = 0;
+      currentStage = 0;
+
+      // 更新側邊欄按鈕狀態
+      document.querySelectorAll('.lesson-btn').forEach(btn => {
+        if (btn.getAttribute('data-lesson') === key) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // 更新主標題
+      const lessonTitle = lessonsData[key].name;
+      document.getElementById('mainTitle').textContent = `🧩 ${lessonTitle} 生字轉轉轉`;
+
+      renderCurrentState();
+    }
+
+    // 渲染當前狀態
+    function renderCurrentState() {
+      const q = questions[currentIndex];
+      const stageInfoEl = document.getElementById('stageInfo');
+      const gameAreaEl = document.getElementById('gameArea');
+      const hintBtn = document.getElementById('hintBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const counterEl = document.getElementById('questionCounter');
+
+      counterEl.textContent = `第 ${currentIndex + 1} 題 / 共 ${questions.length} 題`;
+      prevBtn.disabled = currentIndex === 0;
+
+      // 提示狀態列與按鈕文字設定
+      stageInfoEl.className = 'stage-info stage-' + currentStage;
+      hintBtn.disabled = false;
+
+      if (currentStage === 0) {
+        stageInfoEl.textContent = '初始狀態：部件正在旋轉中，觀察散落的部件，猜猜看是什麼字？';
+        hintBtn.innerHTML = '💡 提示 1 (停止旋轉)';
+      } else if (currentStage === 1) {
+        stageInfoEl.textContent = '提示 1：部件已停止旋轉，仔細辨認每個偏旁與部件！';
+        hintBtn.innerHTML = '💡 提示 2 (合併部件)';
+      } else if (currentStage === 2) {
+        stageInfoEl.textContent = '提示 2：部分部件已合體！試著拼出完整的字！';
+        hintBtn.innerHTML = '💡 提示 3 (揭曉答案)';
+      } else if (currentStage === 3) {
+        stageInfoEl.textContent = '提示 3：答案揭曉！✨';
+        hintBtn.innerHTML = '💡 已揭曉';
+        hintBtn.disabled = true;
+      }
+
+      gameAreaEl.innerHTML = '';
+
+      if (currentStage === 0) {
+        // 階段 0: 旋轉的散落部件
+        const comps = q.stage0_components || [q.answer];
+        comps.forEach((comp, idx) => {
+          const card = document.createElement('div');
+          card.className = 'component-card rotating';
+          card.textContent = comp;
+          // 各部件隨機些微差異的旋轉起點或速度
+          card.style.animationDuration = (3.2 + (idx % 3) * 0.4) + 's';
+          if (idx % 2 === 1) card.style.animationDirection = 'reverse';
+          gameAreaEl.appendChild(card);
+        });
+      } else if (currentStage === 1) {
+        // 階段 1: 停止旋轉的散落部件
+        const comps = q.stage0_components || [q.answer];
+        comps.forEach(comp => {
+          const card = document.createElement('div');
+          card.className = 'component-card';
+          card.textContent = comp;
+          gameAreaEl.appendChild(card);
+        });
+      } else if (currentStage === 2) {
+        // 階段 2: 部件合併
+        const comps = q.stage2_components || [q.answer];
+        comps.forEach(comp => {
+          const card = document.createElement('div');
+          card.className = 'component-card merged';
+          card.textContent = comp;
+          gameAreaEl.appendChild(card);
+        });
+      } else if (currentStage === 3) {
+        // 階段 3: 揭曉答案
+        const ansBox = document.createElement('div');
+        ansBox.className = 'answer-display';
+
+        const charEl = document.createElement('div');
+        charEl.className = 'answer-char';
+        charEl.textContent = q.answer;
+
+        const descEl = document.createElement('div');
+        descEl.className = 'answer-desc';
+        descEl.textContent = q.meaning || '生字學習';
+
+        ansBox.appendChild(charEl);
+        ansBox.appendChild(descEl);
+        gameAreaEl.appendChild(ansBox);
+
+        // 朗讀
+        speakWord(q.answer + '，' + (q.meaning ? q.meaning.split('、')[0] : ''));
+      }
+    }
+
+    // 下一個提示
+    function nextHint() {
+      if (currentStage < 3) {
+        currentStage++;
+        playHintSound(currentStage);
+        renderCurrentState();
+      }
+    }
+
+    // 上一題
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        currentStage = 0;
+        playTone(392, 'sine', 0.1, 0.08);
+        renderCurrentState();
+      }
+    }
+
+    // 下一題
+    function nextQuestion() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        currentStage = 0;
+        playTone(523.25, 'sine', 0.1, 0.08);
+        renderCurrentState();
+      } else {
+        // 最後一題
+        currentStage = 0;
+        currentIndex = 0;
+        renderCurrentState();
+      }
+    }
+
+    // 重新此題
+    function resetQuestion() {
+      currentStage = 0;
+      playTone(330, 'sine', 0.1, 0.08);
+      renderCurrentState();
+    }
+
+    // 鍵盤快捷鍵
+    window.addEventListener('keydown', (e) => {
+      // 忽略正在輸入文字的情況
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.code === 'Space' || e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        nextHint();
+      } else if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        prevQuestion();
+      } else if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'n' || e.key === 'Enter') {
+        e.preventDefault();
+        nextQuestion();
+      } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        resetQuestion();
+      }
+    });
+
+    // 初始化第一課
+    switchLesson('1');
+  </script>
+</body>
+</html>
