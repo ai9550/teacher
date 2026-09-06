@@ -1,0 +1,1433 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語五上語詞賓果遊戲4x4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 50%, #fdf2f8 100%);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Home Navigation Button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      color: #ffffff !important;
+      padding: 9px 18px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1rem;
+      transition: all 0.25s ease;
+      z-index: 99999;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+      user-select: none;
+    }
+    .home-btn:hover {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: #ffffff;
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .card {
+      transition: all 0.25s ease;
+      cursor: pointer;
+      aspect-ratio: 1;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    }
+
+    .card-content {
+      transition: opacity 0.2s ease;
+    }
+
+    .animal-emoji {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+    }
+
+    /* 賓果連線的紅線樣式 */
+    .bingo-line {
+      position: absolute;
+      background-color: #ef4444;
+      z-index: 20;
+      border-radius: 9999px;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.85);
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    /* 萬用格 (PASS) 專屬樣式 */
+    .pass-card {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 0 10px rgba(0,0,0,0.15) !important;
+      transform: scale(1.03);
+    }
+
+    /* 訊息框樣式 */
+    #messageBox {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #messageBox.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* 彩帶（Confetti）效果容器 */
+    #confettiContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: transparent;
+      border-radius: 50%;
+      animation: confetti-fall 3s ease-in-out forwards;
+      opacity: 0.85;
+      transform-origin: center;
+    }
+
+    @keyframes confetti-fall {
+      0% { transform: translate(var(--startX), -5vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translate(var(--endX), 105vh) rotate(720deg); opacity: 0; }
+    }
+
+    .definition-text {
+      font-size: clamp(0.7rem, 1.8vw, 0.95rem) !important;
+      line-height: 1.25;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-weight: 600;
+    }
+
+    .term-text {
+      font-size: clamp(1.2rem, 3.2vw, 2.2rem);
+      font-weight: 900;
+      font-family: '標楷體', 'DFKai-SB', serif;
+      line-height: 1.15;
+    }
+
+    #lessonButtons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    @media (min-width: 1024px) {
+      #lessonButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+
+    .lesson-btn {
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-size: 0.92rem;
+      text-align: left;
+      line-height: 1.3;
+    }
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: white;
+      box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);
+      transform: scale(1.02);
+    }
+    .lesson-btn:not(.active) {
+      background: rgba(255, 255, 255, 0.9);
+      color: #334155;
+    }
+    .lesson-btn:not(.active):hover {
+      background: #ffffff;
+      transform: translateX(3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+  </style>
+</head>
+<body class="p-4 pt-16">
+  <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+  <!-- 彩帶容器 -->
+  <div id="confettiContainer"></div>
+
+  <!-- 主版面容器 -->
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+    
+    <!-- 左側選課按鈕區塊 -->
+    <div id="lessonSidebar" class="flex-shrink-0 w-full lg:w-64 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-xl lg:order-1 order-2 border border-white/60">
+      <h3 class="text-lg font-black text-gray-800 border-b-2 border-pink-400 pb-2 mb-3" style="font-family: 'ZCOOL KuaiLe', sans-serif;">
+        📚 選擇課次
+      </h3>
+      <div id="lessonButtons">
+        <!-- Buttons will be generated by JS -->
+      </div>
+    </div>
+
+    <!-- 主遊戲區塊 -->
+    <div id="gameArea" class="flex-grow lg:order-2 order-1">
+      <!-- 標題 -->
+      <div class="text-center mb-5">
+        <h1 id="gameTitle" class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2" style="font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;">
+          康軒國語五上語詞賓果遊戲4x4
+        </h1>
+        <p class="text-sm font-semibold text-slate-600">4x4 賓果盤（共 16 格），連成任一條線即獲勝！</p>
+      </div>
+
+      <div class="flex justify-center mb-5">
+        <button id="resetButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-7 rounded-xl shadow-lg transition duration-150 transform hover:scale-105 flex items-center gap-2">
+          🔄 重新洗牌
+        </button>
+      </div>
+
+      <!-- 卡片網格容器 -->
+      <div class="max-w-2xl mx-auto relative">
+        <div class="grid grid-cols-4 gap-3 sm:gap-4" id="bingoGrid">
+          <!-- 卡片由 JS 動態生成 -->
+        </div>
+        <!-- 繪製連線紅線 -->
+        <div id="bingoOverlay" class="absolute inset-0 pointer-events-none"></div>
+      </div>
+
+      <!-- 說明 -->
+      <div class="text-center mt-6 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-md max-w-2xl mx-auto border border-white/60">
+        <p class="text-gray-700 font-medium">💡 提示：點擊卡片依序切換 <strong>圖案</strong> ➔ <strong>解釋</strong> ➔ <strong>語詞 (標記)</strong> 三個狀態。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 回首頁跳轉處理
+    function goHome(e) {
+      if (e) e.preventDefault();
+      let target = 'index.html';
+      if (window.location.protocol === 'file:') {
+        target = 'index.html';
+      } else if (window.location.hostname.includes('github.io')) {
+        target = 'https://ai9550.github.io/teacher/';
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = target;
+          return;
+        }
+      } catch (err) {}
+      window.location.href = target;
+    }
+
+    // 全部的課次語詞資料
+    const allLessonData = {
+  "1": {
+    "title": "第一課 蚊帳大使",
+    "vocab": [
+      {
+        "term": "蚊帳",
+        "definition": "防蚊子的紗帳。"
+      },
+      {
+        "term": "非洲",
+        "definition": "洲名。阿非利加洲的簡稱。世界七大洲之一。在東半球的西南部，東瀕印度洋，西臨大西洋，北隔地中海與歐洲相望，地形北闊南尖，是世界第二大洲。"
+      },
+      {
+        "term": "瘧疾",
+        "definition": "病名。是以瘧蚊為媒介而散播的急性傳染病。病原體是瘧原蟲。其症狀有週期性的發冷發熱、大量出汗、頭痛、口渴、全身無力及溶血等。"
+      },
+      {
+        "term": "募集",
+        "definition": "招募聚集。"
+      },
+      {
+        "term": "捐贈",
+        "definition": "捐獻、贈送。"
+      },
+      {
+        "term": "獎狀",
+        "definition": "為獎勵而頒發的證書。"
+      },
+      {
+        "term": "收藏",
+        "definition": "⑴收集保藏。⑵所收集保藏的各項物品。"
+      },
+      {
+        "term": "雜誌",
+        "definition": "含有多類文章，定期出版的刊物。"
+      },
+      {
+        "term": "基金會",
+        "definition": "為興辦、發展某種事業或活動而 組成的團體。本課所指的蓋茲基金會成立 於西元二○○○年，是由微軟公司創始人 比爾‧蓋茲創辦。該基金會屬非營利性質， 旨在促進全球衛生和教育領域的平等。"
+      },
+      {
+        "term": "全力以赴",
+        "definition": "投入全部的心力以達成目的。"
+      }
+    ]
+  },
+  "2": {
+    "title": "第二課 從空中看臺灣",
+    "vocab": [
+      {
+        "term": "德國",
+        "definition": "國名。位於歐洲中部，首都為柏林。人民多信仰基督教、天主教，主要語言為德語。"
+      },
+      {
+        "term": "似乎",
+        "definition": "好像。"
+      },
+      {
+        "term": "血液",
+        "definition": "在動物血管系統中循環流動的液體。它能運送養分、氧氣給細胞，並輸出二氧化碳等廢物至排泄器官，並且調節體溫，製造抗體以抵抗疾病。"
+      },
+      {
+        "term": "拍攝",
+        "definition": "利用攝影器材將人或物的形象記錄在軟片上。"
+      },
+      {
+        "term": "颱風",
+        "definition": "發生在西太平洋上由強烈熱帶性低氣壓或熱帶氣旋所引起的暴風，其強度達到一定標準時即為颱風。"
+      },
+      {
+        "term": "記錄",
+        "definition": "記載登錄。"
+      },
+      {
+        "term": "哀愁",
+        "definition": "哀傷悲愁。"
+      },
+      {
+        "term": "山巒",
+        "definition": "連綿的山。"
+      },
+      {
+        "term": "縱谷",
+        "definition": "與山脈的軸線平行的河谷。"
+      },
+      {
+        "term": "臍帶",
+        "definition": "連接胎兒與胎盤的帶狀構造，內含臍動脈與臍靜脈。胎兒藉此從母體吸取養分並排出廢物。"
+      },
+      {
+        "term": "人禍",
+        "definition": "人為的災禍。"
+      },
+      {
+        "term": "殘破",
+        "definition": "殘缺破爛、不完整。"
+      },
+      {
+        "term": "檳榔",
+        "definition": "植物名。棕櫚科檳榔屬，常綠喬木。高三丈多，葉為羽狀複葉，枝幹似椰子而較細，栽種五年，才開花結果。一年一株可生三、四穗，每穗結實三、四百顆，味澀而微甘。"
+      },
+      {
+        "term": "降低",
+        "definition": "下降。"
+      },
+      {
+        "term": "汙水",
+        "definition": "不潔淨的水。包括雨水、家庭排放出來的廢水及工業廢水等。"
+      },
+      {
+        "term": "不斷",
+        "definition": "持續不停。"
+      }
+    ]
+  },
+  "3": {
+    "title": "第三課 攀岩高手",
+    "vocab": [
+      {
+        "term": "陡峭",
+        "definition": "高峻且坡度大。"
+      },
+      {
+        "term": "強勁",
+        "definition": "強而有力。"
+      },
+      {
+        "term": "高聳",
+        "definition": "直立突出。"
+      },
+      {
+        "term": "充飢",
+        "definition": "吃東西以解除飢餓。"
+      },
+      {
+        "term": "隱形",
+        "definition": "隱藏形體。"
+      },
+      {
+        "term": "尖銳",
+        "definition": "⑴尖而銳利。⑵形容聲音尖細刺耳。⑶形容說話言辭鋒利，毫不留情。"
+      },
+      {
+        "term": "冷箭",
+        "definition": "原指趁人不備時，暗中射出冷箭。後比喻暗中害人的行為。在本詩是用來比喻雨水就像尖銳的冷箭一樣。"
+      },
+      {
+        "term": "堅韌",
+        "definition": "物體有韌性不易毀損。"
+      },
+      {
+        "term": "虯鬚",
+        "definition": "蜷曲的鬍鬚。"
+      },
+      {
+        "term": "繁茂",
+        "definition": "繁密茂盛。"
+      },
+      {
+        "term": "休止",
+        "definition": "停止。"
+      },
+      {
+        "term": "蔓生",
+        "definition": "藤蔓植物攀附他物成長的特性。"
+      },
+      {
+        "term": "藉由",
+        "definition": "透過、經由。"
+      },
+      {
+        "term": "豐富",
+        "definition": "豐裕充足。"
+      },
+      {
+        "term": "挫折",
+        "definition": "事情進行不順利或遭遇失敗。"
+      }
+    ]
+  },
+  "4": {
+    "title": "第四課 恆久的美",
+    "vocab": [
+      {
+        "term": "恆久",
+        "definition": "持久、長遠。"
+      },
+      {
+        "term": "黃澄澄",
+        "definition": "形容顏色金黃鮮明。"
+      },
+      {
+        "term": "稻穗",
+        "definition": "叢聚成串的稻穀。"
+      },
+      {
+        "term": "養活",
+        "definition": "贍養、撫養。"
+      },
+      {
+        "term": "來源",
+        "definition": "根源、出處。"
+      },
+      {
+        "term": "藝術家",
+        "definition": "從事藝術工作而有相當成就的人。"
+      },
+      {
+        "term": "樸實",
+        "definition": "質樸實在。"
+      },
+      {
+        "term": "撿拾",
+        "definition": "拾取。"
+      },
+      {
+        "term": "頭巾",
+        "definition": "裹頭的布。"
+      },
+      {
+        "term": "腰痠背痛",
+        "definition": "腰部和背部痠痛。"
+      },
+      {
+        "term": "樸素",
+        "definition": "樸實而不刻意修飾。"
+      },
+      {
+        "term": "尊嚴",
+        "definition": "不容侵犯的身分或地位。"
+      },
+      {
+        "term": "任勞任怨",
+        "definition": "形容人做事熱心負責，不辭勞苦、不怕嫌怨。"
+      },
+      {
+        "term": "慷慨",
+        "definition": "⑴大方、不吝嗇。⑵志氣高昂。"
+      },
+      {
+        "term": "滋潤",
+        "definition": "浸潤、潤澤。"
+      }
+    ]
+  },
+  "5": {
+    "title": "第五課 它抓得住你││商標的故事",
+    "vocab": [
+      {
+        "term": "商譽",
+        "definition": "商人或商店行號的信譽。"
+      },
+      {
+        "term": "服務",
+        "definition": "⑴為社會、別人做事。⑵任職。"
+      },
+      {
+        "term": "關聯",
+        "definition": "關係連屬。"
+      },
+      {
+        "term": "核准",
+        "definition": "審定後批准。多用於公文。"
+      },
+      {
+        "term": "申請",
+        "definition": "⑴人民對政府或下級對上級的請求事項。⑵向上級或相關單位說明理由，提出請求。"
+      },
+      {
+        "term": "智慧財產局",
+        "definition": "民國八十八年一月二十六日正式成立，隸屬於經濟部，為掌理專利權、商標專用權、積體電路布局及營業祕密、查禁仿冒等智慧財產管理之專責機關。"
+      },
+      {
+        "term": "黑松",
+        "definition": "植物名。松科松屬，常綠喬木。枝開展成闊圓錐狀樹冠，樹皮黑灰色，針葉二針一束，質硬粗短，四月開毬花，毬果圓錐狀卵形。適於造林防風砂。其脂可製松香油以供藥用。原產日本、南韓。本課是指企業的名稱。"
+      },
+      {
+        "term": "註冊",
+        "definition": "向有關機關、團體或學校登記備案。"
+      },
+      {
+        "term": "企業",
+        "definition": "從事生產、運輸、貿易等經濟活動的營利事業，依出資來源不同，可分為公營企業及私人企業。"
+      },
+      {
+        "term": "堅毅不拔",
+        "definition": "堅忍剛毅，不能動搖。"
+      },
+      {
+        "term": "歷經",
+        "definition": "經歷遍盡。"
+      },
+      {
+        "term": "英文",
+        "definition": "英國的語言和文字。"
+      },
+      {
+        "term": "銷售",
+        "definition": "出售、販賣。"
+      },
+      {
+        "term": "霸主",
+        "definition": "⑴在某一方面稱雄的人或集團。⑵春秋時代指勢力最大，能夠號令天下的諸侯。"
+      },
+      {
+        "term": "項目",
+        "definition": "事物分類的條目。"
+      }
+    ]
+  },
+  "6": {
+    "title": "第六課 故事「動」起來",
+    "vocab": [
+      {
+        "term": "娛樂",
+        "definition": "⑴消遣的樂事。⑵快樂，使歡樂。"
+      },
+      {
+        "term": "汽船",
+        "definition": "原指使用蒸汽機發動運轉行駛的船。後泛指各種動力引擎推進的船。本課提到的汽船威利號是指動畫的片名。"
+      },
+      {
+        "term": "口哨",
+        "definition": "聚合雙脣，中間留一小孔或將手指伸入口內，用力吹氣而發出像吹哨子的聲音。"
+      },
+      {
+        "term": "經典",
+        "definition": "⑴形容製作精美，可以流傳久遠，成為後世典範的。⑵具重要性，可以作為典範的書籍。"
+      },
+      {
+        "term": "框架",
+        "definition": "事物的格式與架構。"
+      },
+      {
+        "term": "劇情",
+        "definition": "戲劇中的情節內容。"
+      },
+      {
+        "term": "父母",
+        "definition": "父親和母親。"
+      },
+      {
+        "term": "負責",
+        "definition": "擔負責任。"
+      },
+      {
+        "term": "判斷力",
+        "definition": "判別斷定事物的能力。"
+      },
+      {
+        "term": "共鳴",
+        "definition": "⑴共同的感受或情緒反應。⑵發音體因受到與本身振動頻率相同的音波影響，也隨之產生發音的現象。如兩個頻率相同的音叉放在一起，敲擊其中一個使它發出聲音，另外一個音叉也會跟著發出聲音。"
+      },
+      {
+        "term": "脫穎而出",
+        "definition": "顯露才能，超越眾人。"
+      },
+      {
+        "term": "榮獲",
+        "definition": "光榮的得到。"
+      },
+      {
+        "term": "細膩",
+        "definition": "⑴精細周密。⑵細緻潤滑。"
+      },
+      {
+        "term": "效果",
+        "definition": "⑴功效、成果。⑵戲劇演出為配合劇情需要而製造的特殊聲光。"
+      },
+      {
+        "term": "團隊",
+        "definition": "團體、隊伍。"
+      },
+      {
+        "term": "精益求精",
+        "definition": "不斷努力求進步。"
+      },
+      {
+        "term": "樣貌",
+        "definition": "形狀、外貌。"
+      },
+      {
+        "term": "感官",
+        "definition": "動物接收外界種種刺激的器官。如耳、目、鼻、舌、皮膚等。"
+      },
+      {
+        "term": "增加",
+        "definition": "增添、加多。"
+      }
+    ]
+  },
+  "7": {
+    "title": "第七課 為生命找出口",
+    "vocab": [
+      {
+        "term": "逆風",
+        "definition": "迎面對著風。"
+      },
+      {
+        "term": "可憐",
+        "definition": "令人憐憫、同情。"
+      },
+      {
+        "term": "物競天擇",
+        "definition": "物種互相競爭，適應自然者生存，不適應者即遭淘汰。為達爾文﹁演化論﹂所提出的主要觀念。"
+      },
+      {
+        "term": "好逸惡勞",
+        "definition": "貪圖安逸，憎惡勞動。"
+      },
+      {
+        "term": "鄰居",
+        "definition": "住處相近的人家。"
+      },
+      {
+        "term": "脈絡",
+        "definition": "⑴條理、系統。⑵血管的統稱。"
+      },
+      {
+        "term": "精緻",
+        "definition": "精巧細緻。"
+      },
+      {
+        "term": "脆弱",
+        "definition": "⑴不堅固的。⑵禁不起打擊的。"
+      },
+      {
+        "term": "噴嚏",
+        "definition": "鼻黏膜受了刺激，引起鼻孔急遽噴氣出聲的動作。"
+      },
+      {
+        "term": "忙碌",
+        "definition": "事情太多，不得休息。"
+      },
+      {
+        "term": "興味盎然",
+        "definition": "興趣很高昂的樣子。"
+      },
+      {
+        "term": "精疲力盡",
+        "definition": "精神疲累，力氣耗盡。形容非常的疲憊。"
+      }
+    ]
+  },
+  "8": {
+    "title": "第八課 最勇敢的女孩",
+    "vocab": [
+      {
+        "term": "巴基斯坦",
+        "definition": "國名。位於亞洲南部。西接伊朗，北連阿富汗和前蘇聯，東北鄰中國，東和東南接印度，南瀕阿拉伯海。"
+      },
+      {
+        "term": "女性",
+        "definition": "兩性之一，具雌性特徵者。與男性相對。"
+      },
+      {
+        "term": "恐怖",
+        "definition": "可怕、害怕。"
+      },
+      {
+        "term": "組織",
+        "definition": "⑴一群人為達特定目標，經由一定的程序所組成的團體。⑵構成。⑶生物學上指多個細胞生物體中，各細胞和細胞間質依一定秩序聯合為一體，並產生一定功能的基本結構。"
+      },
+      {
+        "term": "霸占",
+        "definition": "強力占有。"
+      },
+      {
+        "term": "廣播",
+        "definition": "⑴一種利用音波與電波傳達訊息的大眾傳播媒介。有廣義、狹義之分。廣義泛指聲音與影像的傳播，狹義則單指聲音的傳播。⑵指以音波方式傳送出來的廣播節目。⑶廣泛傳播。"
+      },
+      {
+        "term": "控制",
+        "definition": "操縱、節制。"
+      },
+      {
+        "term": "受傷",
+        "definition": "受到傷害。"
+      },
+      {
+        "term": "攻擊",
+        "definition": "以武力、語言、文字等各種方式進攻或傷害別人。"
+      },
+      {
+        "term": "受教權",
+        "definition": "指人民的基本權利之一。由憲法確認和保障的人民受教育的權利。"
+      },
+      {
+        "term": "威脅",
+        "definition": "以權勢威力脅迫。"
+      },
+      {
+        "term": "康復",
+        "definition": "病癒，恢復健康。"
+      },
+      {
+        "term": "武器",
+        "definition": "具有攻擊能力的設備或器械。多作為軍事用途。"
+      },
+      {
+        "term": "震撼",
+        "definition": "震動搖撼。"
+      },
+      {
+        "term": "恐懼",
+        "definition": "惶恐、害怕。"
+      }
+    ]
+  },
+  "9": {
+    "title": "第九課 在挫折中成長",
+    "vocab": [
+      {
+        "term": "維持",
+        "definition": "維護保持。"
+      },
+      {
+        "term": "奮戰",
+        "definition": "奮勇戰鬥。"
+      },
+      {
+        "term": "崎嶇",
+        "definition": "⑴比喻處境艱難。⑵山路高低不平。"
+      },
+      {
+        "term": "拳擊",
+        "definition": "一種西洋拳術運動。是一種兩人用拳頭互相對打的活動。"
+      },
+      {
+        "term": "癌症",
+        "definition": "一類疾病的總稱。人體組織中細胞發生不正常增殖現象，病變細胞增生迅速，而且侵襲力強，常破壞周圍組織，並可經血液或淋巴到處轉移。發生原因不明。"
+      },
+      {
+        "term": "銅牌",
+        "definition": "⑴比賽中的第三名。競賽時，通常頒發銅質的紀念牌給獲得第三名者，故以銅牌稱第三名。⑵銅質的牌子。經常用來製成各種形狀的獎牌，上面刻字，可作獎品或紀念品，便於保存陳列。"
+      },
+      {
+        "term": "屢屢",
+        "definition": "常常。"
+      },
+      {
+        "term": "減少",
+        "definition": "縮減降低、少於原來的數量。"
+      },
+      {
+        "term": "給予",
+        "definition": "拿東西給別人。"
+      },
+      {
+        "term": "幼芽",
+        "definition": "種子發芽時，胚芽上端向上生長的幼小植物體。"
+      },
+      {
+        "term": "椰子",
+        "definition": "植物名。棕櫚科可可椰子屬，常綠喬木。樹幹直立，不分枝，頂端叢生羽狀複葉。果實亦稱為﹁椰子﹂，橢圓形，核果，外果皮為青綠色，中果皮為厚纖維層，內果皮為角質硬殼。果核外層為白色椰肉，可生食或製成椰子油或椰子粉，中心空腔內充滿椰子汁，為天然的清涼飲料。"
+      },
+      {
+        "term": "即使",
+        "definition": "縱使、就算是。"
+      },
+      {
+        "term": "腐爛",
+        "definition": "腐壞潰爛。"
+      },
+      {
+        "term": "衝擊",
+        "definition": "⑴打擊、影響。⑵衝撞碰擊。"
+      },
+      {
+        "term": "鍛造",
+        "definition": "將高溫或常溫的金屬，用錘擊或壓床加壓的方式，使金屬物件具有一定的形狀和尺寸，並改變它的物理性質的加工法。"
+      },
+      {
+        "term": "鍛鍊",
+        "definition": "⑴磨練。⑵冶鍊金屬使其更加精純。"
+      }
+    ]
+  },
+  "10": {
+    "title": "第十課 山中寄情",
+    "vocab": [
+      {
+        "term": "唐朝",
+        "definition": "朝代名，唐朝建都長安，與漢朝並稱為中國歷史上最富強的盛世。當時文化優越，版圖遼闊，聲威遠播，對鄰近諸國有深遠的影響。"
+      },
+      {
+        "term": "恬淡",
+        "definition": "清靜淡泊，不求名利。"
+      },
+      {
+        "term": "日暮",
+        "definition": "傍晚。"
+      },
+      {
+        "term": "柴扉",
+        "definition": "以樹枝木幹做成的門。形容簡陋的居所。"
+      },
+      {
+        "term": "完畢",
+        "definition": "結束。"
+      },
+      {
+        "term": "簡陋",
+        "definition": "簡單粗陋。"
+      },
+      {
+        "term": "傍晚",
+        "definition": "黃昏時分。"
+      },
+      {
+        "term": "確定",
+        "definition": "明確而肯定。"
+      },
+      {
+        "term": "閒適",
+        "definition": "悠閒安適。"
+      },
+      {
+        "term": "幽人",
+        "definition": "隱居在山林的人。"
+      },
+      {
+        "term": "官職",
+        "definition": "泛稱官位。"
+      },
+      {
+        "term": "吟唱",
+        "definition": "吟詠歌唱。"
+      },
+      {
+        "term": "空曠",
+        "definition": "開闊、寬廣。"
+      }
+    ]
+  },
+  "11": {
+    "title": "第十一課 與達駭黑熊走入山林",
+    "vocab": [
+      {
+        "term": "達駭",
+        "definition": "課文中爺爺的外號。"
+      },
+      {
+        "term": "疤痕",
+        "definition": "傷口癒合後的痕跡。"
+      },
+      {
+        "term": "鐵罐",
+        "definition": "鐵製的罐子。"
+      },
+      {
+        "term": "咚咚",
+        "definition": "摹聲詞。摹擬碰撞或擊鼓的聲音。"
+      },
+      {
+        "term": "碰運氣",
+        "definition": "對所做的事情沒有把握，只是存著僥倖心理。"
+      },
+      {
+        "term": "傾盆",
+        "definition": "形容雨勢大且急。"
+      },
+      {
+        "term": "營火",
+        "definition": "夜間露營時，在營帳外堆木燃燒的火。"
+      },
+      {
+        "term": "崇拜",
+        "definition": "尊敬佩服。"
+      },
+      {
+        "term": "棄置",
+        "definition": "廢棄不用，扔在一旁。"
+      },
+      {
+        "term": "奄奄一息",
+        "definition": "僅存微弱的一口氣。形容生命垂危。"
+      },
+      {
+        "term": "小心翼翼",
+        "definition": "形容非常小心謹慎，不敢疏忽。"
+      },
+      {
+        "term": "祈禱",
+        "definition": "⑴禱告求福。⑵宗教中向神請求、告白，或讚美神、感謝神等儀式。"
+      },
+      {
+        "term": "吼聲",
+        "definition": "憤怒或情緒激動時的喊叫聲。"
+      },
+      {
+        "term": "喉嚨",
+        "definition": "咽喉的俗稱。位於嘴、鼻孔後面，食道、氣管之間，具有多個孔道的囊狀區域。長約十公分。可分為三個部分：軟顎以上稱為﹁鼻咽﹂；軟顎以下、會厭之上稱為﹁口咽﹂；會厭以下，喉部之上稱為﹁喉咽﹂。"
+      }
+    ]
+  },
+  "12": {
+    "title": "第十二課 荒島上的國王",
+    "vocab": [
+      {
+        "term": "劇烈",
+        "definition": "猛烈、強烈。"
+      },
+      {
+        "term": "暈船",
+        "definition": "乘船時因過度搖晃而產生頭暈，甚至嘔吐的現象。"
+      },
+      {
+        "term": "黃昏",
+        "definition": "太陽將落，天快黑的時候。"
+      },
+      {
+        "term": "船艙",
+        "definition": "船內部可容納人員或貨物的地方。"
+      },
+      {
+        "term": "途中",
+        "definition": "路上，路途之間。"
+      },
+      {
+        "term": "野獸",
+        "definition": "生長在山野間，沒有經過人工飼養、繁殖的獸類。"
+      },
+      {
+        "term": "渾身",
+        "definition": "全身。"
+      },
+      {
+        "term": "擱淺",
+        "definition": "⑴船隻因水位太低，未能提供所需的浮力而無法行進。⑵比喻事情受阻而停頓。"
+      },
+      {
+        "term": "礁岩",
+        "definition": "暗藏或突出水面的岩石。"
+      },
+      {
+        "term": "木筏",
+        "definition": "以木材平紮成的船板形水上交通工 具，漂浮水面，可用來載人運物，多用於 水道淺的河川。"
+      },
+      {
+        "term": "倒塌",
+        "definition": "傾倒、塌下來。"
+      },
+      {
+        "term": "烤爐",
+        "definition": "用來烘烤食物的爐子。"
+      },
+      {
+        "term": "躍躍欲試",
+        "definition": "心動技癢，急切的想嘗試一下。"
+      }
+    ]
+  }
+};
+
+    const CARD_COUNT = 16;
+    const LESSON_EMOJIS = [
+      "🍎", "🍊", "🍋", "🥝", "🍉", "🍇", "🍓", "🍒", 
+      "🍍", "🍑", "🥭", "🥥", "🥑", "🥕", "🥦", "🍄",
+      "🎈", "🎁", "🎨", "🚀", "🌟", "🦁", "🐼", "🐬"
+    ];
+    
+    let currentLesson = 1;
+    let vocabulary = [];
+    let cardStates = [];
+    let markedCards = [];
+
+    // 音效合成
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      try {
+        if (!audioCtx && AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'win') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.4);
+          });
+        }
+      } catch(e) {}
+    }
+
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.rate = 0.85;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+      }
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function showMessage(title, message) {
+      let messageBox = document.getElementById('messageBox');
+      if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'messageBox';
+        messageBox.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300';
+        document.body.appendChild(messageBox);
+      }
+      
+      messageBox.innerHTML = `
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center transform scale-100 transition-transform duration-300 border border-slate-200">
+          <div class="text-5xl mb-3">${title === "賓果！" ? "🎉" : "💡"}</div>
+          <h2 class="text-2xl font-black text-gray-800 mb-3">${title}</h2>
+          <p class="text-gray-600 font-semibold mb-6 text-lg">${message}</p>
+          <button onclick="document.getElementById('messageBox').classList.remove('active')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition duration-150">
+            太棒了！
+          </button>
+        </div>
+      `;
+      messageBox.classList.add('active');
+    }
+
+    function showConfetti() {
+      const container = document.getElementById('confettiContainer');
+      if (!container) return;
+      
+      container.innerHTML = ''; 
+      container.style.opacity = '1';
+      
+      const colors = ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6']; 
+      const count = 60; 
+
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        const size = Math.random() * 8 + 5; 
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        const startX = Math.random() * 100 + 'vw';
+        const endX = Math.random() * 100 + 'vw';
+
+        confetti.style.setProperty('--startX', startX);
+        confetti.style.setProperty('--endX', endX);
+        confetti.style.animationDelay = `${Math.random() * 0.6}s`;
+        
+        container.appendChild(confetti);
+      }
+
+      setTimeout(() => {
+        container.style.opacity = '0';
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 500); 
+      }, 3000);
+    }
+
+    function drawBingoLines(lines) {
+      const overlay = document.getElementById('bingoOverlay');
+      if (!overlay) return;
+
+      overlay.innerHTML = '';
+
+      const grid = document.getElementById('bingoGrid');
+      if (!grid) return;
+      const gridRect = grid.getBoundingClientRect();
+      
+      const cardElements = Array.from(grid.children);
+      
+      lines.forEach(indices => {
+        const startCard = cardElements[indices[0]];
+        const endCard = cardElements[indices[indices.length - 1]];
+
+        if (!startCard || !endCard) return;
+
+        const startRect = startCard.getBoundingClientRect();
+        const endRect = endCard.getBoundingClientRect();
+
+        const startX = startRect.left + startRect.width / 2 - gridRect.left;
+        const startY = startRect.top + startRect.height / 2 - gridRect.top;
+        const endX = endRect.left + endRect.width / 2 - gridRect.left;
+        const endY = endRect.top + endRect.height / 2 - gridRect.top;
+
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        const line = document.createElement('div');
+        line.className = 'bingo-line';
+        line.style.left = `${startX}px`;
+        line.style.top = `${startY}px`;
+        line.style.width = `${length}px`;
+        line.style.height = '8px'; 
+        line.style.transformOrigin = '0 0'; 
+        line.style.transform = `rotate(${angle}deg)`;
+
+        overlay.appendChild(line);
+      });
+    }
+
+    function checkForBingo() {
+      const size = 4;
+      const lines = [];
+      
+      function addLine(indices) {
+        if (indices.every(i => markedCards[i])) {
+          lines.push(indices);
+        }
+      }
+
+      // Rows
+      for (let i = 0; i < size; i++) {
+        const rowIndices = [];
+        for (let j = 0; j < size; j++) {
+          rowIndices.push(i * size + j);
+        }
+        addLine(rowIndices);
+      }
+
+      // Columns
+      for (let j = 0; j < size; j++) {
+        const colIndices = [];
+        for (let i = 0; i < size; i++) {
+          colIndices.push(i * size + j);
+        }
+        addLine(colIndices);
+      }
+
+      // Diagonals
+      const diag1Indices = [];
+      for (let i = 0; i < size; i++) {
+        diag1Indices.push(i * size + i);
+      }
+      addLine(diag1Indices);
+
+      const diag2Indices = [];
+      for (let i = 0; i < size; i++) {
+        diag2Indices.push(i * size + (size - 1 - i));
+      }
+      addLine(diag2Indices);
+
+      if (lines.length > 0) {
+        playSound('win');
+        showMessage("賓果！", `恭喜您達成 ${lines.length} 條連線！`);
+        drawBingoLines(lines);
+        showConfetti();
+      } else {
+        document.getElementById('bingoOverlay').innerHTML = '';
+      }
+    }
+    
+    function formatTextIn6x4(text) {
+      const chars = [];
+      const charsPerLine = 6; 
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        chars.push(char);
+        
+        const isEndOfChunk = (i + 1) % charsPerLine === 0;
+        const hasMoreChars = i < text.length - 1;
+        
+        if (isEndOfChunk && hasMoreChars) {
+          const remainingChars = text.length - (i + 1);
+          if (remainingChars > 2) { 
+            chars.push('<br>');
+          }
+        }
+      }
+      return chars.join('');
+    }
+
+    function updateCardContent(index) {
+      const content = document.getElementById(`card-${index}`);
+      const item = vocabulary[index];
+      const state = cardStates[index];
+      
+      content.parentElement.classList.remove('pass-card');
+      
+      if (state === 0) {
+        // 圖案狀態
+        content.innerHTML = `<div class="animal-emoji">${item.animal}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-amber-200';
+      } else if (state === 1) {
+        // 解釋狀態
+        const formattedText = formatTextIn6x4(item.definition); 
+        content.innerHTML = `<div class="definition-text text-slate-800 px-1 text-center">${formattedText}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-sky-50 to-blue-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-blue-200';
+      } else {
+        // 語詞狀態 (標記)
+        let termText = item.term;
+        if (item.term === "PASS") {
+          termText = "⭐ PASS"; 
+          content.parentElement.classList.add('pass-card'); 
+        }
+
+        content.innerHTML = `<div class="term-text text-emerald-950">${termText}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-emerald-300';
+      }
+    }
+
+    function toggleCard(index) {
+      playSound('click');
+      const isPassCard = vocabulary[index].term === "PASS";
+      
+      if (isPassCard) {
+        if (cardStates[index] === 0) {
+          cardStates[index] = 2;
+        } else {
+          cardStates[index] = 0;
+        }
+      } else {
+        cardStates[index] = (cardStates[index] + 1) % 3;
+      }
+
+      updateCardContent(index);
+
+      if (cardStates[index] === 2 && !isPassCard) {
+        speakText(vocabulary[index].term);
+      }
+
+      markedCards[index] = cardStates[index] === 2;
+      checkForBingo();
+    }
+
+    function initializeGame() {
+      const grid = document.getElementById('bingoGrid');
+      grid.innerHTML = ''; 
+      
+      document.getElementById('bingoOverlay').innerHTML = '';
+      const confettiContainer = document.getElementById('confettiContainer');
+      if (confettiContainer) {
+        confettiContainer.style.opacity = '0';
+        confettiContainer.innerHTML = '';
+      }
+
+      vocabulary.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card bg-white rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-slate-200';
+        card.onclick = () => toggleCard(index);
+        
+        const content = document.createElement('div');
+        content.className = 'card-content text-center w-full h-full flex items-center justify-center';
+        content.id = `card-${index}`;
+        
+        card.appendChild(content);
+        grid.appendChild(card);
+        
+        updateCardContent(index);
+      });
+      
+      document.getElementById('messageBox')?.classList.remove('active'); 
+    }
+    
+    function loadLesson(lessonNumber) {
+      currentLesson = lessonNumber;
+      const lesson = allLessonData[lessonNumber];
+      if (!lesson) return;
+
+      document.getElementById('gameTitle').textContent = `康軒國語五上語詞賓果遊戲4x4 - ${lesson.title}`;
+
+      let currentVocab = [...lesson.vocab];
+      
+      // 填充 PASS 卡片至 16 格
+      const passNeeded = CARD_COUNT - currentVocab.length;
+      if (passNeeded > 0) {
+        for (let i = 0; i < passNeeded; i++) {
+          currentVocab.push({ 
+            term: "PASS", 
+            definition: "萬用格，點擊即可翻開標記。", 
+            isPass: true 
+          });
+        }
+      } else if (currentVocab.length > CARD_COUNT) {
+        // 若大於 16 詞，隨機取 16 詞
+        currentVocab = shuffleArray(currentVocab).slice(0, CARD_COUNT);
+      }
+      
+      vocabulary = shuffleArray(currentVocab);
+      
+      const shuffledEmojis = shuffleArray(LESSON_EMOJIS);
+      vocabulary.forEach((item, index) => {
+        if (!item.isPass) {
+          item.animal = shuffledEmojis[index % shuffledEmojis.length]; 
+        } else {
+          item.animal = "⭐";
+        }
+      });
+      
+      cardStates = new Array(vocabulary.length).fill(0);
+      markedCards = new Array(vocabulary.length).fill(false);
+      
+      initializeGame();
+      updateButtonStates(lessonNumber);
+    }
+
+    function createLessonButtons() {
+      const container = document.getElementById('lessonButtons');
+      container.innerHTML = '';
+      const lessonKeys = Object.keys(allLessonData).map(Number).sort((a, b) => a - b);
+      
+      lessonKeys.forEach(key => {
+        const button = document.createElement('button');
+        button.textContent = allLessonData[key].title;
+        button.className = 'lesson-btn';
+        button.id = `btn-lesson-${key}`;
+        button.onclick = () => loadLesson(key);
+        container.appendChild(button);
+      });
+    }
+    
+    function updateButtonStates(activeLesson) {
+      const buttons = document.querySelectorAll('.lesson-btn');
+      buttons.forEach(btn => {
+        const lessonNumber = parseInt(btn.id.replace('btn-lesson-', ''), 10);
+        if (lessonNumber === activeLesson) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      createLessonButtons();
+      loadLesson(1);
+
+      const resetButton = document.getElementById('resetButton');
+      if (resetButton) {
+        resetButton.addEventListener('click', () => {
+          loadLesson(currentLesson);
+        });
+      }
+      
+      window.addEventListener('resize', () => {
+        document.getElementById('bingoOverlay').innerHTML = '';
+      });
+    });
+  </script>
+</body>
+</html>

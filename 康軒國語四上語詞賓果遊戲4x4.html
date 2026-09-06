@@ -1,0 +1,1265 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語四上語詞賓果遊戲4x4</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      box-sizing: border-box;
+      background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 50%, #fdf2f8 100%);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Home Navigation Button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      color: #ffffff !important;
+      padding: 9px 18px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1rem;
+      transition: all 0.25s ease;
+      z-index: 99999;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+      user-select: none;
+    }
+    .home-btn:hover {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: #ffffff;
+      transform: translateY(-2px) scale(1.04);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .card {
+      transition: all 0.25s ease;
+      cursor: pointer;
+      aspect-ratio: 1;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+    }
+
+    .card-content {
+      transition: opacity 0.2s ease;
+    }
+
+    .animal-emoji {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+    }
+
+    /* 賓果連線的紅線樣式 */
+    .bingo-line {
+      position: absolute;
+      background-color: #ef4444;
+      z-index: 20;
+      border-radius: 9999px;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.85);
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    /* 萬用格 (PASS) 專屬樣式 */
+    .pass-card {
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 0 10px rgba(0,0,0,0.15) !important;
+      transform: scale(1.03);
+    }
+
+    /* 訊息框樣式 */
+    #messageBox {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #messageBox.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* 彩帶（Confetti）效果容器 */
+    #confettiContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: transparent;
+      border-radius: 50%;
+      animation: confetti-fall 3s ease-in-out forwards;
+      opacity: 0.85;
+      transform-origin: center;
+    }
+
+    @keyframes confetti-fall {
+      0% { transform: translate(var(--startX), -5vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translate(var(--endX), 105vh) rotate(720deg); opacity: 0; }
+    }
+
+    .definition-text {
+      font-size: clamp(0.7rem, 1.8vw, 0.95rem) !important;
+      line-height: 1.25;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      font-weight: 600;
+    }
+
+    .term-text {
+      font-size: clamp(1.2rem, 3.2vw, 2.2rem);
+      font-weight: 900;
+      font-family: '標楷體', 'DFKai-SB', serif;
+      line-height: 1.15;
+    }
+
+    #lessonButtons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+    @media (min-width: 1024px) {
+      #lessonButtons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+
+    .lesson-btn {
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      font-size: 0.92rem;
+      text-align: left;
+      line-height: 1.3;
+    }
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: white;
+      box-shadow: 0 4px 15px rgba(219, 39, 119, 0.4);
+      transform: scale(1.02);
+    }
+    .lesson-btn:not(.active) {
+      background: rgba(255, 255, 255, 0.9);
+      color: #334155;
+    }
+    .lesson-btn:not(.active):hover {
+      background: #ffffff;
+      transform: translateX(3px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+  </style>
+</head>
+<body class="p-4 pt-16">
+  <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+  <!-- 彩帶容器 -->
+  <div id="confettiContainer"></div>
+
+  <!-- 主版面容器 -->
+  <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+    
+    <!-- 左側選課按鈕區塊 -->
+    <div id="lessonSidebar" class="flex-shrink-0 w-full lg:w-64 bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-xl lg:order-1 order-2 border border-white/60">
+      <h3 class="text-lg font-black text-gray-800 border-b-2 border-pink-400 pb-2 mb-3" style="font-family: 'ZCOOL KuaiLe', sans-serif;">
+        📚 選擇課次
+      </h3>
+      <div id="lessonButtons">
+        <!-- Buttons will be generated by JS -->
+      </div>
+    </div>
+
+    <!-- 主遊戲區塊 -->
+    <div id="gameArea" class="flex-grow lg:order-2 order-1">
+      <!-- 標題 -->
+      <div class="text-center mb-5">
+        <h1 id="gameTitle" class="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-2" style="font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;">
+          康軒國語四上語詞賓果遊戲4x4
+        </h1>
+        <p class="text-sm font-semibold text-slate-600">4x4 賓果盤（共 16 格），連成任一條線即獲勝！</p>
+      </div>
+
+      <div class="flex justify-center mb-5">
+        <button id="resetButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-7 rounded-xl shadow-lg transition duration-150 transform hover:scale-105 flex items-center gap-2">
+          🔄 重新洗牌
+        </button>
+      </div>
+
+      <!-- 卡片網格容器 -->
+      <div class="max-w-2xl mx-auto relative">
+        <div class="grid grid-cols-4 gap-3 sm:gap-4" id="bingoGrid">
+          <!-- 卡片由 JS 動態生成 -->
+        </div>
+        <!-- 繪製連線紅線 -->
+        <div id="bingoOverlay" class="absolute inset-0 pointer-events-none"></div>
+      </div>
+
+      <!-- 說明 -->
+      <div class="text-center mt-6 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-md max-w-2xl mx-auto border border-white/60">
+        <p class="text-gray-700 font-medium">💡 提示：點擊卡片依序切換 <strong>圖案</strong> ➔ <strong>解釋</strong> ➔ <strong>語詞 (標記)</strong> 三個狀態。</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 回首頁跳轉處理
+    function goHome(e) {
+      if (e) e.preventDefault();
+      let target = 'index.html';
+      if (window.location.protocol === 'file:') {
+        target = 'index.html';
+      } else if (window.location.hostname.includes('github.io')) {
+        target = 'https://ai9550.github.io/teacher/';
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = target;
+          return;
+        }
+      } catch (err) {}
+      window.location.href = target;
+    }
+
+    // 全部的課次語詞資料
+    const allLessonData = {
+  "1": {
+    "title": "第一課 水陸小高手",
+    "vocab": [
+      {
+        "term": "游泳",
+        "definition": "一種體育運動。為人在水中靠自力漂浮，並以各種不同姿勢划水前進的水中運動。常用的游姿有捷泳、蛙泳、蝶泳、仰泳等。"
+      },
+      {
+        "term": "一般",
+        "definition": "⑴同樣、同等。"
+      },
+      {
+        "term": "多采多姿",
+        "definition": "形容姿態多樣，色彩迷人。後引申為內容豐富華麗，且變化多端。"
+      },
+      {
+        "term": "滑行",
+        "definition": "滑動前進。"
+      },
+      {
+        "term": "遨遊",
+        "definition": "逍遙自在的遊歷玩賞。"
+      },
+      {
+        "term": "緩緩",
+        "definition": "緩慢、慢慢。"
+      },
+      {
+        "term": "陀螺",
+        "definition": "一種木頭製的圓錐形玩具。下端有鐵尖，圍繞上繩子後，急甩出去，落地後就能在地上直立旋轉。"
+      },
+      {
+        "term": "轉身",
+        "definition": "回轉身軀。"
+      },
+      {
+        "term": "水陸",
+        "definition": "跳起來。"
+      },
+      {
+        "term": "煩惱",
+        "definition": "⑴煩悶而不快活的情緒。"
+      }
+    ]
+  },
+  "2": {
+    "title": "第二課 放學後",
+    "vocab": [
+      {
+        "term": "招招手",
+        "definition": "揮動手，表招呼或示意前來。"
+      },
+      {
+        "term": "食糧",
+        "definition": "泛指一切米穀及食物。"
+      },
+      {
+        "term": "姐姐",
+        "definition": "稱同父母所生而比自己年長的女性。"
+      },
+      {
+        "term": "爭吵",
+        "definition": "爭鬥吵鬧。"
+      },
+      {
+        "term": "警察",
+        "definition": "依法以維持公共秩序、保護社會安寧、促進人民福利為主要任務的人。"
+      },
+      {
+        "term": "小偷",
+        "definition": "竊賊。"
+      },
+      {
+        "term": "跳繩",
+        "definition": "⑴一種跳過繩子的運動或遊戲。普通是把繩子掄成圓圈，人趁繩子近地時跳過去。有單腳跳、雙腳跳、交叉跳、轉身跳等多種花樣。"
+      },
+      {
+        "term": "依依不捨",
+        "definition": "非常留戀、捨不得。"
+      },
+      {
+        "term": "結束",
+        "definition": "終結、了結。"
+      },
+      {
+        "term": "暫停",
+        "definition": "進行中作短時間的中止。"
+      },
+      {
+        "term": "幸福",
+        "definition": "指生活、境遇圓滿愉快。"
+      }
+    ]
+  },
+  "3": {
+    "title": "第三課 我的籃球夢",
+    "vocab": [
+      {
+        "term": "邀約",
+        "definition": "邀請、約請。"
+      },
+      {
+        "term": "遙不可及",
+        "definition": "距離遙遠無法到達或形容沒有希望。"
+      },
+      {
+        "term": "熟能生巧",
+        "definition": "熟練了自然能領悟出竅門。"
+      },
+      {
+        "term": "反彈",
+        "definition": "⑴物理學上指作用力施於物體的同一時間，必產生相等而相反的動量，稱為「反彈」。"
+      },
+      {
+        "term": "不曾",
+        "definition": "從不。"
+      },
+      {
+        "term": "指揮",
+        "definition": "⑴發號施令，指示別人行動。"
+      },
+      {
+        "term": "此起彼落",
+        "definition": "這裡起來，那裡落下。形容連續不斷。"
+      },
+      {
+        "term": "喧鬧",
+        "definition": "喧譁吵鬧。"
+      },
+      {
+        "term": "優美",
+        "definition": "良好、美妙。"
+      },
+      {
+        "term": "弧線",
+        "definition": "彎曲如弓的線條。"
+      }
+    ]
+  },
+  "4": {
+    "title": "第四課 永遠的馬偕",
+    "vocab": [
+      {
+        "term": "馬偕",
+        "definition": "馬偕博士（西元一八四四—一九○一年）是蘇格蘭裔的加拿大人。"
+      },
+      {
+        "term": "醫院",
+        "definition": "診治或看護病人的機構。"
+      },
+      {
+        "term": "生命",
+        "definition": "⑴生物生存的壽命。"
+      },
+      {
+        "term": "奉獻",
+        "definition": "恭敬的交付、貢獻。"
+      },
+      {
+        "term": "醫療",
+        "definition": "醫治療養。"
+      },
+      {
+        "term": "衛生",
+        "definition": "⑴預防疾病，追求健康的觀念和措施。"
+      },
+      {
+        "term": "藥品",
+        "definition": "可以用來防治疾病的物質。"
+      },
+      {
+        "term": "治病",
+        "definition": "治療疾病，使恢復健康。"
+      },
+      {
+        "term": "翻山越嶺",
+        "definition": "形容長途跋涉、旅途辛苦。"
+      },
+      {
+        "term": "捐錢",
+        "definition": "捐獻金錢。"
+      },
+      {
+        "term": "食宿",
+        "definition": "飲食和住宿。"
+      },
+      {
+        "term": "學堂",
+        "definition": "古代學生受教育的場所，相當於現今的學校。"
+      },
+      {
+        "term": "濃濃",
+        "definition": "濃厚、盛多的樣子。"
+      }
+    ]
+  },
+  "5": {
+    "title": "第五課 假如給我三天光明",
+    "vocab": [
+      {
+        "term": "海倫‧凱勒",
+        "definition": "西元一八八○年出生於美國 阿拉巴馬州的女作家，有聾、啞、盲三重障礙，卻能克服困難而成功。"
+      },
+      {
+        "term": "學業",
+        "definition": "學習的課業。"
+      },
+      {
+        "term": "勵志",
+        "definition": "激勵奮發向上的心志。"
+      },
+      {
+        "term": "寧靜",
+        "definition": "安靜、平和。"
+      },
+      {
+        "term": "視力",
+        "definition": "眼力。常人在一定距離內，眼睛辨識事物的能力。"
+      },
+      {
+        "term": "注意",
+        "definition": "關注留意。"
+      },
+      {
+        "term": "單憑",
+        "definition": "只憑藉。"
+      },
+      {
+        "term": "蓓蕾",
+        "definition": "⑴含苞未開的花。"
+      },
+      {
+        "term": "任何",
+        "definition": "無論什麼。"
+      },
+      {
+        "term": "地毯",
+        "definition": "鋪在地面上的毯子，多為毛織物。"
+      },
+      {
+        "term": "舒適",
+        "definition": "舒服安適。"
+      },
+      {
+        "term": "五彩繽紛",
+        "definition": "形容色彩繁多，鮮豔絢麗。"
+      },
+      {
+        "term": "盡力",
+        "definition": "竭力。"
+      }
+    ]
+  },
+  "6": {
+    "title": "第六課 攀登生命的高峰",
+    "vocab": [
+      {
+        "term": "江秀真",
+        "definition": "西元一九七一年生於新北市 雙溪區。畢業於嘉義大學森林系學士、嘉義大學森林研究所碩士，並於二○一七年拿到臺灣大學大氣所碩士。"
+      },
+      {
+        "term": "開朗",
+        "definition": "⑴豁達、樂觀。"
+      },
+      {
+        "term": "珠穆朗瑪峰",
+        "definition": "為世界第一高峰，峰頂位於中國與尼泊爾的邊界。"
+      },
+      {
+        "term": "母親",
+        "definition": "⑴稱謂。對媽媽的稱呼。"
+      },
+      {
+        "term": "冷酷",
+        "definition": "對人冷漠、毫無感情。"
+      },
+      {
+        "term": "磨練",
+        "definition": "鍛鍊、考驗。"
+      },
+      {
+        "term": "攀登",
+        "definition": "用手抓住東西往上爬。"
+      },
+      {
+        "term": "訓練",
+        "definition": "經由有計畫、步驟的指導，並實地操作練習，使受訓者具有某種特長或技能。"
+      },
+      {
+        "term": "谷底",
+        "definition": "⑴山谷的底部。"
+      }
+    ]
+  },
+  "7": {
+    "title": "第七課 美味的一堂課",
+    "vocab": [
+      {
+        "term": "咖哩",
+        "definition": "用胡椒、薑黃、番椒、茴香、陳皮等粉末製成的調味品。色黃、味香而辛辣，以印度所產的咖哩最著名。"
+      },
+      {
+        "term": "印度",
+        "definition": "國名。位於亞洲南部，介於孟加拉灣與阿拉伯海之間，為世界文明古國之一。首都為新德里。人民信仰的宗教有印度教、基督教等。主要語言為北印度語、英語。原為英國殖民地，西元一九四七年正式獨立。"
+      },
+      {
+        "term": "甩餅",
+        "definition": "印度甩餅，是馬來西亞 印度裔發明的食物。做法是將和好的小片麵皮，多次旋轉向上拋甩，形成大而薄的圓餅，再放到鍋上烙。"
+      },
+      {
+        "term": "食材",
+        "definition": "食物的原始材料。"
+      },
+      {
+        "term": "醬料",
+        "definition": "用來醃漬食材或增加食物風味的佐料。多呈糊狀或液態。"
+      },
+      {
+        "term": "義大利",
+        "definition": "國名。位於南歐 義大利半島，首都羅馬，人民信仰天主教，主要語言為義大利語。"
+      },
+      {
+        "term": "麵條",
+        "definition": "麵粉製成的條狀食品。"
+      },
+      {
+        "term": "濃郁",
+        "definition": "香氣濃烈。"
+      },
+      {
+        "term": "壽司",
+        "definition": "一種日本料理。在剛蒸熟的飯中，放入醋、糖、鹽等調味料，攪拌均勻，使飯冷卻。然後在細竹簾上先鋪一層海苔皮或豆皮，鋪上一層飯後，再鋪上生魚片、漬菜、炒蛋等食品，最後再壓緊成筒狀，切成小塊食用。"
+      },
+      {
+        "term": "未知",
+        "definition": "不知道。"
+      }
+    ]
+  },
+  "8": {
+    "title": "第八課 建築界的長頸鹿",
+    "vocab": [
+      {
+        "term": "居高臨下",
+        "definition": "位在高處，可向下俯視。或比喻處於有利的地位。"
+      },
+      {
+        "term": "大樓",
+        "definition": "高大的樓房。"
+      },
+      {
+        "term": "長頸鹿",
+        "definition": "動物名，原產於非洲 撒哈拉以南的大部分地區。形略似鹿，腿和頸部很長，視覺和聽覺都很好，毛淺黃色，有淺棕褐色斑點。群居，生活在平原和開闊的灌木地區，以金合歡屬植物的葉為食。步距長，跑得很快，性情馴順。"
+      },
+      {
+        "term": "代表",
+        "definition": "⑴象徵、代替。"
+      },
+      {
+        "term": "經濟",
+        "definition": "⑴指人類利用種種財貨，來滿足欲望的一切行為及狀態。通常指一國國民的生產、銷售及分配關係，或指國家、個人的收支狀況。"
+      },
+      {
+        "term": "阻尼器",
+        "definition": "是一種利用阻尼特性來吸收或抑制衝量，藉以減緩力學振動及消耗動能的機械或液壓裝置。"
+      },
+      {
+        "term": "地震",
+        "definition": "由地球內部變動所引起的地殼位移。"
+      },
+      {
+        "term": "東京晴空塔",
+        "definition": "又稱東京天空樹、新東京鐵塔，位於日本 東京的電波塔，高度為六百三十四公尺。東京晴空塔®的建造目的，是為了降低東京市中心內，高樓林立而造成的電波傳輸障礙。"
+      },
+      {
+        "term": "通訊",
+        "definition": "信件、訊息或信號的傳遞。"
+      },
+      {
+        "term": "吉隆坡",
+        "definition": "城市名，馬來西亞的首都，是馬來西亞最繁盛的都市，也為鐵路交通中心。"
+      },
+      {
+        "term": "連通橋",
+        "definition": "連繫兩地或多地交通的橋梁。"
+      }
+    ]
+  },
+  "9": {
+    "title": "第九課 請到我的家鄉來",
+    "vocab": [
+      {
+        "term": "泰國",
+        "definition": "國名。位於東南亞 中南半島中部，首都曼谷。居民百分之九十以上信奉佛教，泰語是主要語言。西元一三七○年獨立，一九三九年定國名為泰王國，簡稱為﹁泰國﹂。物產以米、錫、柚木、橡膠為最重要，與我國貿易關係密切。"
+      },
+      {
+        "term": "華麗",
+        "definition": "豪華美麗。"
+      },
+      {
+        "term": "和尚",
+        "definition": "泛稱男性僧侶。"
+      },
+      {
+        "term": "逛逛",
+        "definition": "隨意走動。"
+      },
+      {
+        "term": "埃及",
+        "definition": "國名。位於東北非，首都為開羅。人民多信仰伊斯蘭教、天主教，主要語言為阿拉伯語。埃及約在西元前四千年時建國，為世界文明古國之一，七世紀時被阿拉伯人占領，成為阿拉伯語國家，十六世紀時受奧圖曼土耳其統治，第一次世界大戰後成為英國的保護國。西元一九二二年獨立，原稱為﹁阿聯﹂，一九七一年改名為﹁埃及阿拉伯共和國﹂。簡稱為﹁埃及﹂。"
+      },
+      {
+        "term": "尼羅河",
+        "definition": "發源於東非高原的一條河流。全長約六千六百四十八公里，為世界最長的河流。每年定期氾濫，使沿岸土壤更加肥沃。河口三角洲是世界古文明發祥地之一。"
+      },
+      {
+        "term": "地勢",
+        "definition": "地面高低起伏的形勢。"
+      },
+      {
+        "term": "低窪",
+        "definition": "地勢凹陷，比四周低下。"
+      },
+      {
+        "term": "築堤",
+        "definition": "建築堤防。"
+      },
+      {
+        "term": "防潮",
+        "definition": "⑴防止潮水入侵。"
+      },
+      {
+        "term": "鬱金香",
+        "definition": "植物名，原產於小亞細亞。葉接莖下部互生，呈廣披針形或橢圓狀披針形，葉緣略向內捲。花似倒鐘形，花瓣六片，有單瓣也有重瓣，很容易產生變種。原種為白色紅緣，另有赤、黃、白、紫等色。主供觀賞。"
+      },
+      {
+        "term": "划船",
+        "definition": "划槳使船行動。"
+      }
+    ]
+  },
+  "10": {
+    "title": "第十課 奇幻旋律",
+    "vocab": [
+      {
+        "term": "奇幻",
+        "definition": "非常神奇，好像夢幻一般。"
+      },
+      {
+        "term": "旋律",
+        "definition": "若干高低、長短、強弱不同的樂音，依節奏上的一定組織關係連續奏出，稱為﹁旋律﹂。是構成音樂的基本要素，可以表現出音樂的內容、風格及體裁。"
+      },
+      {
+        "term": "一瞬間",
+        "definition": "比喻很短的時間。"
+      },
+      {
+        "term": "體驗",
+        "definition": "親身體會、感受。"
+      },
+      {
+        "term": "芝麻",
+        "definition": "植物名。莖方形。葉長，對生或互生，呈橢圓形或卵形。花單生於葉腋，表面有毛，向側方下垂，呈白色或雜有淡紅色。果實為長橢圓形的蒴角，熟後縱裂。種子小而扁平，有白色及黑色等數種，可供食用或榨油。大多分布於熱帶地區。"
+      },
+      {
+        "term": "大盜",
+        "definition": "強行掠奪別人財物的人。"
+      },
+      {
+        "term": "邁開",
+        "definition": "跨出、踏出腳步。"
+      },
+      {
+        "term": "臉龐",
+        "definition": "面容、臉蛋。"
+      },
+      {
+        "term": "榮華富貴",
+        "definition": "顯榮發達，財多位尊。"
+      }
+    ]
+  },
+  "11": {
+    "title": "第十一課 兔子先生等等我",
+    "vocab": [
+      {
+        "term": "背心",
+        "definition": "一種蔽護胸背的無袖上衣，可分兩種：一種是貼身的汗衫，一種是配合其他衣物，套穿於外面。"
+      },
+      {
+        "term": "懷錶",
+        "definition": "裝在衣袋裡可隨身懷帶的錶。比一般手錶大，錶外加蓋。"
+      },
+      {
+        "term": "上鎖",
+        "definition": "把門或開關用鎖鎖上。"
+      },
+      {
+        "term": "鑰匙",
+        "definition": "開鎖的器物。"
+      },
+      {
+        "term": "果汁",
+        "definition": "用水果擠榨出來的汁液，或以水果汁液做成的飲料。如檸檬汁、葡萄汁等。"
+      },
+      {
+        "term": "標示",
+        "definition": "標明、揭示。"
+      },
+      {
+        "term": "迫不及待",
+        "definition": "比喻情況或時間急切，不能再等。"
+      },
+      {
+        "term": "口袋",
+        "definition": "縫在衣物上的袋子。"
+      },
+      {
+        "term": "盒子",
+        "definition": "有底、蓋可相合的盛物器皿。"
+      },
+      {
+        "term": "扇子",
+        "definition": "一種搖動生風以驅除熱氣的用具。"
+      },
+      {
+        "term": "遲到",
+        "definition": "到達的時間超過了既定的時限。"
+      }
+    ]
+  },
+  "12": {
+    "title": "第十二課 老鞋匠和小精靈",
+    "vocab": [
+      {
+        "term": "妻子",
+        "definition": "稱男子的配偶。"
+      },
+      {
+        "term": "耐心",
+        "definition": "心情平和而不厭煩、急躁。"
+      },
+      {
+        "term": "皮革",
+        "definition": "獸皮經過去毛、去脂等處理而製成的熟皮。"
+      },
+      {
+        "term": "雙倍",
+        "definition": "兩倍。"
+      },
+      {
+        "term": "謎團",
+        "definition": "比喻事物隱晦不清，讓人難以明白、理解。"
+      },
+      {
+        "term": "鐘聲",
+        "definition": "敲鐘所發出的聲音。"
+      },
+      {
+        "term": "小精靈",
+        "definition": "⑴北歐神話中的人物。有親切可愛的白精靈和凶惡調皮的黑精靈。"
+      },
+      {
+        "term": "鐵鎚",
+        "definition": "鐵製的鎚子。"
+      },
+      {
+        "term": "嘖嘖稱奇",
+        "definition": "對事物的奇妙讚嘆不已。"
+      },
+      {
+        "term": "手舞足蹈",
+        "definition": "手、腳舞動跳躍。形容非常高興喜悅的樣子。"
+      },
+      {
+        "term": "蹦蹦跳跳",
+        "definition": "形容跳躍的樣子。"
+      },
+      {
+        "term": "內心",
+        "definition": "泛指思想或感情。因為心是思想的主體，二者又都在身體內，故稱為﹁內心﹂。"
+      }
+    ]
+  }
+};
+
+    const CARD_COUNT = 16;
+    const LESSON_EMOJIS = [
+      "🍎", "🍊", "🍋", "🥝", "🍉", "🍇", "🍓", "🍒", 
+      "🍍", "🍑", "🥭", "🥥", "🥑", "🥕", "🥦", "🍄",
+      "🎈", "🎁", "🎨", "🚀", "🌟", "🦁", "🐼", "🐬"
+    ];
+    
+    let currentLesson = 1;
+    let vocabulary = [];
+    let cardStates = [];
+    let markedCards = [];
+
+    // 音效合成
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      try {
+        if (!audioCtx && AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        if (type === 'click') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'win') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.4);
+          });
+        }
+      } catch(e) {}
+    }
+
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.rate = 0.85;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+      }
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function showMessage(title, message) {
+      let messageBox = document.getElementById('messageBox');
+      if (!messageBox) {
+        messageBox = document.createElement('div');
+        messageBox.id = 'messageBox';
+        messageBox.className = 'fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300';
+        document.body.appendChild(messageBox);
+      }
+      
+      messageBox.innerHTML = `
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm text-center transform scale-100 transition-transform duration-300 border border-slate-200">
+          <div class="text-5xl mb-3">${title === "賓果！" ? "🎉" : "💡"}</div>
+          <h2 class="text-2xl font-black text-gray-800 mb-3">${title}</h2>
+          <p class="text-gray-600 font-semibold mb-6 text-lg">${message}</p>
+          <button onclick="document.getElementById('messageBox').classList.remove('active')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg transition duration-150">
+            太棒了！
+          </button>
+        </div>
+      `;
+      messageBox.classList.add('active');
+    }
+
+    function showConfetti() {
+      const container = document.getElementById('confettiContainer');
+      if (!container) return;
+      
+      container.innerHTML = ''; 
+      container.style.opacity = '1';
+      
+      const colors = ['#f43f5e', '#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6']; 
+      const count = 60; 
+
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        const size = Math.random() * 8 + 5; 
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        const startX = Math.random() * 100 + 'vw';
+        const endX = Math.random() * 100 + 'vw';
+
+        confetti.style.setProperty('--startX', startX);
+        confetti.style.setProperty('--endX', endX);
+        confetti.style.animationDelay = `${Math.random() * 0.6}s`;
+        
+        container.appendChild(confetti);
+      }
+
+      setTimeout(() => {
+        container.style.opacity = '0';
+        setTimeout(() => {
+          container.innerHTML = '';
+        }, 500); 
+      }, 3000);
+    }
+
+    function drawBingoLines(lines) {
+      const overlay = document.getElementById('bingoOverlay');
+      if (!overlay) return;
+
+      overlay.innerHTML = '';
+
+      const grid = document.getElementById('bingoGrid');
+      if (!grid) return;
+      const gridRect = grid.getBoundingClientRect();
+      
+      const cardElements = Array.from(grid.children);
+      
+      lines.forEach(indices => {
+        const startCard = cardElements[indices[0]];
+        const endCard = cardElements[indices[indices.length - 1]];
+
+        if (!startCard || !endCard) return;
+
+        const startRect = startCard.getBoundingClientRect();
+        const endRect = endCard.getBoundingClientRect();
+
+        const startX = startRect.left + startRect.width / 2 - gridRect.left;
+        const startY = startRect.top + startRect.height / 2 - gridRect.top;
+        const endX = endRect.left + endRect.width / 2 - gridRect.left;
+        const endY = endRect.top + endRect.height / 2 - gridRect.top;
+
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        const line = document.createElement('div');
+        line.className = 'bingo-line';
+        line.style.left = `${startX}px`;
+        line.style.top = `${startY}px`;
+        line.style.width = `${length}px`;
+        line.style.height = '8px'; 
+        line.style.transformOrigin = '0 0'; 
+        line.style.transform = `rotate(${angle}deg)`;
+
+        overlay.appendChild(line);
+      });
+    }
+
+    function checkForBingo() {
+      const size = 4;
+      const lines = [];
+      
+      function addLine(indices) {
+        if (indices.every(i => markedCards[i])) {
+          lines.push(indices);
+        }
+      }
+
+      // Rows
+      for (let i = 0; i < size; i++) {
+        const rowIndices = [];
+        for (let j = 0; j < size; j++) {
+          rowIndices.push(i * size + j);
+        }
+        addLine(rowIndices);
+      }
+
+      // Columns
+      for (let j = 0; j < size; j++) {
+        const colIndices = [];
+        for (let i = 0; i < size; i++) {
+          colIndices.push(i * size + j);
+        }
+        addLine(colIndices);
+      }
+
+      // Diagonals
+      const diag1Indices = [];
+      for (let i = 0; i < size; i++) {
+        diag1Indices.push(i * size + i);
+      }
+      addLine(diag1Indices);
+
+      const diag2Indices = [];
+      for (let i = 0; i < size; i++) {
+        diag2Indices.push(i * size + (size - 1 - i));
+      }
+      addLine(diag2Indices);
+
+      if (lines.length > 0) {
+        playSound('win');
+        showMessage("賓果！", `恭喜您達成 ${lines.length} 條連線！`);
+        drawBingoLines(lines);
+        showConfetti();
+      } else {
+        document.getElementById('bingoOverlay').innerHTML = '';
+      }
+    }
+    
+    function formatTextIn6x4(text) {
+      const chars = [];
+      const charsPerLine = 6; 
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        chars.push(char);
+        
+        const isEndOfChunk = (i + 1) % charsPerLine === 0;
+        const hasMoreChars = i < text.length - 1;
+        
+        if (isEndOfChunk && hasMoreChars) {
+          const remainingChars = text.length - (i + 1);
+          if (remainingChars > 2) { 
+            chars.push('<br>');
+          }
+        }
+      }
+      return chars.join('');
+    }
+
+    function updateCardContent(index) {
+      const content = document.getElementById(`card-${index}`);
+      const item = vocabulary[index];
+      const state = cardStates[index];
+      
+      content.parentElement.classList.remove('pass-card');
+      
+      if (state === 0) {
+        // 圖案狀態
+        content.innerHTML = `<div class="animal-emoji">${item.animal}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-amber-50 to-orange-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-amber-200';
+      } else if (state === 1) {
+        // 解釋狀態
+        const formattedText = formatTextIn6x4(item.definition); 
+        content.innerHTML = `<div class="definition-text text-slate-800 px-1 text-center">${formattedText}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-sky-50 to-blue-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-blue-200';
+      } else {
+        // 語詞狀態 (標記)
+        let termText = item.term;
+        if (item.term === "PASS") {
+          termText = "⭐ PASS"; 
+          content.parentElement.classList.add('pass-card'); 
+        }
+
+        content.innerHTML = `<div class="term-text text-emerald-950">${termText}</div>`;
+        content.parentElement.className = 'card bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-emerald-300';
+      }
+    }
+
+    function toggleCard(index) {
+      playSound('click');
+      const isPassCard = vocabulary[index].term === "PASS";
+      
+      if (isPassCard) {
+        if (cardStates[index] === 0) {
+          cardStates[index] = 2;
+        } else {
+          cardStates[index] = 0;
+        }
+      } else {
+        cardStates[index] = (cardStates[index] + 1) % 3;
+      }
+
+      updateCardContent(index);
+
+      if (cardStates[index] === 2 && !isPassCard) {
+        speakText(vocabulary[index].term);
+      }
+
+      markedCards[index] = cardStates[index] === 2;
+      checkForBingo();
+    }
+
+    function initializeGame() {
+      const grid = document.getElementById('bingoGrid');
+      grid.innerHTML = ''; 
+      
+      document.getElementById('bingoOverlay').innerHTML = '';
+      const confettiContainer = document.getElementById('confettiContainer');
+      if (confettiContainer) {
+        confettiContainer.style.opacity = '0';
+        confettiContainer.innerHTML = '';
+      }
+
+      vocabulary.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'card bg-white rounded-2xl shadow-md p-3 flex items-center justify-center border-2 border-slate-200';
+        card.onclick = () => toggleCard(index);
+        
+        const content = document.createElement('div');
+        content.className = 'card-content text-center w-full h-full flex items-center justify-center';
+        content.id = `card-${index}`;
+        
+        card.appendChild(content);
+        grid.appendChild(card);
+        
+        updateCardContent(index);
+      });
+      
+      document.getElementById('messageBox')?.classList.remove('active'); 
+    }
+    
+    function loadLesson(lessonNumber) {
+      currentLesson = lessonNumber;
+      const lesson = allLessonData[lessonNumber];
+      if (!lesson) return;
+
+      document.getElementById('gameTitle').textContent = `康軒國語四上語詞賓果遊戲4x4 - ${lesson.title}`;
+
+      let currentVocab = [...lesson.vocab];
+      
+      // 填充 PASS 卡片至 16 格
+      const passNeeded = CARD_COUNT - currentVocab.length;
+      if (passNeeded > 0) {
+        for (let i = 0; i < passNeeded; i++) {
+          currentVocab.push({ 
+            term: "PASS", 
+            definition: "萬用格，點擊即可翻開標記。", 
+            isPass: true 
+          });
+        }
+      } else if (currentVocab.length > CARD_COUNT) {
+        // 若大於 16 詞，隨機取 16 詞
+        currentVocab = shuffleArray(currentVocab).slice(0, CARD_COUNT);
+      }
+      
+      vocabulary = shuffleArray(currentVocab);
+      
+      const shuffledEmojis = shuffleArray(LESSON_EMOJIS);
+      vocabulary.forEach((item, index) => {
+        if (!item.isPass) {
+          item.animal = shuffledEmojis[index % shuffledEmojis.length]; 
+        } else {
+          item.animal = "⭐";
+        }
+      });
+      
+      cardStates = new Array(vocabulary.length).fill(0);
+      markedCards = new Array(vocabulary.length).fill(false);
+      
+      initializeGame();
+      updateButtonStates(lessonNumber);
+    }
+
+    function createLessonButtons() {
+      const container = document.getElementById('lessonButtons');
+      container.innerHTML = '';
+      const lessonKeys = Object.keys(allLessonData).map(Number).sort((a, b) => a - b);
+      
+      lessonKeys.forEach(key => {
+        const button = document.createElement('button');
+        button.textContent = allLessonData[key].title;
+        button.className = 'lesson-btn';
+        button.id = `btn-lesson-${key}`;
+        button.onclick = () => loadLesson(key);
+        container.appendChild(button);
+      });
+    }
+    
+    function updateButtonStates(activeLesson) {
+      const buttons = document.querySelectorAll('.lesson-btn');
+      buttons.forEach(btn => {
+        const lessonNumber = parseInt(btn.id.replace('btn-lesson-', ''), 10);
+        if (lessonNumber === activeLesson) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      createLessonButtons();
+      loadLesson(1);
+
+      const resetButton = document.getElementById('resetButton');
+      if (resetButton) {
+        resetButton.addEventListener('click', () => {
+          loadLesson(currentLesson);
+        });
+      }
+      
+      window.addEventListener('resize', () => {
+        document.getElementById('bingoOverlay').innerHTML = '';
+      });
+    });
+  </script>
+</body>
+</html>
