@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>康軒國語五上語詞賓果遊戲5x5</title>
+    <!-- 載入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 載入 Google Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --bingo-grid-size: min(90vw, 520px);
+            --ribbon-offset: 25px;
+        }
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            padding-top: 60px;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Home Navigation Button */
+        .home-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            color: #ffffff !important;
+            padding: 9px 18px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 1rem;
+            transition: all 0.25s ease;
+            z-index: 99999;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+            user-select: none;
+        }
+        .home-btn:hover {
+            background: rgba(15, 23, 42, 0.95);
+            border-color: #ffffff;
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Setup Screen Custom Styling */
+        .checkbox-container {
+            display: block;
+            position: relative;
+            padding-left: 36px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            user-select: none;
+            color: #334155;
+            font-weight: 600;
+        }
+        .checkbox-container input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .checkmark {
+            position: absolute;
+            top: 2px;
+            left: 0;
+            height: 24px;
+            width: 24px;
+            background-color: #e2e8f0;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .checkbox-container:hover input ~ .checkmark {
+            background-color: #cbd5e1;
+        }
+        .checkbox-container input:checked ~ .checkmark {
+            background-color: #2563eb;
+        }
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+        .checkbox-container input:checked ~ .checkmark:after {
+            display: block;
+        }
+        .checkbox-container .checkmark:after {
+            left: 8px;
+            top: 4px;
+            width: 7px;
+            height: 12px;
+            border: solid white;
+            border-width: 0 3px 3px 0;
+            transform: rotate(45deg);
+        }
+
+        /* Quick Action Buttons in Setup */
+        .select-all-btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* Bingo Card Custom Styling */
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            width: var(--bingo-grid-size);
+            height: var(--bingo-grid-size);
+            max-width: 520px;
+            max-height: 520px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.18);
+            border-radius: 1.25rem;
+            overflow: hidden;
+            background-color: #fff;
+            position: relative;
+            border: 3px solid #cbd5e1;
+        }
+        .bingo-cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.25s ease, background-color 0.25s;
+            padding: 4px;
+            font-weight: bold;
+            overflow: hidden;
+            flex-shrink: 0; 
+            user-select: none;
+        }
+        .bingo-cell:hover:not(.center-cell) {
+            background-color: #f8fafc;
+        }
+        .cell-content {
+            padding: 4px;
+            word-break: break-all;
+            max-height: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        .word {
+            font-size: clamp(0.95rem, 3.8vw, 1.6rem);
+            color: #1e3a8a;
+            font-family: '標楷體', 'DFKai-SB', serif;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+        .definition {
+            font-size: clamp(0.65rem, 2.2vw, 0.88rem);
+            color: #334155;
+            line-height: 1.25;
+            font-weight: 600;
+        }
+        .center-cell {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #b45309;
+            font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+            font-weight: 900;
+        }
+        .marked {
+            background-color: #fee2e2 !important;
+        }
+        .heart {
+            color: #ef4444;
+            font-size: clamp(2rem, 7.5vw, 2.8rem);
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.15); }
+        }
+        .bingo-line {
+            position: absolute;
+            background-color: rgba(239, 68, 68, 0.78);
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 9999px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .row-line { height: 8px; width: 100%; left: 0; transform: translateY(-50%); }
+        .col-line { width: 8px; height: 100%; top: 0; transform: translateX(-50%); }
+        .diag-down-line { height: 8px; width: 141.42%; top: 0; left: 0; transform-origin: top left; transform: rotate(45deg) translateY(-50%); }
+        .diag-up-line { height: 8px; width: 141.42%; top: 0; right: 0; transform-origin: top right; transform: rotate(-45deg) translateY(-50%); }
+
+        /* 彩帶效果 */
+        .ribbon-effect {
+            position: absolute;
+            width: 20px;
+            height: var(--bingo-grid-size);
+            z-index: 9;
+            pointer-events: none;
+            background-color: transparent;
+            border-radius: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.1s ease-out;
+        }
+        .ribbon-flash {
+            background: linear-gradient(to bottom, #fee2e2, #f87171, #fee2e2);
+            opacity: 1;
+            animation: ribbonFlash 0.5s linear infinite;
+        }
+        @keyframes ribbonFlash {
+            0%, 100% { box-shadow: 0 0 12px #f87171; opacity: 1; }
+            50% { box-shadow: 0 0 24px #ef4444; opacity: 0.8; }
+        }
+
+        /* 主持人畫面 */
+        .overlay-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(6px);
+            z-index: 50;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-card {
+            background-color: #fff;
+            padding: 32px 28px;
+            border-radius: 1.5rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+    <h1 id="mainTitle" class="text-3xl sm:text-4xl font-extrabold text-blue-800 mb-6 text-center w-full max-w-xl" style="font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;">
+        康軒國語五上語詞賓果遊戲5x5
+    </h1>
+
+    <!-- 第 1 頁面：設定選擇區 -->
+    <div id="setupScreen" class="w-full max-w-3xl bg-white p-6 sm:p-8 rounded-2xl shadow-xl flex flex-col border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b-2 border-blue-500 pb-3 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">📚 請選擇語詞課別</h2>
+            <div class="flex gap-2">
+                <button id="btnSelectAll" class="select-all-btn bg-blue-100 hover:bg-blue-200 text-blue-700">全選</button>
+                <button id="btnDeselectAll" class="select-all-btn bg-gray-100 hover:bg-gray-200 text-gray-700">全取消</button>
+            </div>
+        </div>
+        
+        <div id="lessonList" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            <!-- 課程選單由 JS 自動產生 -->
+        </div>
+
+        <div class="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl mb-6 border border-slate-200">
+            <p class="text-lg text-gray-700 font-semibold mb-1">目前已選擇的語詞總數：</p>
+            <p id="totalWordCountDisplay" class="text-4xl font-black text-red-500 transition-colors duration-300">0</p>
+            <p id="wordCountHint" class="text-sm text-red-500 mt-2 font-medium">（※注意：至少需要 24 個語詞才能開始遊戲）</p>
+        </div>
+
+        <button id="btnProceedToGame" disabled class="px-8 py-4 bg-blue-600 text-white font-bold text-xl rounded-xl shadow-lg transition duration-200 disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-blue-700 mx-auto w-full max-w-sm">
+            🎲 開始遊戲
+        </button>
+    </div>
+
+    <!-- 第 2 頁面：遊戲畫面 (初始隱藏) -->
+    <div id="gameScreen" class="hidden flex-col items-center w-full">
+        <!-- 賓果連線計數顯示區 -->
+        <div id="scoreDisplay" class="mb-4 p-3 px-6 text-2xl font-extrabold text-red-600 bg-white rounded-xl shadow-md border border-slate-200">
+            請點擊「固定配置」開始遊戲
+        </div>
+
+        <!-- 賓果遊戲卡區 -->
+        <div id="bingoGridContainer" class="relative">
+            <div id="bingoGrid" class="bingo-grid">
+                <!-- 賓果格子由 JS 渲染 -->
+            </div>
+            
+            <!-- 彩帶效果元素 -->
+            <div id="leftRibbon" class="ribbon-effect" style="left: calc(0% - var(--ribbon-offset)); top: 0;"></div>
+            <div id="rightRibbon" class="ribbon-effect" style="right: calc(0% - var(--ribbon-offset)); top: 0;"></div>
+        </div>
+
+        <!-- 控制按鈕區 -->
+        <div class="mt-6 flex flex-wrap justify-center gap-3 w-full max-w-md">
+            <button id="btnRandomize" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition duration-150">
+                🔄 重新配置
+            </button>
+            <button id="btnStartGame" class="px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md transition duration-150">
+                🔒 固定配置
+            </button>
+            <button id="btnHost" class="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-md transition duration-150">
+                🎤 主持人
+            </button>
+            <button id="btnBackToSetup" class="px-5 py-3 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl shadow-md transition duration-150">
+                ⚙️ 重選課程
+            </button>
+        </div>
+
+        <!-- 已選語詞顯示區 -->
+        <div id="selectedWordsDisplay" class="mt-5 p-4 text-base font-semibold text-gray-800 bg-white rounded-xl shadow-md w-full max-w-lg text-center break-words border border-slate-200">
+            已標記語詞: (無)
+        </div>
+    </div>
+
+    <!-- 主持人畫面 (Overlay) -->
+    <div id="hostScreen" class="overlay-modal">
+        <div class="modal-card">
+            <h2 class="text-2xl sm:text-3xl font-bold mb-4 text-gray-800" style="font-family: 'ZCOOL KuaiLe', sans-serif;">🎤 主持人語詞抽籤機</h2>
+            
+            <div id="hostStatus" class="mb-5 p-3 text-lg font-semibold text-gray-700 bg-slate-100 rounded-xl w-full max-w-sm">
+                點擊「抽取語詞解釋」開始
+            </div>
+
+            <!-- 抽取的內容顯示區 -->
+            <div id="drawnContent" class="min-h-28 mb-6 flex flex-col justify-center items-center p-4 bg-blue-50 rounded-2xl w-full border border-blue-200">
+                <p id="currentDef" class="definition text-xl font-medium text-purple-900 px-2 leading-relaxed"></p>
+                <p id="currentWord" class="word text-4xl font-extrabold text-blue-700 mt-4 hidden transform scale-110">?</p>
+            </div>
+            
+            <!-- 主持人操作按鈕 -->
+            <div class="flex flex-col gap-3 w-full max-w-xs">
+                <button id="btnDrawWord" class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    🎲 抽取語詞解釋
+                </button>
+                <button id="btnRevealWord" class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-xl shadow-md transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    👁️ 揭示答案語詞
+                </button>
+                
+                <!-- 已出現過的語詞顯示區 -->
+                <div id="hostRevealedWords" class="mt-3 p-3 text-sm font-medium text-gray-700 bg-gray-50 rounded-xl w-full text-left break-words border border-gray-200 max-h-32 overflow-y-auto">
+                    已出現過的語詞: (無)
+                </div>
+                
+                <button id="btnCloseHost" class="mt-3 px-6 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl shadow-sm transition duration-200">
+                    關閉主持人畫面
+                </button>
+            </div>
+
+            <p id="hostRemainingCount" class="mt-4 text-sm text-gray-500">
+                剩餘詞彙數量：0
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 回首頁跳轉處理
+        function goHome(e) {
+            if (e) e.preventDefault();
+            let target = 'index.html';
+            if (window.location.protocol === 'file:') {
+                target = 'index.html';
+            } else if (window.location.hostname.includes('github.io')) {
+                target = 'https://ai9550.github.io/teacher/';
+            }
+            try {
+                if (window.top && window.top !== window) {
+                    window.top.location.href = target;
+                    return;
+                }
+            } catch (err) {}
+            window.location.href = target;
+        }
+
+        // -----------------------------------------------------
+        // 1. 課文與語詞資料庫
+        // -----------------------------------------------------
+        const LESSONS_DATA = [
+  {
+    "id": "L1",
+    "title": "第一課 蚊帳大使",
+    "words": [
+      {
+        "word": "蚊帳",
+        "def": "防蚊子的紗帳。"
+      },
+      {
+        "word": "非洲",
+        "def": "洲名。阿非利加洲的簡稱。世界七大洲之一。在東半球的西南部，東瀕印度洋，西臨大西洋，北隔地中海與歐洲相望，地形北闊南尖，是世界第二大洲。"
+      },
+      {
+        "word": "瘧疾",
+        "def": "病名。是以瘧蚊為媒介而散播的急性傳染病。病原體是瘧原蟲。其症狀有週期性的發冷發熱、大量出汗、頭痛、口渴、全身無力及溶血等。"
+      },
+      {
+        "word": "募集",
+        "def": "招募聚集。"
+      },
+      {
+        "word": "捐贈",
+        "def": "捐獻、贈送。"
+      },
+      {
+        "word": "獎狀",
+        "def": "為獎勵而頒發的證書。"
+      },
+      {
+        "word": "收藏",
+        "def": "⑴收集保藏。⑵所收集保藏的各項物品。"
+      },
+      {
+        "word": "雜誌",
+        "def": "含有多類文章，定期出版的刊物。"
+      },
+      {
+        "word": "基金會",
+        "def": "為興辦、發展某種事業或活動而 組成的團體。本課所指的蓋茲基金會成立 於西元二○○○年，是由微軟公司創始人 比爾‧蓋茲創辦。該基金會屬非營利性質， 旨在促進全球衛生和教育領域的平等。"
+      },
+      {
+        "word": "全力以赴",
+        "def": "投入全部的心力以達成目的。"
+      }
+    ]
+  },
+  {
+    "id": "L2",
+    "title": "第二課 從空中看臺灣",
+    "words": [
+      {
+        "word": "德國",
+        "def": "國名。位於歐洲中部，首都為柏林。人民多信仰基督教、天主教，主要語言為德語。"
+      },
+      {
+        "word": "似乎",
+        "def": "好像。"
+      },
+      {
+        "word": "血液",
+        "def": "在動物血管系統中循環流動的液體。它能運送養分、氧氣給細胞，並輸出二氧化碳等廢物至排泄器官，並且調節體溫，製造抗體以抵抗疾病。"
+      },
+      {
+        "word": "拍攝",
+        "def": "利用攝影器材將人或物的形象記錄在軟片上。"
+      },
+      {
+        "word": "颱風",
+        "def": "發生在西太平洋上由強烈熱帶性低氣壓或熱帶氣旋所引起的暴風，其強度達到一定標準時即為颱風。"
+      },
+      {
+        "word": "記錄",
+        "def": "記載登錄。"
+      },
+      {
+        "word": "哀愁",
+        "def": "哀傷悲愁。"
+      },
+      {
+        "word": "山巒",
+        "def": "連綿的山。"
+      },
+      {
+        "word": "縱谷",
+        "def": "與山脈的軸線平行的河谷。"
+      },
+      {
+        "word": "臍帶",
+        "def": "連接胎兒與胎盤的帶狀構造，內含臍動脈與臍靜脈。胎兒藉此從母體吸取養分並排出廢物。"
+      },
+      {
+        "word": "人禍",
+        "def": "人為的災禍。"
+      },
+      {
+        "word": "殘破",
+        "def": "殘缺破爛、不完整。"
+      },
+      {
+        "word": "檳榔",
+        "def": "植物名。棕櫚科檳榔屬，常綠喬木。高三丈多，葉為羽狀複葉，枝幹似椰子而較細，栽種五年，才開花結果。一年一株可生三、四穗，每穗結實三、四百顆，味澀而微甘。"
+      },
+      {
+        "word": "降低",
+        "def": "下降。"
+      },
+      {
+        "word": "汙水",
+        "def": "不潔淨的水。包括雨水、家庭排放出來的廢水及工業廢水等。"
+      },
+      {
+        "word": "不斷",
+        "def": "持續不停。"
+      }
+    ]
+  },
+  {
+    "id": "L3",
+    "title": "第三課 攀岩高手",
+    "words": [
+      {
+        "word": "陡峭",
+        "def": "高峻且坡度大。"
+      },
+      {
+        "word": "強勁",
+        "def": "強而有力。"
+      },
+      {
+        "word": "高聳",
+        "def": "直立突出。"
+      },
+      {
+        "word": "充飢",
+        "def": "吃東西以解除飢餓。"
+      },
+      {
+        "word": "隱形",
+        "def": "隱藏形體。"
+      },
+      {
+        "word": "尖銳",
+        "def": "⑴尖而銳利。⑵形容聲音尖細刺耳。⑶形容說話言辭鋒利，毫不留情。"
+      },
+      {
+        "word": "冷箭",
+        "def": "原指趁人不備時，暗中射出冷箭。後比喻暗中害人的行為。在本詩是用來比喻雨水就像尖銳的冷箭一樣。"
+      },
+      {
+        "word": "堅韌",
+        "def": "物體有韌性不易毀損。"
+      },
+      {
+        "word": "虯鬚",
+        "def": "蜷曲的鬍鬚。"
+      },
+      {
+        "word": "繁茂",
+        "def": "繁密茂盛。"
+      },
+      {
+        "word": "休止",
+        "def": "停止。"
+      },
+      {
+        "word": "蔓生",
+        "def": "藤蔓植物攀附他物成長的特性。"
+      },
+      {
+        "word": "藉由",
+        "def": "透過、經由。"
+      },
+      {
+        "word": "豐富",
+        "def": "豐裕充足。"
+      },
+      {
+        "word": "挫折",
+        "def": "事情進行不順利或遭遇失敗。"
+      }
+    ]
+  },
+  {
+    "id": "L4",
+    "title": "第四課 恆久的美",
+    "words": [
+      {
+        "word": "恆久",
+        "def": "持久、長遠。"
+      },
+      {
+        "word": "黃澄澄",
+        "def": "形容顏色金黃鮮明。"
+      },
+      {
+        "word": "稻穗",
+        "def": "叢聚成串的稻穀。"
+      },
+      {
+        "word": "養活",
+        "def": "贍養、撫養。"
+      },
+      {
+        "word": "來源",
+        "def": "根源、出處。"
+      },
+      {
+        "word": "藝術家",
+        "def": "從事藝術工作而有相當成就的人。"
+      },
+      {
+        "word": "樸實",
+        "def": "質樸實在。"
+      },
+      {
+        "word": "撿拾",
+        "def": "拾取。"
+      },
+      {
+        "word": "頭巾",
+        "def": "裹頭的布。"
+      },
+      {
+        "word": "腰痠背痛",
+        "def": "腰部和背部痠痛。"
+      },
+      {
+        "word": "樸素",
+        "def": "樸實而不刻意修飾。"
+      },
+      {
+        "word": "尊嚴",
+        "def": "不容侵犯的身分或地位。"
+      },
+      {
+        "word": "任勞任怨",
+        "def": "形容人做事熱心負責，不辭勞苦、不怕嫌怨。"
+      },
+      {
+        "word": "慷慨",
+        "def": "⑴大方、不吝嗇。⑵志氣高昂。"
+      },
+      {
+        "word": "滋潤",
+        "def": "浸潤、潤澤。"
+      }
+    ]
+  },
+  {
+    "id": "L5",
+    "title": "第五課 它抓得住你││商標的故事",
+    "words": [
+      {
+        "word": "商譽",
+        "def": "商人或商店行號的信譽。"
+      },
+      {
+        "word": "服務",
+        "def": "⑴為社會、別人做事。⑵任職。"
+      },
+      {
+        "word": "關聯",
+        "def": "關係連屬。"
+      },
+      {
+        "word": "核准",
+        "def": "審定後批准。多用於公文。"
+      },
+      {
+        "word": "申請",
+        "def": "⑴人民對政府或下級對上級的請求事項。⑵向上級或相關單位說明理由，提出請求。"
+      },
+      {
+        "word": "智慧財產局",
+        "def": "民國八十八年一月二十六日正式成立，隸屬於經濟部，為掌理專利權、商標專用權、積體電路布局及營業祕密、查禁仿冒等智慧財產管理之專責機關。"
+      },
+      {
+        "word": "黑松",
+        "def": "植物名。松科松屬，常綠喬木。枝開展成闊圓錐狀樹冠，樹皮黑灰色，針葉二針一束，質硬粗短，四月開毬花，毬果圓錐狀卵形。適於造林防風砂。其脂可製松香油以供藥用。原產日本、南韓。本課是指企業的名稱。"
+      },
+      {
+        "word": "註冊",
+        "def": "向有關機關、團體或學校登記備案。"
+      },
+      {
+        "word": "企業",
+        "def": "從事生產、運輸、貿易等經濟活動的營利事業，依出資來源不同，可分為公營企業及私人企業。"
+      },
+      {
+        "word": "堅毅不拔",
+        "def": "堅忍剛毅，不能動搖。"
+      },
+      {
+        "word": "歷經",
+        "def": "經歷遍盡。"
+      },
+      {
+        "word": "英文",
+        "def": "英國的語言和文字。"
+      },
+      {
+        "word": "銷售",
+        "def": "出售、販賣。"
+      },
+      {
+        "word": "霸主",
+        "def": "⑴在某一方面稱雄的人或集團。⑵春秋時代指勢力最大，能夠號令天下的諸侯。"
+      },
+      {
+        "word": "項目",
+        "def": "事物分類的條目。"
+      }
+    ]
+  },
+  {
+    "id": "L6",
+    "title": "第六課 故事「動」起來",
+    "words": [
+      {
+        "word": "娛樂",
+        "def": "⑴消遣的樂事。⑵快樂，使歡樂。"
+      },
+      {
+        "word": "汽船",
+        "def": "原指使用蒸汽機發動運轉行駛的船。後泛指各種動力引擎推進的船。本課提到的汽船威利號是指動畫的片名。"
+      },
+      {
+        "word": "口哨",
+        "def": "聚合雙脣，中間留一小孔或將手指伸入口內，用力吹氣而發出像吹哨子的聲音。"
+      },
+      {
+        "word": "經典",
+        "def": "⑴形容製作精美，可以流傳久遠，成為後世典範的。⑵具重要性，可以作為典範的書籍。"
+      },
+      {
+        "word": "框架",
+        "def": "事物的格式與架構。"
+      },
+      {
+        "word": "劇情",
+        "def": "戲劇中的情節內容。"
+      },
+      {
+        "word": "父母",
+        "def": "父親和母親。"
+      },
+      {
+        "word": "負責",
+        "def": "擔負責任。"
+      },
+      {
+        "word": "判斷力",
+        "def": "判別斷定事物的能力。"
+      },
+      {
+        "word": "共鳴",
+        "def": "⑴共同的感受或情緒反應。⑵發音體因受到與本身振動頻率相同的音波影響，也隨之產生發音的現象。如兩個頻率相同的音叉放在一起，敲擊其中一個使它發出聲音，另外一個音叉也會跟著發出聲音。"
+      },
+      {
+        "word": "脫穎而出",
+        "def": "顯露才能，超越眾人。"
+      },
+      {
+        "word": "榮獲",
+        "def": "光榮的得到。"
+      },
+      {
+        "word": "細膩",
+        "def": "⑴精細周密。⑵細緻潤滑。"
+      },
+      {
+        "word": "效果",
+        "def": "⑴功效、成果。⑵戲劇演出為配合劇情需要而製造的特殊聲光。"
+      },
+      {
+        "word": "團隊",
+        "def": "團體、隊伍。"
+      },
+      {
+        "word": "精益求精",
+        "def": "不斷努力求進步。"
+      },
+      {
+        "word": "樣貌",
+        "def": "形狀、外貌。"
+      },
+      {
+        "word": "感官",
+        "def": "動物接收外界種種刺激的器官。如耳、目、鼻、舌、皮膚等。"
+      },
+      {
+        "word": "增加",
+        "def": "增添、加多。"
+      }
+    ]
+  },
+  {
+    "id": "L7",
+    "title": "第七課 為生命找出口",
+    "words": [
+      {
+        "word": "逆風",
+        "def": "迎面對著風。"
+      },
+      {
+        "word": "可憐",
+        "def": "令人憐憫、同情。"
+      },
+      {
+        "word": "物競天擇",
+        "def": "物種互相競爭，適應自然者生存，不適應者即遭淘汰。為達爾文﹁演化論﹂所提出的主要觀念。"
+      },
+      {
+        "word": "好逸惡勞",
+        "def": "貪圖安逸，憎惡勞動。"
+      },
+      {
+        "word": "鄰居",
+        "def": "住處相近的人家。"
+      },
+      {
+        "word": "脈絡",
+        "def": "⑴條理、系統。⑵血管的統稱。"
+      },
+      {
+        "word": "精緻",
+        "def": "精巧細緻。"
+      },
+      {
+        "word": "脆弱",
+        "def": "⑴不堅固的。⑵禁不起打擊的。"
+      },
+      {
+        "word": "噴嚏",
+        "def": "鼻黏膜受了刺激，引起鼻孔急遽噴氣出聲的動作。"
+      },
+      {
+        "word": "忙碌",
+        "def": "事情太多，不得休息。"
+      },
+      {
+        "word": "興味盎然",
+        "def": "興趣很高昂的樣子。"
+      },
+      {
+        "word": "精疲力盡",
+        "def": "精神疲累，力氣耗盡。形容非常的疲憊。"
+      }
+    ]
+  },
+  {
+    "id": "L8",
+    "title": "第八課 最勇敢的女孩",
+    "words": [
+      {
+        "word": "巴基斯坦",
+        "def": "國名。位於亞洲南部。西接伊朗，北連阿富汗和前蘇聯，東北鄰中國，東和東南接印度，南瀕阿拉伯海。"
+      },
+      {
+        "word": "女性",
+        "def": "兩性之一，具雌性特徵者。與男性相對。"
+      },
+      {
+        "word": "恐怖",
+        "def": "可怕、害怕。"
+      },
+      {
+        "word": "組織",
+        "def": "⑴一群人為達特定目標，經由一定的程序所組成的團體。⑵構成。⑶生物學上指多個細胞生物體中，各細胞和細胞間質依一定秩序聯合為一體，並產生一定功能的基本結構。"
+      },
+      {
+        "word": "霸占",
+        "def": "強力占有。"
+      },
+      {
+        "word": "廣播",
+        "def": "⑴一種利用音波與電波傳達訊息的大眾傳播媒介。有廣義、狹義之分。廣義泛指聲音與影像的傳播，狹義則單指聲音的傳播。⑵指以音波方式傳送出來的廣播節目。⑶廣泛傳播。"
+      },
+      {
+        "word": "控制",
+        "def": "操縱、節制。"
+      },
+      {
+        "word": "受傷",
+        "def": "受到傷害。"
+      },
+      {
+        "word": "攻擊",
+        "def": "以武力、語言、文字等各種方式進攻或傷害別人。"
+      },
+      {
+        "word": "受教權",
+        "def": "指人民的基本權利之一。由憲法確認和保障的人民受教育的權利。"
+      },
+      {
+        "word": "威脅",
+        "def": "以權勢威力脅迫。"
+      },
+      {
+        "word": "康復",
+        "def": "病癒，恢復健康。"
+      },
+      {
+        "word": "武器",
+        "def": "具有攻擊能力的設備或器械。多作為軍事用途。"
+      },
+      {
+        "word": "震撼",
+        "def": "震動搖撼。"
+      },
+      {
+        "word": "恐懼",
+        "def": "惶恐、害怕。"
+      }
+    ]
+  },
+  {
+    "id": "L9",
+    "title": "第九課 在挫折中成長",
+    "words": [
+      {
+        "word": "維持",
+        "def": "維護保持。"
+      },
+      {
+        "word": "奮戰",
+        "def": "奮勇戰鬥。"
+      },
+      {
+        "word": "崎嶇",
+        "def": "⑴比喻處境艱難。⑵山路高低不平。"
+      },
+      {
+        "word": "拳擊",
+        "def": "一種西洋拳術運動。是一種兩人用拳頭互相對打的活動。"
+      },
+      {
+        "word": "癌症",
+        "def": "一類疾病的總稱。人體組織中細胞發生不正常增殖現象，病變細胞增生迅速，而且侵襲力強，常破壞周圍組織，並可經血液或淋巴到處轉移。發生原因不明。"
+      },
+      {
+        "word": "銅牌",
+        "def": "⑴比賽中的第三名。競賽時，通常頒發銅質的紀念牌給獲得第三名者，故以銅牌稱第三名。⑵銅質的牌子。經常用來製成各種形狀的獎牌，上面刻字，可作獎品或紀念品，便於保存陳列。"
+      },
+      {
+        "word": "屢屢",
+        "def": "常常。"
+      },
+      {
+        "word": "減少",
+        "def": "縮減降低、少於原來的數量。"
+      },
+      {
+        "word": "給予",
+        "def": "拿東西給別人。"
+      },
+      {
+        "word": "幼芽",
+        "def": "種子發芽時，胚芽上端向上生長的幼小植物體。"
+      },
+      {
+        "word": "椰子",
+        "def": "植物名。棕櫚科可可椰子屬，常綠喬木。樹幹直立，不分枝，頂端叢生羽狀複葉。果實亦稱為﹁椰子﹂，橢圓形，核果，外果皮為青綠色，中果皮為厚纖維層，內果皮為角質硬殼。果核外層為白色椰肉，可生食或製成椰子油或椰子粉，中心空腔內充滿椰子汁，為天然的清涼飲料。"
+      },
+      {
+        "word": "即使",
+        "def": "縱使、就算是。"
+      },
+      {
+        "word": "腐爛",
+        "def": "腐壞潰爛。"
+      },
+      {
+        "word": "衝擊",
+        "def": "⑴打擊、影響。⑵衝撞碰擊。"
+      },
+      {
+        "word": "鍛造",
+        "def": "將高溫或常溫的金屬，用錘擊或壓床加壓的方式，使金屬物件具有一定的形狀和尺寸，並改變它的物理性質的加工法。"
+      },
+      {
+        "word": "鍛鍊",
+        "def": "⑴磨練。⑵冶鍊金屬使其更加精純。"
+      }
+    ]
+  },
+  {
+    "id": "L10",
+    "title": "第十課 山中寄情",
+    "words": [
+      {
+        "word": "唐朝",
+        "def": "朝代名，唐朝建都長安，與漢朝並稱為中國歷史上最富強的盛世。當時文化優越，版圖遼闊，聲威遠播，對鄰近諸國有深遠的影響。"
+      },
+      {
+        "word": "恬淡",
+        "def": "清靜淡泊，不求名利。"
+      },
+      {
+        "word": "日暮",
+        "def": "傍晚。"
+      },
+      {
+        "word": "柴扉",
+        "def": "以樹枝木幹做成的門。形容簡陋的居所。"
+      },
+      {
+        "word": "完畢",
+        "def": "結束。"
+      },
+      {
+        "word": "簡陋",
+        "def": "簡單粗陋。"
+      },
+      {
+        "word": "傍晚",
+        "def": "黃昏時分。"
+      },
+      {
+        "word": "確定",
+        "def": "明確而肯定。"
+      },
+      {
+        "word": "閒適",
+        "def": "悠閒安適。"
+      },
+      {
+        "word": "幽人",
+        "def": "隱居在山林的人。"
+      },
+      {
+        "word": "官職",
+        "def": "泛稱官位。"
+      },
+      {
+        "word": "吟唱",
+        "def": "吟詠歌唱。"
+      },
+      {
+        "word": "空曠",
+        "def": "開闊、寬廣。"
+      }
+    ]
+  },
+  {
+    "id": "L11",
+    "title": "第十一課 與達駭黑熊走入山林",
+    "words": [
+      {
+        "word": "達駭",
+        "def": "課文中爺爺的外號。"
+      },
+      {
+        "word": "疤痕",
+        "def": "傷口癒合後的痕跡。"
+      },
+      {
+        "word": "鐵罐",
+        "def": "鐵製的罐子。"
+      },
+      {
+        "word": "咚咚",
+        "def": "摹聲詞。摹擬碰撞或擊鼓的聲音。"
+      },
+      {
+        "word": "碰運氣",
+        "def": "對所做的事情沒有把握，只是存著僥倖心理。"
+      },
+      {
+        "word": "傾盆",
+        "def": "形容雨勢大且急。"
+      },
+      {
+        "word": "營火",
+        "def": "夜間露營時，在營帳外堆木燃燒的火。"
+      },
+      {
+        "word": "崇拜",
+        "def": "尊敬佩服。"
+      },
+      {
+        "word": "棄置",
+        "def": "廢棄不用，扔在一旁。"
+      },
+      {
+        "word": "奄奄一息",
+        "def": "僅存微弱的一口氣。形容生命垂危。"
+      },
+      {
+        "word": "小心翼翼",
+        "def": "形容非常小心謹慎，不敢疏忽。"
+      },
+      {
+        "word": "祈禱",
+        "def": "⑴禱告求福。⑵宗教中向神請求、告白，或讚美神、感謝神等儀式。"
+      },
+      {
+        "word": "吼聲",
+        "def": "憤怒或情緒激動時的喊叫聲。"
+      },
+      {
+        "word": "喉嚨",
+        "def": "咽喉的俗稱。位於嘴、鼻孔後面，食道、氣管之間，具有多個孔道的囊狀區域。長約十公分。可分為三個部分：軟顎以上稱為﹁鼻咽﹂；軟顎以下、會厭之上稱為﹁口咽﹂；會厭以下，喉部之上稱為﹁喉咽﹂。"
+      }
+    ]
+  },
+  {
+    "id": "L12",
+    "title": "第十二課 荒島上的國王",
+    "words": [
+      {
+        "word": "劇烈",
+        "def": "猛烈、強烈。"
+      },
+      {
+        "word": "暈船",
+        "def": "乘船時因過度搖晃而產生頭暈，甚至嘔吐的現象。"
+      },
+      {
+        "word": "黃昏",
+        "def": "太陽將落，天快黑的時候。"
+      },
+      {
+        "word": "船艙",
+        "def": "船內部可容納人員或貨物的地方。"
+      },
+      {
+        "word": "途中",
+        "def": "路上，路途之間。"
+      },
+      {
+        "word": "野獸",
+        "def": "生長在山野間，沒有經過人工飼養、繁殖的獸類。"
+      },
+      {
+        "word": "渾身",
+        "def": "全身。"
+      },
+      {
+        "word": "擱淺",
+        "def": "⑴船隻因水位太低，未能提供所需的浮力而無法行進。⑵比喻事情受阻而停頓。"
+      },
+      {
+        "word": "礁岩",
+        "def": "暗藏或突出水面的岩石。"
+      },
+      {
+        "word": "木筏",
+        "def": "以木材平紮成的船板形水上交通工 具，漂浮水面，可用來載人運物，多用於 水道淺的河川。"
+      },
+      {
+        "word": "倒塌",
+        "def": "傾倒、塌下來。"
+      },
+      {
+        "word": "烤爐",
+        "def": "用來烘烤食物的爐子。"
+      },
+      {
+        "word": "躍躍欲試",
+        "def": "心動技癢，急切的想嘗試一下。"
+      }
+    ]
+  }
+];
+
+        let ALL_WORDS = [];
+
+        // -----------------------------------------------------
+        // 2. 遊戲狀態
+        // -----------------------------------------------------
+        let gameState = 'randomizing'; // 'randomizing', 'playing', 'host'
+        let grid = []; 
+        let lineCount = 0; 
+        let availableWords = []; 
+        let drawnWords = []; 
+        let currentDrawnWord = null; 
+
+        // Web Audio API 音效合成
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            try {
+                if (!audioCtx && AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+                if (type === 'pop') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(450, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                        gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.09);
+                        osc.stop(now + idx * 0.09 + 0.4);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // 語音朗讀
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                try {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-TW';
+                    utterance.rate = 0.85;
+                    window.speechSynthesis.speak(utterance);
+                } catch(e) {}
+            }
+        }
+
+        // DOM 元素引用
+        const $setupScreen = document.getElementById('setupScreen');
+        const $gameScreen = document.getElementById('gameScreen');
+        const $lessonList = document.getElementById('lessonList');
+        const $totalWordCountDisplay = document.getElementById('totalWordCountDisplay');
+        const $wordCountHint = document.getElementById('wordCountHint');
+        const $btnProceedToGame = document.getElementById('btnProceedToGame');
+        const $btnSelectAll = document.getElementById('btnSelectAll');
+        const $btnDeselectAll = document.getElementById('btnDeselectAll');
+
+        const $gridContainer = document.getElementById('bingoGridContainer');
+        const $bingoGrid = document.getElementById('bingoGrid');
+        const $scoreDisplay = document.getElementById('scoreDisplay');
+        const $btnRandomize = document.getElementById('btnRandomize');
+        const $btnStartGame = document.getElementById('btnStartGame');
+        const $btnHost = document.getElementById('btnHost');
+        const $btnBackToSetup = document.getElementById('btnBackToSetup');
+
+        const $hostScreen = document.getElementById('hostScreen');
+        const $btnDrawWord = document.getElementById('btnDrawWord');
+        const $btnRevealWord = document.getElementById('btnRevealWord');
+        const $btnCloseHost = document.getElementById('btnCloseHost');
+        const $hostStatus = document.getElementById('hostStatus');
+        const $currentDef = document.getElementById('currentDef');
+        const $currentWord = document.getElementById('currentWord');
+        const $hostRemainingCount = document.getElementById('hostRemainingCount');
+        const $leftRibbon = document.getElementById('leftRibbon');
+        const $rightRibbon = document.getElementById('rightRibbon');
+        const $selectedWordsDisplay = document.getElementById('selectedWordsDisplay');
+        const $hostRevealedWords = document.getElementById('hostRevealedWords'); 
+
+        // -----------------------------------------------------
+        // 3. 第一畫面 (設定選擇區) 邏輯
+        // -----------------------------------------------------
+        function initializeSetupScreen() {
+            $lessonList.innerHTML = '';
+            LESSONS_DATA.forEach((lesson, index) => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-container';
+                label.innerHTML = `
+                    <input type="checkbox" class="lesson-checkbox" value="${index}" checked>
+                    <span class="checkmark border border-gray-400"></span>
+                    ${lesson.title} <span class="text-sm text-gray-500 font-normal">(${lesson.words.length}詞)</span>
+                `;
+                $lessonList.appendChild(label);
+            });
+
+            const checkboxes = document.querySelectorAll('.lesson-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedWordCount);
+            });
+
+            updateSelectedWordCount();
+        }
+
+        $btnSelectAll.onclick = () => {
+            document.querySelectorAll('.lesson-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedWordCount();
+        };
+
+        $btnDeselectAll.onclick = () => {
+            document.querySelectorAll('.lesson-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedWordCount();
+        };
+
+        function updateSelectedWordCount() {
+            const checkboxes = document.querySelectorAll('.lesson-checkbox:checked');
+            let totalWords = 0;
+            ALL_WORDS = [];
+
+            checkboxes.forEach(cb => {
+                const lessonIndex = parseInt(cb.value);
+                const lessonWords = LESSONS_DATA[lessonIndex].words;
+                totalWords += lessonWords.length;
+                ALL_WORDS = ALL_WORDS.concat(lessonWords);
+            });
+
+            $totalWordCountDisplay.textContent = totalWords;
+
+            if (totalWords >= 24) {
+                $totalWordCountDisplay.classList.remove('text-red-500');
+                $totalWordCountDisplay.classList.add('text-green-600');
+                $wordCountHint.classList.replace('text-red-500', 'text-green-600');
+                $wordCountHint.textContent = '（※ 語詞數量充足，可以開始遊戲囉！）';
+                $btnProceedToGame.disabled = false;
+            } else {
+                $totalWordCountDisplay.classList.remove('text-green-600');
+                $totalWordCountDisplay.classList.add('text-red-500');
+                $wordCountHint.classList.replace('text-green-600', 'text-red-500');
+                $wordCountHint.textContent = '（※ 注意：至少需要勾選 24 個語詞才能開始遊戲）';
+                $btnProceedToGame.disabled = true;
+            }
+        }
+
+        $btnProceedToGame.addEventListener('click', () => {
+            $setupScreen.classList.add('hidden');
+            $gameScreen.classList.remove('hidden');
+            $gameScreen.classList.add('flex');
+
+            gameState = 'randomizing';
+            $btnStartGame.disabled = false;
+            $btnRandomize.disabled = false;
+            $btnHost.disabled = false;
+            $btnStartGame.className = 'px-5 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md transition duration-150';
+            $btnRandomize.className = 'px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition duration-150';
+            $btnHost.className = 'px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-md transition duration-150';
+
+            initializeGrid();
+            renderGrid();
+            $scoreDisplay.textContent = '請點擊「固定配置」開始遊戲';
+        });
+
+        $btnBackToSetup.onclick = () => {
+            $gameScreen.classList.add('hidden');
+            $gameScreen.classList.remove('flex');
+            $setupScreen.classList.remove('hidden');
+        };
+
+        // -----------------------------------------------------
+        // 4. 遊戲核心邏輯
+        // -----------------------------------------------------
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function initializeGrid() {
+            const shuffledWords = shuffle([...ALL_WORDS]).slice(0, 24);
+            const gridItems = shuffledWords.map(item => ({
+                ...item,
+                state: 0, 
+                isCenter: false,
+                isMarked: false,
+            }));
+
+            gridItems.splice(12, 0, { 
+                word: 'PASS',
+                def: '萬用格',
+                state: 2,
+                isCenter: true,
+                isMarked: true,
+            });
+
+            grid = [];
+            for (let i = 0; i < 5; i++) {
+                grid.push(gridItems.slice(i * 5, (i + 1) * 5));
+            }
+            lineCount = 0;
+            updateScoreDisplay();
+        }
+
+        function renderGrid() {
+            $bingoGrid.innerHTML = '';
+            $bingoGrid.querySelectorAll('.bingo-line').forEach(line => line.remove());
+
+            grid.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'bingo-cell relative';
+                    cellDiv.dataset.row = rowIndex;
+                    cellDiv.dataset.col = colIndex;
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'cell-content';
+
+                    if (cell.isCenter) {
+                        cellDiv.classList.add('center-cell', 'marked');
+                        contentDiv.innerHTML = cell.word;
+                    } else {
+                        let innerHTML = '';
+                        let contentClass = '';
+
+                        if (cell.state === 0) { // 狀態 0: 語詞
+                            innerHTML = `<span class="word">${cell.word}</span>`;
+                            contentClass = 'word';
+                        } else if (cell.state === 1) { // 狀態 1: 解釋
+                            innerHTML = `<span class="definition">${cell.def}</span>`;
+                            contentClass = 'definition';
+                            cellDiv.classList.add('bg-blue-50');
+                        } else if (cell.state === 2) { // 狀態 2: 愛心標記
+                            innerHTML = `<i class="fas fa-heart heart"></i>`;
+                            contentClass = 'heart';
+                            cellDiv.classList.add('marked');
+                        }
+
+                        contentDiv.innerHTML = innerHTML;
+                        contentDiv.classList.add(contentClass);
+                    }
+
+                    cellDiv.appendChild(contentDiv);
+                    $bingoGrid.appendChild(cellDiv);
+
+                    if (gameState === 'playing' && !cell.isCenter) {
+                        cellDiv.onclick = handleCellClick;
+                    }
+                });
+            });
+
+            if (gameState === 'playing') {
+                checkBingo(true); 
+                updateSelectedWordsDisplay();
+            }
+        }
+
+        function handleCellClick(event) {
+            if (gameState !== 'playing') return;
+
+            const cellDiv = event.currentTarget;
+            const row = parseInt(cellDiv.dataset.row);
+            const col = parseInt(cellDiv.dataset.col);
+            const cell = grid[row][col];
+
+            if (cell.isCenter) return; 
+            
+            // 順序切換：0(語詞) -> 1(解釋) -> 2(愛心) -> 0(語詞)
+            cell.state = (cell.state + 1) % 3;
+            cell.isMarked = (cell.state === 2);
+            playSound('pop');
+            renderGrid();
+        }
+
+        function checkBingo(redraw = false) {
+            const lines = []; 
+            const BINGO_SIZE = 5;
+            const oldLines = lineCount; 
+
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (grid[i].every(cell => cell.isMarked)) {
+                    lines.push({ type: 'row', index: i });
+                }
+            }
+
+            for (let j = 0; j < BINGO_SIZE; j++) {
+                let isBingo = true;
+                for (let i = 0; i < BINGO_SIZE; i++) {
+                    if (!grid[i][j].isMarked) {
+                        isBingo = false;
+                        break;
+                    }
+                }
+                if (isBingo) {
+                    lines.push({ type: 'col', index: j });
+                }
+            }
+
+            let diag1Bingo = true;
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (!grid[i][i].isMarked) {
+                    diag1Bingo = false;
+                    break;
+                }
+            }
+            if (diag1Bingo) lines.push({ type: 'diag', index: 1 });
+
+            let diag2Bingo = true;
+            for (let i = 0; i < BINGO_SIZE; i++) {
+                if (!grid[i][BINGO_SIZE - 1 - i].isMarked) {
+                    diag2Bingo = false;
+                    break;
+                }
+            }
+            if (diag2Bingo) lines.push({ type: 'diag', index: 2 });
+            
+            const newLines = lines.length;
+
+            if (redraw) {
+                drawBingoLines(lines);
+                lineCount = newLines;
+            } else {
+                lineCount = newLines;
+            }
+
+            updateScoreDisplay();
+
+            if (lineCount > oldLines) {
+                showCongrats(); 
+                playSound('win'); 
+            }
+        }
+
+        function drawBingoLines(lines) {
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.classList.add('bingo-line');
+                
+                if (line.type === 'row') {
+                    lineDiv.classList.add('row-line');
+                    lineDiv.style.top = `${line.index * 20 + 10}%`;
+                } else if (line.type === 'col') {
+                    lineDiv.classList.add('col-line');
+                    lineDiv.style.left = `${line.index * 20 + 10}%`;
+                } else if (line.type === 'diag') {
+                    if (line.index === 1) { 
+                        lineDiv.classList.add('diag-down-line');
+                    } else if (line.index === 2) { 
+                        lineDiv.classList.add('diag-up-line');
+                    }
+                }
+                $bingoGrid.appendChild(lineDiv);
+            });
+        }
+
+        function updateScoreDisplay() {
+            $scoreDisplay.textContent = `🎉 目前連成 ${lineCount} 條線！`;
+        }
+
+        function updateSelectedWordsDisplay() {
+            const selectedWords = [];
+            grid.forEach(row => {
+                row.forEach(cell => {
+                    if (cell.isMarked && !cell.isCenter) {
+                        selectedWords.push(cell.word);
+                    }
+                });
+            });
+
+            const wordsText = selectedWords.length > 0 ? selectedWords.join('、') : '(無)';
+            $selectedWordsDisplay.textContent = `已標記語詞: ${wordsText}`;
+        }
+
+        function showCongrats() {
+            $leftRibbon.classList.add('ribbon-flash');
+            $rightRibbon.classList.add('ribbon-flash');
+            setTimeout(() => {
+                $leftRibbon.classList.remove('ribbon-flash');
+                $rightRibbon.classList.remove('ribbon-flash');
+            }, 600); 
+        }
+
+        // -----------------------------------------------------
+        // 5. 按鈕與事件處理
+        // -----------------------------------------------------
+        $btnRandomize.onclick = () => {
+            if ($btnStartGame.disabled || gameState === 'host') return; 
+            gameState = 'randomizing';
+            initializeGrid();
+            renderGrid();
+            $scoreDisplay.textContent = '請點擊「固定配置」開始遊戲';
+        };
+
+        $btnStartGame.onclick = () => {
+            if (gameState === 'host') return;
+            if (gameState === 'randomizing' || grid.length === 0) {
+                gameState = 'playing';
+                renderGrid(); 
+                $scoreDisplay.textContent = `目前連成 ${lineCount} 條線`;
+
+                $btnStartGame.disabled = true;
+                $btnRandomize.disabled = true;
+                $btnHost.disabled = true;
+                
+                $btnStartGame.classList.add('opacity-50', 'cursor-not-allowed');
+                $btnRandomize.classList.add('opacity-50', 'cursor-not-allowed');
+                $btnHost.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        };
+
+        $btnHost.onclick = () => {
+            if ($btnHost.disabled) return; 
+            gameState = 'host';
+            $hostScreen.style.display = 'flex';
+            initializeHostScreen();
+        };
+
+        function updateHostRevealedWordsDisplay() {
+            const wordsText = drawnWords.map(item => item.word).join('、');
+            $hostRevealedWords.textContent = `已出現過的語詞: ${wordsText || '(無)'}`;
+        }
+
+        function initializeHostScreen() {
+            const currentGridWords = [];
+            grid.forEach(row => {
+                row.forEach(cell => {
+                    if (!cell.isCenter) {
+                        currentGridWords.push({ word: cell.word, def: cell.def });
+                    }
+                });
+            });
+            availableWords = currentGridWords; 
+            drawnWords = [];
+            currentDrawnWord = null;
+            $currentDef.textContent = '';
+            $currentWord.textContent = '?';
+            $currentWord.classList.add('hidden');
+            $btnRevealWord.disabled = true;
+            $btnDrawWord.disabled = false;
+            $hostStatus.textContent = '點擊「抽取語詞解釋」開始';
+            updateHostRemainingCount();
+            updateHostRevealedWordsDisplay(); 
+        }
+
+        $btnDrawWord.onclick = () => {
+            if (availableWords.length === 0) {
+                $hostStatus.textContent = '所有詞彙已抽取完畢！';
+                $btnDrawWord.disabled = true;
+                $btnRevealWord.disabled = true;
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * availableWords.length);
+            currentDrawnWord = availableWords.splice(randomIndex, 1)[0];
+
+            $currentDef.textContent = currentDrawnWord.def;
+            $currentWord.textContent = '?';
+            $currentWord.classList.add('hidden');
+            $btnRevealWord.disabled = false;
+            $hostStatus.textContent = '請根據解釋猜語詞...';
+            $btnDrawWord.disabled = true; 
+
+            speakText(currentDrawnWord.def);
+            updateHostRemainingCount();
+        };
+
+        $btnRevealWord.onclick = () => {
+            if (!currentDrawnWord) return;
+
+            $currentWord.textContent = currentDrawnWord.word;
+            $currentWord.classList.remove('hidden');
+            $hostStatus.textContent = `正確答案是：「${currentDrawnWord.word}」`;
+            
+            speakText(currentDrawnWord.word);
+
+            if (!drawnWords.some(item => item.word === currentDrawnWord.word && item.def === currentDrawnWord.def)) {
+                drawnWords.push(currentDrawnWord);
+            }
+            updateHostRevealedWordsDisplay(); 
+
+            $btnRevealWord.disabled = true;
+            $btnDrawWord.disabled = (availableWords.length === 0);
+            currentDrawnWord = null;
+        };
+
+        $btnCloseHost.onclick = () => {
+            gameState = 'playing'; 
+            $hostScreen.style.display = 'none';
+            renderGrid(); 
+        };
+
+        function updateHostRemainingCount() {
+            $hostRemainingCount.textContent = `剩餘詞彙數量：${availableWords.length}`;
+        }
+
+        // -----------------------------------------------------
+        // 6. 初始啟動
+        // -----------------------------------------------------
+        initializeSetupScreen();
+
+        window.addEventListener('resize', () => {
+            if (gameState === 'playing') {
+                checkBingo(true); 
+            }
+        });
+
+    </script>
+</body>
+</html>
