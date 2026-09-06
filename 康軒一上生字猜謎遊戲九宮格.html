@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒一上生字猜謎遊戲九宮格</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+      background: linear-gradient(135deg, #FF6B6B 0%, #556270 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: white;
+      gap: 30px;
+      position: relative;
+    }
+
+    /* Home Navigation Button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      color: #ffffff !important;
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 1.05rem;
+      transition: all 0.25s ease;
+      z-index: 99999;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+    .home-btn:hover {
+      background: rgba(0, 0, 0, 0.7);
+      border-color: #ffffff;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .lesson-sidebar {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+      max-height: 88vh;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .sidebar-title {
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 6px;
+      color: #ffeaa7;
+      text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .lesson-btn {
+      padding: 12px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(255, 255, 255, 0.22);
+      color: white;
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      text-align: center;
+      user-select: none;
+    }
+
+    .lesson-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateX(4px);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+    }
+
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+      color: #2d3436;
+      border: 2px solid #fff;
+      box-shadow: 0 6px 18px rgba(253, 203, 110, 0.55);
+      transform: scale(1.03);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .header h1 {
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;
+      font-size: 2.3rem;
+      margin-bottom: 8px;
+      text-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      font-size: 1.15rem;
+      opacity: 0.95;
+    }
+
+    .question-counter {
+      color: #ffeaa7;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .game-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 10px auto;
+      border-radius: 24px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      border: 4px solid rgba(255, 255, 255, 0.6);
+      background: #ffffff;
+    }
+
+    .character-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19rem;
+      font-weight: 900;
+      color: #2d3436;
+      font-family: '標楷體', 'DFKai-SB', 'BiauKai', 'Noto Sans TC', serif;
+      user-select: none;
+      line-height: 1;
+    }
+
+    .overlay-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 0;
+    }
+
+    .overlay-block {
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.35s ease, filter 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      user-select: none;
+    }
+
+    .overlay-block:hover {
+      filter: brightness(1.15);
+      transform: scale(0.96);
+    }
+
+    .overlay-block.clicked {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.85);
+    }
+
+    .block-1 { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+    .block-2 { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+    .block-3 { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); }
+    .block-4 { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+    .block-5 { background: linear-gradient(135deg, #fd79a8, #e84393); }
+    .block-6 { background: linear-gradient(135deg, #fab1a0, #e17055); }
+    .block-7 { background: linear-gradient(135deg, #00b894, #00cec9); }
+    .block-8 { background: linear-gradient(135deg, #fdcb6e, #e17055); }
+    .block-9 { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+
+    .block-number {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 900;
+      margin-bottom: 2px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 1px;
+      user-select: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+      color: #2d3436;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(253, 203, 110, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .completion-message {
+      background: rgba(46, 213, 115, 0.95);
+      padding: 22px 28px;
+      border-radius: 18px;
+      text-align: center;
+      margin-top: 18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .completion-message.show {
+      display: block;
+      animation: celebration 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes celebration {
+      0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+        gap: 15px;
+        padding-top: 60px;
+      }
+
+      .lesson-sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+        width: 100%;
+        padding: 12px;
+        max-height: none;
+      }
+
+      .sidebar-title {
+        display: none;
+      }
+
+      .lesson-btn {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+      }
+
+      .game-container {
+        width: 270px;
+        height: 270px;
+      }
+
+      .character-card {
+        font-size: 16rem;
+      }
+
+      .header h1 {
+        font-size: 1.8rem;
+      }
+
+      .overlay-block {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
+
+  <div class="lesson-sidebar">
+    <div class="sidebar-title">📚 選擇課程</div>
+    <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1')">第一課</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2')">第二課</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3')">第三課</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4')">第四課</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5')">第五課</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6')">第六課</button>
+    <button class="lesson-btn" data-lesson="prep" onclick="switchLesson('prep')">國字真簡單</button>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1 id="mainTitle">🎯 康軒一上第一課生字猜謎九宮格</h1>
+      <p>點擊彩色區塊，逐步揭示隱藏的生字！<span id="questionCounter" class="question-counter">(第 1 題 / 共 0 題)</span></p>
+    </div>
+
+    <div class="game-container">
+      <div class="character-card" id="characterCard">字</div>
+      <div class="overlay-grid">
+        <div class="overlay-block block-1" onclick="revealBlock(1)">
+          <div class="block-number">1</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-2" onclick="revealBlock(2)">
+          <div class="block-number">2</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-3" onclick="revealBlock(3)">
+          <div class="block-number">3</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-4" onclick="revealBlock(4)">
+          <div class="block-number">4</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-5" onclick="revealBlock(5)">
+          <div class="block-number">5</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-6" onclick="revealBlock(6)">
+          <div class="block-number">6</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-7" onclick="revealBlock(7)">
+          <div class="block-number">7</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-8" onclick="revealBlock(8)">
+          <div class="block-number">8</div>
+          <div>點我</div>
+        </div>
+        <div class="overlay-block block-9" onclick="revealBlock(9)">
+          <div class="block-number">9</div>
+          <div>點我</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-secondary" onclick="resetGame()">🔄 蓋上區塊</button>
+      <button class="btn btn-primary" onclick="revealAll()">👁️ 全部顯示</button>
+      <button class="btn btn-secondary" onclick="newCharacter()">🎲 下一題</button>
+    </div>
+
+    <div class="completion-message" id="completionMessage"></div>
+  </div>
+
+  <script>
+    // 回首頁跳轉處理
+    function goHome(e) {
+      if (e) e.preventDefault();
+      let target = 'index.html';
+      if (window.location.protocol === 'file:') {
+        target = 'index.html';
+      } else if (window.location.hostname.includes('github.io')) {
+        target = 'https://ai9550.github.io/teacher/';
+      }
+      try {
+        if (window.top && window.top !== window) {
+          window.top.location.href = target;
+          return;
+        }
+      } catch (err) {}
+      window.location.href = target;
+    }
+
+    // 生字資料庫
+    const lessonData = {
+  "1": {
+    "name": "第一課",
+    "title": "🎯 康軒一上第一課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "拍",
+        "meaning": "拍手、打拍子"
+      },
+      {
+        "char": "手",
+        "meaning": "雙手、小手"
+      },
+      {
+        "char": "左",
+        "meaning": "左邊、左手"
+      },
+      {
+        "char": "右",
+        "meaning": "右邊、右手"
+      },
+      {
+        "char": "你",
+        "meaning": "你們、你我"
+      },
+      {
+        "char": "他",
+        "meaning": "他們、他人"
+      },
+      {
+        "char": "也",
+        "meaning": "也是、也好"
+      },
+      {
+        "char": "上",
+        "meaning": "上學、上面"
+      },
+      {
+        "char": "下",
+        "meaning": "下來、下面"
+      }
+    ]
+  },
+  "2": {
+    "name": "第二課",
+    "title": "🎯 康軒一上第二課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "這",
+        "meaning": "這裡、這個"
+      },
+      {
+        "char": "是",
+        "meaning": "是不是、可是"
+      },
+      {
+        "char": "誰",
+        "meaning": "是誰、誰的"
+      },
+      {
+        "char": "的",
+        "meaning": "好的、我的"
+      },
+      {
+        "char": "我",
+        "meaning": "我們、自我"
+      },
+      {
+        "char": "分",
+        "meaning": "分享、分開"
+      },
+      {
+        "char": "好",
+        "meaning": "好事、好朋友"
+      },
+      {
+        "char": "了",
+        "meaning": "好了、太棒了"
+      },
+      {
+        "char": "啊",
+        "meaning": "好啊、啊哈"
+      },
+      {
+        "char": "多",
+        "meaning": "很多、多少"
+      },
+      {
+        "char": "個",
+        "meaning": "一個、個人"
+      }
+    ]
+  },
+  "3": {
+    "name": "第三課",
+    "title": "🎯 康軒一上第三課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "秋",
+        "meaning": "秋天、秋千"
+      },
+      {
+        "char": "千",
+        "meaning": "秋千、千萬"
+      },
+      {
+        "char": "和",
+        "meaning": "和平、我和你"
+      },
+      {
+        "char": "玩",
+        "meaning": "好玩、玩具"
+      },
+      {
+        "char": "陪",
+        "meaning": "陪伴、陪同"
+      },
+      {
+        "char": "高",
+        "meaning": "高大、高興"
+      },
+      {
+        "char": "山",
+        "meaning": "大山、山林"
+      },
+      {
+        "char": "到",
+        "meaning": "到達、來到"
+      },
+      {
+        "char": "大",
+        "meaning": "大家、大雨"
+      },
+      {
+        "char": "海",
+        "meaning": "大海、海水"
+      },
+      {
+        "char": "朋",
+        "meaning": "朋友、朋輩"
+      },
+      {
+        "char": "友",
+        "meaning": "好友、友情"
+      },
+      {
+        "char": "們",
+        "meaning": "我們、同學們"
+      },
+      {
+        "char": "起",
+        "meaning": "一起、起床"
+      }
+    ]
+  },
+  "4": {
+    "name": "第四課",
+    "title": "🎯 康軒一上第四課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "子",
+        "meaning": "種子、孩子"
+      },
+      {
+        "char": "小",
+        "meaning": "小花、小草"
+      },
+      {
+        "char": "課",
+        "meaning": "上課、課本"
+      },
+      {
+        "char": "兩",
+        "meaning": "兩人、兩隻"
+      },
+      {
+        "char": "人",
+        "meaning": "大人、同學"
+      },
+      {
+        "char": "拉",
+        "meaning": "拉手、拉車"
+      },
+      {
+        "char": "看",
+        "meaning": "看書、看見"
+      },
+      {
+        "char": "找",
+        "meaning": "找到、尋找"
+      },
+      {
+        "char": "隻",
+        "meaning": "一隻、小隻"
+      },
+      {
+        "char": "青",
+        "meaning": "青蛙、青草"
+      },
+      {
+        "char": "蛙",
+        "meaning": "青蛙、樹蛙"
+      },
+      {
+        "char": "開",
+        "meaning": "開學、開花"
+      },
+      {
+        "char": "心",
+        "meaning": "開心、愛心"
+      }
+    ]
+  },
+  "5": {
+    "name": "第五課",
+    "title": "🎯 康軒一上第五課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "比",
+        "meaning": "比賽、比較"
+      },
+      {
+        "char": "門",
+        "meaning": "開門、大門"
+      },
+      {
+        "char": "裡",
+        "meaning": "這裡、家裡"
+      },
+      {
+        "char": "外",
+        "meaning": "外面、外頭"
+      },
+      {
+        "char": "有",
+        "meaning": "沒有、有趣"
+      },
+      {
+        "char": "什",
+        "meaning": "什麼"
+      },
+      {
+        "char": "麼",
+        "meaning": "這麼、多麼"
+      },
+      {
+        "char": "不",
+        "meaning": "不要、不行"
+      },
+      {
+        "char": "同",
+        "meaning": "同學、一同"
+      },
+      {
+        "char": "早",
+        "meaning": "早上、早安"
+      },
+      {
+        "char": "晚",
+        "meaning": "晚上、早晚"
+      },
+      {
+        "char": "王",
+        "meaning": "國王、大王"
+      },
+      {
+        "char": "主",
+        "meaning": "主動、主人"
+      },
+      {
+        "char": "又",
+        "meaning": "又大又圓、又是"
+      }
+    ]
+  },
+  "6": {
+    "name": "第六課",
+    "title": "🎯 康軒一上第六課生字猜謎九宮格",
+    "items": [
+      {
+        "char": "路",
+        "meaning": "路上、馬路"
+      },
+      {
+        "char": "長",
+        "meaning": "長短、長大"
+      },
+      {
+        "char": "白",
+        "meaning": "白雲、白色"
+      },
+      {
+        "char": "花",
+        "meaning": "花朵、開花"
+      },
+      {
+        "char": "紅",
+        "meaning": "紅花、紅色"
+      },
+      {
+        "char": "走",
+        "meaning": "走出、走路"
+      },
+      {
+        "char": "在",
+        "meaning": "在家、正在"
+      },
+      {
+        "char": "向",
+        "meaning": "向上、向著"
+      },
+      {
+        "char": "說",
+        "meaning": "說話、說明"
+      },
+      {
+        "char": "朵",
+        "meaning": "花朵、一朵朵"
+      },
+      {
+        "char": "從",
+        "meaning": "從小、從前"
+      },
+      {
+        "char": "頭",
+        "meaning": "頭部、頭髮"
+      },
+      {
+        "char": "尾",
+        "meaning": "結尾、尾巴"
+      },
+      {
+        "char": "跑",
+        "meaning": "跑步、奔跑"
+      }
+    ]
+  },
+  "prep": {
+    "name": "國字真簡單",
+    "title": "🎯 康軒一上國字真簡單生字猜謎九宮格",
+    "items": [
+      {
+        "char": "一",
+        "meaning": "第一、一天"
+      },
+      {
+        "char": "二",
+        "meaning": "第二、二人"
+      },
+      {
+        "char": "三",
+        "meaning": "第三、三月"
+      },
+      {
+        "char": "四",
+        "meaning": "第四、四季"
+      },
+      {
+        "char": "五",
+        "meaning": "第五、五月"
+      },
+      {
+        "char": "六",
+        "meaning": "第六、星期六"
+      },
+      {
+        "char": "七",
+        "meaning": "第七、七天"
+      },
+      {
+        "char": "八",
+        "meaning": "第八、八方"
+      },
+      {
+        "char": "九",
+        "meaning": "第九、九月"
+      },
+      {
+        "char": "十",
+        "meaning": "十分、十字路口"
+      }
+    ]
+  }
+};
+
+    let revealedBlocks = new Set();
+    let totalBlocks = 9;
+    let currentLessonKey = '1';
+    let characters = lessonData[currentLessonKey].items;
+    let currentCharacterIndex = 0;
+    let shuffledIndices = [];
+    let currentQuestionNumber = 0;
+
+    // 音效合成 (Web Audio API)
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playSound(type) {
+      try {
+        if (!audioCtx && AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        if (type === 'pop') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'fanfare') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.4);
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 語音朗讀漢字
+    function speakChar(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.rate = 0.85;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+      }
+    }
+
+    // 初始化隨機順序
+    function initializeRandomOrder() {
+      shuffledIndices = [];
+      for (let i = 0; i < characters.length; i++) {
+        shuffledIndices.push(i);
+      }
+      // Fisher-Yates 洗牌
+      for (let i = shuffledIndices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+      }
+      currentQuestionNumber = 0;
+      currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+      updateDisplay();
+    }
+
+    function switchLesson(lessonKey) {
+      currentLessonKey = lessonKey;
+      characters = lessonData[currentLessonKey].items;
+
+      document.querySelectorAll('.lesson-btn').forEach(btn => {
+        if (btn.dataset.lesson === lessonKey) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      document.getElementById('mainTitle').textContent = lessonData[currentLessonKey].title;
+      resetGame();
+      initializeRandomOrder();
+    }
+
+    function revealBlock(blockNumber) {
+      const block = document.querySelector(`.block-${blockNumber}`);
+      if (block && !revealedBlocks.has(blockNumber)) {
+        block.classList.add('clicked');
+        revealedBlocks.add(blockNumber);
+        playSound('pop');
+
+        if (revealedBlocks.size === totalBlocks) {
+          setTimeout(showCompletion, 250);
+        }
+      }
+    }
+
+    function showCompletion() {
+      const currentItem = characters[currentCharacterIndex];
+      playSound('fanfare');
+      speakChar(currentItem.char);
+      document.getElementById('completionMessage').classList.add('show');
+    }
+
+    function resetGame() {
+      revealedBlocks.clear();
+      document.getElementById('completionMessage').classList.remove('show');
+      for (let i = 1; i <= totalBlocks; i++) {
+        const block = document.querySelector(`.block-${i}`);
+        if (block) block.classList.remove('clicked');
+      }
+    }
+
+    function revealAll() {
+      for (let i = 1; i <= totalBlocks; i++) {
+        const block = document.querySelector(`.block-${i}`);
+        if (block) {
+          block.classList.add('clicked');
+          revealedBlocks.add(i);
+        }
+      }
+      setTimeout(showCompletion, 250);
+    }
+
+    function updateDisplay() {
+      const item = characters[currentCharacterIndex];
+      document.getElementById('characterCard').textContent = item.char;
+      document.getElementById('questionCounter').textContent = `(第 ${currentQuestionNumber + 1} 題 / 共 ${characters.length} 題)`;
+
+      const completionMsg = document.getElementById('completionMessage');
+      completionMsg.innerHTML = `
+        <h2>🎉 恭喜完成！</h2>
+        <p>成功揭示生字：<strong style="font-size: 2.3rem; color: #ffeaa7; margin: 0 4px;">${item.char}</strong></p>
+        <p style="font-size: 1.15rem; margin-top: 6px;">語詞範例 / 意思：<strong>${item.meaning}</strong></p>
+        <div style="margin-top: 15px;">
+          <button class="btn btn-primary" onclick="resetGame()" style="margin: 4px;">🔄 再猜一次</button>
+          <button class="btn btn-secondary" onclick="newCharacter()" style="margin: 4px;">🎲 下一題 ▶</button>
+        </div>
+      `;
+    }
+
+    function newCharacter() {
+      resetGame();
+
+      setTimeout(() => {
+        currentQuestionNumber++;
+        if (currentQuestionNumber >= characters.length) {
+          initializeRandomOrder();
+        } else {
+          currentCharacterIndex = shuffledIndices[currentQuestionNumber];
+          updateDisplay();
+        }
+      }, 350);
+    }
+
+    // 鍵盤快捷鍵
+    document.addEventListener('keydown', function(event) {
+      switch(event.key) {
+        case '1': revealBlock(1); break;
+        case '2': revealBlock(2); break;
+        case '3': revealBlock(3); break;
+        case '4': revealBlock(4); break;
+        case '5': revealBlock(5); break;
+        case '6': revealBlock(6); break;
+        case '7': revealBlock(7); break;
+        case '8': revealBlock(8); break;
+        case '9': revealBlock(9); break;
+        case 'r':
+        case 'R': resetGame(); break;
+        case ' ':
+          event.preventDefault();
+          revealAll();
+          break;
+        case 'n':
+        case 'N':
+        case 'Enter': newCharacter(); break;
+      }
+    });
+
+    // 啟動初始化
+    initializeRandomOrder();
+  </script>
+</body>
+</html>
