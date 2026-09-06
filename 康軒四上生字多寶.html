@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒四上生字多寶</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+      background: linear-gradient(135deg, #1E88E5 0%, #1565C0 50%, #4A148C 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #333;
+    }
+
+    .game-container {
+      max-width: 1080px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      padding-left: 140px;
+    }
+
+    /* Lesson Navigation Sidebar */
+    .lesson-buttons {
+      position: fixed;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 10px 5px;
+      z-index: 100;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.4) transparent;
+    }
+
+    .lesson-buttons::-webkit-scrollbar {
+      width: 6px;
+    }
+    .lesson-buttons::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.4);
+      border-radius: 10px;
+    }
+
+    .lesson-btn {
+      background: linear-gradient(135deg, #4CAF50, #2E7D32);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-weight: bold;
+      min-width: 110px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
+
+    .lesson-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+      background: linear-gradient(135deg, #66BB6A, #388E3C);
+    }
+
+    .lesson-btn.active {
+      background: linear-gradient(135deg, #FF5252, #D32F2F);
+      transform: scale(1.06);
+      box-shadow: 0 0 15px rgba(255, 82, 82, 0.6);
+    }
+
+    .title {
+      color: white;
+      font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+      text-shadow: 2px 3px 6px rgba(0,0,0,0.35);
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: rgba(255,255,255,0.92);
+      font-size: 1.15rem;
+      margin-bottom: 18px;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .game-info {
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 16px;
+      padding: 12px 24px;
+      margin: 0 auto 20px auto;
+      max-width: 600px;
+      color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .question-number {
+      font-size: 1.35rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .cards-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 50px;
+      margin: 20px 0 30px 0;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 10px solid #FFFDF6;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.25), inset 0 0 15px rgba(0,0,0,0.06);
+      position: relative;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .character {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: #333;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 12px;
+      transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+      text-align: center;
+      position: absolute;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .character:hover {
+      background: rgba(255, 235, 59, 0.4);
+      transform: translate(-50%, -50%) scale(1.25) !important;
+      z-index: 10;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+
+    .character.selected {
+      background: #4CAF50;
+      color: white !important;
+      transform: translate(-50%, -50%) scale(1.3) !important;
+      z-index: 15;
+    }
+
+    .character.correct {
+      background: #4CAF50;
+      color: white !important;
+      animation: bounce 0.6s ease;
+      z-index: 20;
+      box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
+    }
+
+    .character.wrong {
+      background: #F44336;
+      color: white !important;
+      animation: shake 0.6s ease;
+      z-index: 20;
+      box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
+    }
+
+    @keyframes bounce {
+      0%, 20%, 60%, 100% { transform: translate(-50%, -50%) translateY(0); }
+      40% { transform: translate(-50%, -50%) translateY(-22px) scale(1.35); }
+      80% { transform: translate(-50%, -50%) translateY(-10px) scale(1.2); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+      20%, 60% { transform: translate(-50%, -50%) translateX(-12px); }
+      40%, 80% { transform: translate(-50%, -50%) translateX(12px); }
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #FF9800, #F57C00);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 1.15rem;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-weight: 800;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+      background: linear-gradient(135deg, #FFA726, #FB8C00);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #607D8B, #455A64);
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, #78909C, #546E7A);
+    }
+
+    .feedback {
+      margin: 15px 0;
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 32px;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    }
+
+    .game-complete {
+      background: rgba(46, 125, 50, 0.95);
+      backdrop-filter: blur(12px);
+      border: 3px solid rgba(255,255,255,0.6);
+      border-radius: 24px;
+      padding: 35px 25px;
+      color: white;
+      margin: 25px auto;
+      max-width: 500px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .game-complete h2 {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+    }
+    .game-complete p {
+      font-size: 1.3rem;
+      margin: 8px 0;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      animation: confetti-fall 3.2s linear forwards;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-10vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .ribbon {
+      position: fixed;
+      top: 0;
+      width: 90px;
+      height: 100%;
+      background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3);
+      background-size: 400% 400%;
+      animation: ribbon-wave 2s ease-in-out, gradient-shift 3s ease-in-out;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .ribbon.left { left: 0; transform: translateX(-100%); }
+    .ribbon.right { right: 0; transform: translateX(100%); }
+
+    @keyframes ribbon-wave {
+      0% { opacity: 0; transform: translateX(-100%); }
+      20%, 80% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(-100%); }
+    }
+    @keyframes gradient-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* Home navigation back button */
+    .home-btn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .home-btn:hover {
+      background: rgba(255,255,255,0.4);
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 900px) {
+      .game-container {
+        padding-left: 0;
+      }
+      .lesson-buttons {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-bottom: 20px;
+        max-height: none;
+        gap: 8px;
+        padding: 0;
+      }
+      .lesson-btn {
+        font-size: 0.9rem;
+        padding: 8px 14px;
+        min-width: auto;
+      }
+      .cards-container {
+        gap: 25px;
+      }
+      .card {
+        width: 270px;
+        height: 270px;
+      }
+      .character {
+        font-size: 2.6rem;
+      }
+      .title {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="home-btn">🏠 回首頁</a>
+
+  <div class="lesson-buttons" id="lessonButtonsContainer">
+    <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1', this)">第一課</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2', this)">第二課</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3', this)">第三課</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4', this)">第四課</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5', this)">第五課</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6', this)">第六課</button>
+    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7', this)">第七課</button>
+    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8', this)">第八課</button>
+    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9', this)">第九課</button>
+    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10', this)">第十課</button>
+    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11', this)">第十一課</button>
+    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12', this)">第十二課</button>
+    <button class="lesson-btn" data-lesson="all" onclick="switchLesson('all', this)">🌟 全冊挑戰</button>
+    
+  </div>
+
+  <div class="game-container">
+    <h1 class="title" id="gameTitle">康軒四上第一課生字</h1>
+    <div class="subtitle">尋找兩張卡片中唯一相同的生字！</div>
+
+    <div class="game-info">
+      <div class="question-number">
+        第 <span id="currentQuestion">1</span> 題 / 共 <span id="totalQuestions">0</span> 題　｜　得分：<span id="score" style="color: #FFEB3B; font-weight: 900;">0</span> 分
+      </div>
+    </div>
+
+    <div class="cards-container">
+      <div class="card left" id="leftCard"></div>
+      <div class="card right" id="rightCard"></div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="controls">
+      <button class="btn" id="nextBtn" onclick="nextQuestion()" disabled>下一題 ▶</button>
+      <button class="btn btn-secondary" id="restartBtn" onclick="restartGame()">🔄 重新開始</button>
+    </div>
+
+    <div id="gameComplete" class="game-complete" style="display: none;">
+      <h2>🎉 恭喜完成本課挑戰！</h2>
+      <p>最終得分：<span id="finalScore" style="color: #FFEB3B; font-weight: bold;"></span> / <span id="maxScore"></span> 分</p>
+      <p>太厲害了！點選其他課次繼續練習吧！</p>
+      <button class="btn" style="margin-top: 15px;" onclick="restartGame()">再玩一次 🔁</button>
+    </div>
+  </div>
+
+  <script>
+    // 各課生字資料
+    const lessonData = {
+  "1": {
+    "name": "第一課",
+    "title": "康軒四上第一課生字",
+    "characters": [
+      "泳",
+      "串",
+      "般",
+      "姿",
+      "溜",
+      "耳",
+      "鷹",
+      "滑",
+      "遨",
+      "緩",
+      "陀",
+      "螺",
+      "轉",
+      "躍",
+      "煩"
+    ]
+  },
+  "2": {
+    "name": "第二課",
+    "title": "康軒四上第二課生字",
+    "characters": [
+      "招",
+      "湯",
+      "拋",
+      "糧",
+      "姐",
+      "爭",
+      "警",
+      "偷",
+      "則",
+      "繩",
+      "依",
+      "捨",
+      "束",
+      "暫",
+      "幸"
+    ]
+  },
+  "3": {
+    "name": "第三課",
+    "title": "康軒四上第三課生字",
+    "characters": [
+      "社",
+      "邀",
+      "與",
+      "遙",
+      "投",
+      "熟",
+      "巧",
+      "彈",
+      "曾",
+      "揮",
+      "彼",
+      "秒",
+      "喧",
+      "優",
+      "弧"
+    ]
+  },
+  "4": {
+    "name": "第四課",
+    "title": "康軒四上第四課生字",
+    "characters": [
+      "偕",
+      "醫",
+      "命",
+      "奉",
+      "獻",
+      "療",
+      "衛",
+      "藥",
+      "治",
+      "翻",
+      "嶺",
+      "捐",
+      "宿",
+      "堂",
+      "濃"
+    ]
+  },
+  "5": {
+    "name": "第五課",
+    "title": "康軒四上第五課生字",
+    "characters": [
+      "凱",
+      "勒",
+      "業",
+      "勵",
+      "寧",
+      "視",
+      "注",
+      "憑",
+      "蓓",
+      "蕾",
+      "何",
+      "毯",
+      "適",
+      "繽",
+      "盡"
+    ]
+  },
+  "6": {
+    "name": "第六課",
+    "title": "康軒四上第六課生字",
+    "characters": [
+      "秀",
+      "稱",
+      "朗",
+      "登",
+      "穆",
+      "瑪",
+      "峰",
+      "母",
+      "酷",
+      "磨",
+      "攀",
+      "氧",
+      "訓",
+      "谷",
+      "響"
+    ]
+  },
+  "7": {
+    "name": "第七課",
+    "title": "康軒四上第七課生字",
+    "characters": [
+      "薄",
+      "烙",
+      "沾",
+      "咖",
+      "哩",
+      "印",
+      "甩",
+      "材",
+      "醬",
+      "義",
+      "麵",
+      "郁",
+      "壽",
+      "醋",
+      "未"
+    ]
+  },
+  "8": {
+    "name": "第八課",
+    "title": "康軒四上第八課生字",
+    "characters": [
+      "臨",
+      "樓",
+      "頸",
+      "代",
+      "濟",
+      "阻",
+      "尼",
+      "器",
+      "震",
+      "京",
+      "晴",
+      "塔",
+      "訊",
+      "吉",
+      "橋"
+    ]
+  },
+  "9": {
+    "name": "第九課",
+    "title": "康軒四上第九課生字",
+    "characters": [
+      "佛",
+      "泰",
+      "廟",
+      "華",
+      "尚",
+      "逛",
+      "埃",
+      "羅",
+      "勢",
+      "窪",
+      "堤",
+      "防",
+      "潮",
+      "鬱",
+      "划"
+    ]
+  },
+  "10": {
+    "name": "第十課",
+    "title": "康軒四上第十課生字",
+    "characters": [
+      "幻",
+      "旋",
+      "扁",
+      "瞬",
+      "驗",
+      "牙",
+      "芝",
+      "盜",
+      "邁",
+      "困",
+      "龐",
+      "搓",
+      "榮",
+      "富",
+      "遍"
+    ]
+  },
+  "11": {
+    "name": "第十一課",
+    "title": "康軒四上第十一課生字",
+    "characters": [
+      "背",
+      "錶",
+      "掉",
+      "深",
+      "鎖",
+      "鑰",
+      "匙",
+      "汁",
+      "示",
+      "迫",
+      "袋",
+      "哭",
+      "盒",
+      "扇",
+      "遲"
+    ]
+  },
+  "12": {
+    "name": "第十二課",
+    "title": "康軒四上第十二課生字",
+    "characters": [
+      "妻",
+      "耐",
+      "革",
+      "賣",
+      "倍",
+      "謎",
+      "鐘",
+      "敲",
+      "靈",
+      "鎚",
+      "嘖",
+      "足",
+      "蹈",
+      "蹦",
+      "內"
+    ]
+  },
+  "all": {
+    "name": "🌟 全冊挑戰",
+    "title": "康軒四上全冊生字綜合挑戰",
+    "characters": [
+      "泳",
+      "串",
+      "般",
+      "姿",
+      "溜",
+      "耳",
+      "鷹",
+      "滑",
+      "遨",
+      "緩",
+      "陀",
+      "螺",
+      "轉",
+      "躍",
+      "煩",
+      "招",
+      "湯",
+      "拋",
+      "糧",
+      "姐",
+      "爭",
+      "警",
+      "偷",
+      "則",
+      "繩",
+      "依",
+      "捨",
+      "束",
+      "暫",
+      "幸",
+      "社",
+      "邀",
+      "與",
+      "遙",
+      "投",
+      "熟",
+      "巧",
+      "彈",
+      "曾",
+      "揮",
+      "彼",
+      "秒",
+      "喧",
+      "優",
+      "弧",
+      "偕",
+      "醫",
+      "命",
+      "奉",
+      "獻",
+      "療",
+      "衛",
+      "藥",
+      "治",
+      "翻",
+      "嶺",
+      "捐",
+      "宿",
+      "堂",
+      "濃",
+      "凱",
+      "勒",
+      "業",
+      "勵",
+      "寧",
+      "視",
+      "注",
+      "憑",
+      "蓓",
+      "蕾",
+      "何",
+      "毯",
+      "適",
+      "繽",
+      "盡",
+      "秀",
+      "稱",
+      "朗",
+      "登",
+      "穆",
+      "瑪",
+      "峰",
+      "母",
+      "酷",
+      "磨",
+      "攀",
+      "氧",
+      "訓",
+      "谷",
+      "響",
+      "薄",
+      "烙",
+      "沾",
+      "咖",
+      "哩",
+      "印",
+      "甩",
+      "材",
+      "醬",
+      "義",
+      "麵",
+      "郁",
+      "壽",
+      "醋",
+      "未",
+      "臨",
+      "樓",
+      "頸",
+      "代",
+      "濟",
+      "阻",
+      "尼",
+      "器",
+      "震",
+      "京",
+      "晴",
+      "塔",
+      "訊",
+      "吉",
+      "橋",
+      "佛",
+      "泰",
+      "廟",
+      "華",
+      "尚",
+      "逛",
+      "埃",
+      "羅",
+      "勢",
+      "窪",
+      "堤",
+      "防",
+      "潮",
+      "鬱",
+      "划",
+      "幻",
+      "旋",
+      "扁",
+      "瞬",
+      "驗",
+      "牙",
+      "芝",
+      "盜",
+      "邁",
+      "困",
+      "龐",
+      "搓",
+      "榮",
+      "富",
+      "遍",
+      "背",
+      "錶",
+      "掉",
+      "深",
+      "鎖",
+      "鑰",
+      "匙",
+      "汁",
+      "示",
+      "迫",
+      "袋",
+      "哭",
+      "盒",
+      "扇",
+      "遲",
+      "妻",
+      "耐",
+      "革",
+      "賣",
+      "倍",
+      "謎",
+      "鐘",
+      "敲",
+      "靈",
+      "鎚",
+      "嘖",
+      "足",
+      "蹈",
+      "蹦",
+      "內"
+    ]
+  }
+};
+
+    let currentLessonKey = '1';
+    let characters = lessonData[currentLessonKey].characters;
+    let currentQuestionNum = 1;
+    let score = 0;
+    let gameQuestions = [];
+    let currentAnswer = '';
+    let questionAnswered = false;
+
+    // 音效合成 (Web Audio API)
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+    
+    function playSound(type) {
+      try {
+        if (!audioCtx && AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+        if (type === 'correct') {
+          const osc1 = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc1.type = 'triangle';
+          osc2.type = 'sine';
+
+          osc1.frequency.setValueAtTime(523.25, now);
+          osc1.frequency.setValueAtTime(659.25, now + 0.08);
+          osc1.frequency.setValueAtTime(783.99, now + 0.16);
+          osc1.frequency.setValueAtTime(1046.50, now + 0.24);
+
+          osc2.frequency.setValueAtTime(261.63, now);
+          osc2.frequency.setValueAtTime(329.63, now + 0.08);
+          osc2.frequency.setValueAtTime(392.00, now + 0.16);
+          osc2.frequency.setValueAtTime(523.25, now + 0.24);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc1.start(now);
+          osc2.start(now);
+          osc1.stop(now + 0.6);
+          osc2.stop(now + 0.6);
+        } else if (type === 'wrong') {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.setValueAtTime(130, now + 0.12);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.35);
+        }
+      } catch (e) {
+        console.log('Audio error', e);
+      }
+    }
+
+    // 語音朗讀漢字
+    function speakChar(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.rate = 0.85;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+      }
+    }
+
+    // 切換課程
+    function switchLesson(lessonKey, btnElement) {
+      currentLessonKey = lessonKey;
+      characters = lessonData[lessonKey].characters;
+
+      // 更新標題
+      document.getElementById('gameTitle').textContent = lessonData[lessonKey].title;
+
+      // 更新按鈕狀態
+      document.querySelectorAll('.lesson-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (btnElement) {
+        btnElement.classList.add('active');
+      } else {
+        const targetBtn = document.querySelector(`[data-lesson="${lessonKey}"]`);
+        if (targetBtn) targetBtn.classList.add('active');
+      }
+
+      // 重新開始遊戲
+      restartGame();
+    }
+
+    // 生成題目清單
+    function generateQuestions() {
+      gameQuestions = [];
+      const total = characters.length;
+      for (let i = 0; i < total; i++) {
+        const question = generateQuestion(i);
+        gameQuestions.push(question);
+      }
+    }
+
+    // 生成單題
+    function generateQuestion(qIndex) {
+      const targetAns = characters[qIndex % characters.length];
+      const otherPool = characters.filter(c => c !== targetAns).sort(() => Math.random() - 0.5);
+
+      const M = characters.length;
+      let numOthers = 7;
+      if (M >= 15) {
+        numOthers = 7;
+      } else if (M >= 13) {
+        numOthers = 6;
+      } else if (M >= 11) {
+        numOthers = 5;
+      } else if (M >= 9) {
+        numOthers = 4;
+      } else {
+        numOthers = Math.max(2, Math.floor((M - 1) / 2));
+      }
+
+      const leftOthers = otherPool.slice(0, numOthers);
+      const rightOthers = otherPool.slice(numOthers, numOthers * 2);
+
+      const leftCard = [targetAns, ...leftOthers].sort(() => Math.random() - 0.5);
+      const rightCard = [targetAns, ...rightOthers].sort(() => Math.random() - 0.5);
+
+      return {
+        leftCard,
+        rightCard,
+        answer: targetAns,
+        cardSymbolCount: numOthers + 1
+      };
+    }
+
+    // 在圓形內分佈位置
+    function generateGridPositions(count, cardRadius) {
+      const gridSize = 4;
+      const cellSize = (cardRadius * 2) / gridSize;
+      const startOffset = -cardRadius + cellSize / 2;
+
+      const allGridPositions = [];
+      for (let row = 0; row < gridSize; row++) {
+        for (let col = 0; col < gridSize; col++) {
+          const x = startOffset + col * cellSize;
+          const y = startOffset + row * cellSize;
+          const distanceFromCenter = Math.sqrt(x * x + y * y);
+          if (distanceFromCenter <= cardRadius * 0.82) {
+            allGridPositions.push({ x, y });
+          }
+        }
+      }
+
+      const shuffled = [...allGridPositions].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    }
+
+    // 顯示當前題目
+    function displayQuestion() {
+      const question = gameQuestions[currentQuestionNum - 1];
+      currentAnswer = question.answer;
+      questionAnswered = false;
+
+      const leftCardEl = document.getElementById('leftCard');
+      const rightCardEl = document.getElementById('rightCard');
+      leftCardEl.innerHTML = '';
+      rightCardEl.innerHTML = '';
+
+      const count = question.cardSymbolCount;
+      const leftPositions = generateGridPositions(count, 150);
+      const rightPositions = generateGridPositions(count, 150);
+
+      const allColors = [
+        '#E53E3E', '#00B5D8', '#3182CE', '#2E7D32',
+        '#D69E2E', '#805AD5', '#D81B60', '#DD6B20',
+        '#00897B', '#5E35B1', '#C2185B', '#1E88E5'
+      ];
+
+      // 渲染左卡
+      question.leftCard.forEach((char, index) => {
+        const charEl = document.createElement('div');
+        charEl.className = 'character';
+        charEl.textContent = char;
+
+        const pos = leftPositions[index] || { x: 0, y: 0 };
+        charEl.style.left = `calc(50% + ${pos.x}px)`;
+        charEl.style.top = `calc(50% + ${pos.y}px)`;
+
+        const rot = Math.random() * 50 - 25;
+        charEl.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+        charEl.style.color = allColors[(index * 3 + currentQuestionNum) % allColors.length];
+
+        charEl.onclick = () => selectCharacter(char, charEl);
+        leftCardEl.appendChild(charEl);
+      });
+
+      // 渲染右卡
+      question.rightCard.forEach((char, index) => {
+        const charEl = document.createElement('div');
+        charEl.className = 'character';
+        charEl.textContent = char;
+
+        const pos = rightPositions[index] || { x: 0, y: 0 };
+        charEl.style.left = `calc(50% + ${pos.x}px)`;
+        charEl.style.top = `calc(50% + ${pos.y}px)`;
+
+        const rot = Math.random() * 50 - 25;
+        charEl.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+        charEl.style.color = allColors[(index * 3 + 7 + currentQuestionNum) % allColors.length];
+
+        charEl.onclick = () => selectCharacter(char, charEl);
+        rightCardEl.appendChild(charEl);
+      });
+
+      // 更新進度顯示
+      document.getElementById('currentQuestion').textContent = currentQuestionNum;
+      document.getElementById('totalQuestions').textContent = gameQuestions.length;
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('nextBtn').disabled = true;
+    }
+
+    // 點擊選擇字符
+    function selectCharacter(char, element) {
+      if (questionAnswered) return;
+      questionAnswered = true;
+
+      // 發音
+      speakChar(char);
+
+      if (char === currentAnswer) {
+        // 答對
+        score += 1;
+        playSound('correct');
+
+        document.querySelectorAll('.character').forEach(el => {
+          if (el.textContent === currentAnswer) {
+            el.classList.add('correct');
+          }
+        });
+
+        document.getElementById('feedback').innerHTML = `✨ 太棒了！答對了：「<span style="color: #FFEB3B; font-size: 1.6rem;">${currentAnswer}</span>」`;
+        showCelebration();
+      } else {
+        // 答錯
+        playSound('wrong');
+        element.classList.add('wrong');
+
+        document.querySelectorAll('.character').forEach(el => {
+          if (el.textContent === currentAnswer) {
+            el.classList.add('correct');
+          }
+        });
+
+        document.getElementById('feedback').innerHTML = `💡 共同生字是：「<span style="color: #FFEB3B; font-size: 1.6rem;">${currentAnswer}</span>」`;
+      }
+
+      document.getElementById('score').textContent = score;
+      document.getElementById('nextBtn').disabled = false;
+    }
+
+    // 慶祝特效
+    function showCelebration() {
+      const leftRibbon = document.createElement('div');
+      leftRibbon.className = 'ribbon left';
+      document.body.appendChild(leftRibbon);
+
+      const rightRibbon = document.createElement('div');
+      rightRibbon.className = 'ribbon right';
+      document.body.appendChild(rightRibbon);
+
+      for (let i = 0; i < 40; i++) {
+        setTimeout(() => createConfetti(), i * 45);
+      }
+
+      setTimeout(() => {
+        leftRibbon.remove();
+        rightRibbon.remove();
+      }, 2500);
+    }
+
+    function createConfetti() {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#a8e6cf', '#ffd93d', '#ff7675'];
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.top = '-20px';
+      confetti.style.animationDuration = (Math.random() * 1.5 + 2) + 's';
+      document.body.appendChild(confetti);
+
+      setTimeout(() => confetti.remove(), 3500);
+    }
+
+    // 下一題
+    function nextQuestion() {
+      if (currentQuestionNum < gameQuestions.length) {
+        currentQuestionNum++;
+        displayQuestion();
+      } else {
+        // 遊戲結算
+        document.getElementById('finalScore').textContent = score;
+        document.getElementById('maxScore').textContent = gameQuestions.length;
+        document.getElementById('gameComplete').style.display = 'block';
+        document.getElementById('nextBtn').disabled = true;
+      }
+    }
+
+    // 重新開始
+    function restartGame() {
+      currentQuestionNum = 1;
+      score = 0;
+      document.getElementById('score').textContent = '0';
+      document.getElementById('gameComplete').style.display = 'none';
+      document.getElementById('nextBtn').disabled = true;
+
+      generateQuestions();
+      displayQuestion();
+    }
+
+    // 初始載入
+    generateQuestions();
+    displayQuestion();
+  </script>
+</body>
+</html>
