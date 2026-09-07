@@ -294,7 +294,13 @@
   <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
   <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
- </head>
+   <style>
+    /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
+    .character, .char, .word, .vocab, .meaning, .question, .answer, .answer-char, .character-card, .overlay-char, .block, strong, b, .char-display, .word-display, .bingo-cell, .mole-char, .question-char, .stage0-char, .stage2-char, .hint-text, .question-text {
+        font-weight: normal !important;
+    }
+  </style>
+</head>
  <body>
   <div style="display: flex; gap: 30px; align-items: flex-start; width: 100%; max-width: 900px; justify-content: center;">
    <div class="lesson-buttons">
