@@ -416,18 +416,18 @@
   <!-- Left Sidebar -->
   <div class="lesson-sidebar">
     <div class="sidebar-title">📚 選擇課程</div>
-        <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1')">第一課 水陸小高手</button>
-    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2')">第二課 放學後</button>
-    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3')">第三課 我的籃球夢</button>
-    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4')">第四課 永遠的馬偕</button>
-    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5')">第五課 假如給我三天光明</button>
-    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6')">第六課 攀登生命的高峰</button>
-    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7')">第七課 美味的一堂課</button>
-    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8')">第八課 建築界的長頸鹿</button>
-    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9')">第九課 請到我的家鄉來</button>
-    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10')">第十課 奇幻旋律</button>
-    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11')">第十一課 兔子先生等等我</button>
-    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12')">第十二課 老鞋匠和小精靈</button>
+        <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1')">第一課</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2')">第二課</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3')">第三課</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4')">第四課</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5')">第五課</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6')">第六課</button>
+    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7')">第七課</button>
+    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8')">第八課</button>
+    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9')">第九課</button>
+    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10')">第十課</button>
+    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11')">第十一課</button>
+    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12')">第十二課</button>
   </div>
 
   <main class="game-container">
@@ -475,11 +475,260 @@
       window.location.href = target;
     }
 
-    // 各課題目資料
     const lessonsData = {
   "1": {
-    "name": "第一課 水陸小高手",
-    "title": "🧩 第一課 水陸小高手 生字轉轉轉",
+    "name": "第一課",
+    "title": "🧩 第一課 生字轉轉轉",
+    "questions": [
+      { "answer": "泳", "meaning": "游泳、泳池", "stage0_components": ["氵", "丶", "水"], "stage2_components": ["氵", "永"] },
+      { "answer": "串", "meaning": "一串、客串", "stage0_components": ["口", "口", "丨"], "stage2_components": ["口\n口\n丨"] },
+      { "answer": "般", "meaning": "一般、百般", "stage0_components": ["舟", "几", "又"], "stage2_components": ["舟", "殳"] },
+      { "answer": "姿", "meaning": "姿勢、舞姿", "stage0_components": ["冫", "欠", "女"], "stage2_components": ["次\n女"] },
+      { "answer": "溜", "meaning": "溜冰、溜走", "stage0_components": ["氵", "卯", "田"], "stage2_components": ["氵", "留"] },
+      { "answer": "耳", "meaning": "耳朵、耳機", "stage0_components": ["一", "丨", "二"], "stage2_components": ["耳"] },
+      { "answer": "鷹", "meaning": "老鷹、獵鷹", "stage0_components": ["广", "亻", "隹", "鳥"], "stage2_components": ["雁\n鳥"] },
+      { "answer": "滑", "meaning": "滑動、滑稽", "stage0_components": ["氵", "骨"], "stage2_components": ["氵", "骨"] },
+      { "answer": "遨", "meaning": "遨遊、遨翔", "stage0_components": ["土", "方", "攵", "辶"], "stage2_components": ["敖", "辶"] },
+      { "answer": "緩", "meaning": "緩慢、舒緩", "stage0_components": ["糹", "爫", "一", "友"], "stage2_components": ["糹", "爰"] },
+      { "answer": "陀", "meaning": "陀螺、頭陀", "stage0_components": ["阝", "宀", "匕"], "stage2_components": ["阝", "它"] },
+      { "answer": "螺", "meaning": "螺絲、海螺", "stage0_components": ["虫", "田", "糸"], "stage2_components": ["虫", "累"] },
+      { "answer": "轉", "meaning": "轉動、旋轉", "stage0_components": ["車", "一", "口", "寸"], "stage2_components": ["車", "專"] },
+      { "answer": "躍", "meaning": "踴躍、跳躍", "stage0_components": ["足", "羽", "隹"], "stage2_components": ["足", "翟"] },
+      { "answer": "煩", "meaning": "煩惱、麻煩", "stage0_components": ["火", "頁"], "stage2_components": ["火", "頁"] }
+    ]
+  },
+  "2": {
+    "name": "第二課",
+    "title": "🧩 第二課 生字轉轉轉",
+    "questions": [
+      { "answer": "招", "meaning": "招手、招待", "stage0_components": ["扌", "刀", "口"], "stage2_components": ["扌", "召"] },
+      { "answer": "湯", "meaning": "喝湯、湯圓", "stage0_components": ["氵", "日", "一", "勿"], "stage2_components": ["氵", "昜"] },
+      { "answer": "拋", "meaning": "拋棄、拋物線", "stage0_components": ["扌", "九", "力"], "stage2_components": ["扌", "尥"] },
+      { "answer": "糧", "meaning": "糧食、乾糧", "stage0_components": ["米", "日", "一", "里"], "stage2_components": ["米", "量"] },
+      { "answer": "姐", "meaning": "姐姐、小姐", "stage0_components": ["女", "且"], "stage2_components": ["女", "且"] },
+      { "answer": "爭", "meaning": "爭取、戰爭", "stage0_components": ["爫", "彐", "亅"], "stage2_components": ["爭"] },
+      { "answer": "警", "meaning": "警察、警告", "stage0_components": ["艹", "句", "攵", "言"], "stage2_components": ["敬\n言"] },
+      { "answer": "偷", "meaning": "小偷、偷偷", "stage0_components": ["亻", "人", "一", "月", "刂"], "stage2_components": ["亻", "俞"] },
+      { "answer": "則", "meaning": "規則、原則", "stage0_components": ["貝", "刂"], "stage2_components": ["貝", "刂"] },
+      { "answer": "繩", "meaning": "繩子、跳繩", "stage0_components": ["糹", "口", "黽"], "stage2_components": ["糹", "黽"] },
+      { "answer": "依", "meaning": "依靠、依然", "stage0_components": ["亻", "衣"], "stage2_components": ["亻", "衣"] },
+      { "answer": "捨", "meaning": "捨棄、施捨", "stage0_components": ["扌", "人", "干", "口"], "stage2_components": ["扌", "舍"] },
+      { "answer": "束", "meaning": "結束、花束", "stage0_components": ["木", "口"], "stage2_components": ["束"] },
+      { "answer": "暫", "meaning": "暫時、短暫", "stage0_components": ["車", "斤", "日"], "stage2_components": ["斬\n日"] },
+      { "answer": "幸", "meaning": "幸福、幸運", "stage0_components": ["土", "丷", "干"], "stage2_components": ["幸"] }
+    ]
+  },
+  "3": {
+    "name": "第三課",
+    "title": "🧩 第三課 生字轉轉轉",
+    "questions": [
+      { "answer": "社", "meaning": "社會、社區", "stage0_components": ["礻", "土"], "stage2_components": ["礻", "土"] },
+      { "answer": "邀", "meaning": "邀請、邀約", "stage0_components": ["白", "方", "攵", "辶"], "stage2_components": ["敫", "辶"] },
+      { "answer": "與", "meaning": "參與、與其", "stage0_components": ["臼", "一", "八"], "stage2_components": ["與"] },
+      { "answer": "遙", "meaning": "遙遠、遙控", "stage0_components": ["月", "缶", "辶"], "stage2_components": ["䍃", "辶"] },
+      { "answer": "投", "meaning": "投票、投入", "stage0_components": ["扌", "几", "又"], "stage2_components": ["扌", "殳"] },
+      { "answer": "熟", "meaning": "熟悉、成熟", "stage0_components": ["享", "丸", "灬"], "stage2_components": ["孰\n灬"] },
+      { "answer": "巧", "meaning": "巧妙、乖巧", "stage0_components": ["工", "丂"], "stage2_components": ["工", "丂"] },
+      { "answer": "彈", "meaning": "子彈、彈琴", "stage0_components": ["弓", "口", "口", "十"], "stage2_components": ["弓", "單"] },
+      { "answer": "曾", "meaning": "曾經、未曾", "stage0_components": ["丷", "田", "日"], "stage2_components": ["曾"] },
+      { "answer": "揮", "meaning": "揮手、指揮", "stage0_components": ["扌", "冖", "車"], "stage2_components": ["扌", "軍"] },
+      { "answer": "彼", "meaning": "彼此、彼岸", "stage0_components": ["彳", "皮"], "stage2_components": ["彳", "皮"] },
+      { "answer": "秒", "meaning": "秒數、分秒", "stage0_components": ["禾", "少"], "stage2_components": ["禾", "少"] },
+      { "answer": "喧", "meaning": "喧嘩、喧鬧", "stage0_components": ["口", "宀", "一", "日"], "stage2_components": ["口", "宣"] },
+      { "answer": "優", "meaning": "優秀、優點", "stage0_components": ["亻", "頁", "心", "夂"], "stage2_components": ["亻", "憂"] },
+      { "answer": "弧", "meaning": "弧線、圓弧", "stage0_components": ["弓", "瓜"], "stage2_components": ["弓", "瓜"] }
+    ]
+  },
+  "4": {
+    "name": "第四課",
+    "title": "🧩 第四課 生字轉轉轉",
+    "questions": [
+      { "answer": "偕", "meaning": "白頭偕老、偕同", "stage0_components": ["亻", "比", "白"], "stage2_components": ["亻", "皆"] },
+      { "answer": "醫", "meaning": "醫生、醫療", "stage0_components": ["匚", "矢", "殳", "酉"], "stage2_components": ["殹\n酉"] },
+      { "answer": "命", "meaning": "生命、命令", "stage0_components": ["亼", "一", "叩"], "stage2_components": ["亼\n叩"] },
+      { "answer": "奉", "meaning": "奉獻、信奉", "stage0_components": ["𡗗", "二", "小"], "stage2_components": ["𡗗\n𠬞"] },
+      { "answer": "獻", "meaning": "貢獻、奉獻", "stage0_components": ["虍", "鬲", "犬"], "stage2_components": ["鬳", "犬"] },
+      { "answer": "療", "meaning": "治療、療養", "stage0_components": ["疒", "大", "丷", "日", "小"], "stage2_components": ["疒", "尞"] },
+      { "answer": "衛", "meaning": "衛生、守衛", "stage0_components": ["彳", "韋", "亍"], "stage2_components": ["彳", "韋", "亍"] },
+      { "answer": "藥", "meaning": "吃藥、藥局", "stage0_components": ["艹", "幺", "白", "幺", "木"], "stage2_components": ["艹\n樂"] },
+      { "answer": "治", "meaning": "治病、統治", "stage0_components": ["氵", "厶", "口"], "stage2_components": ["氵", "台"] },
+      { "answer": "翻", "meaning": "翻書、翻譯", "stage0_components": ["釆", "田", "羽"], "stage2_components": ["番", "羽"] },
+      { "answer": "嶺", "meaning": "山嶺、崇山峻嶺", "stage0_components": ["山", "亼", "頁"], "stage2_components": ["山", "領"] },
+      { "answer": "捐", "meaning": "捐款、捐血", "stage0_components": ["扌", "口", "月"], "stage2_components": ["扌", "肙"] },
+      { "answer": "宿", "meaning": "住宿、宿舍", "stage0_components": ["宀", "亻", "百"], "stage2_components": ["宀\n佰"] },
+      { "answer": "堂", "meaning": "教堂、課堂", "stage0_components": ["⺌", "冖", "口", "土"], "stage2_components": ["尚\n土"] },
+      { "answer": "濃", "meaning": "濃茶、濃霧", "stage0_components": ["氵", "曲", "辰"], "stage2_components": ["氵", "農"] }
+    ]
+  },
+  "5": {
+    "name": "第五課",
+    "title": "🧩 第五課 生字轉轉轉",
+    "questions": [
+      { "answer": "凱", "meaning": "凱旋、凱歌", "stage0_components": ["山", "豆", "几"], "stage2_components": ["豈", "几"] },
+      { "answer": "勒", "meaning": "勒索、懸崖勒馬", "stage0_components": ["廿", "口", "十", "力"], "stage2_components": ["革", "力"] },
+      { "answer": "業", "meaning": "作業、事業", "stage0_components": ["丵", "䒑", "木"], "stage2_components": ["丵\n木"] },
+      { "answer": "勵", "meaning": "鼓勵、勉勵", "stage0_components": ["厂", "萬", "力"], "stage2_components": ["厲", "力"] },
+      { "answer": "寧", "meaning": "安寧、寧靜", "stage0_components": ["宀", "心", "皿", "丁"], "stage2_components": ["宀\n甯"] },
+      { "answer": "視", "meaning": "電視、視力", "stage0_components": ["礻", "見"], "stage2_components": ["礻", "見"] },
+      { "answer": "注", "meaning": "注意、注音", "stage0_components": ["氵", "主"], "stage2_components": ["氵", "主"] },
+      { "answer": "憑", "meaning": "憑證、任憑", "stage0_components": ["冫", "馬", "心"], "stage2_components": ["馮\n心"] },
+      { "answer": "蓓", "meaning": "蓓蕾、蓓蕾初綻", "stage0_components": ["艹", "亻", "咅"], "stage2_components": ["艹\n倍"] },
+      { "answer": "蕾", "meaning": "花蕾、芭蕾", "stage0_components": ["艹", "雨", "田"], "stage2_components": ["艹\n雷"] },
+      { "answer": "何", "meaning": "如何、任何", "stage0_components": ["亻", "丁", "口"], "stage2_components": ["亻", "可"] },
+      { "answer": "毯", "meaning": "地毯、毛毯", "stage0_components": ["毛", "炎"], "stage2_components": ["毛", "炎"] },
+      { "answer": "適", "meaning": "適合、適應", "stage0_components": ["辶", "亠", "丷", "冂", "古"], "stage2_components": ["辶", "啇"] },
+      { "answer": "繽", "meaning": "繽紛、落英繽紛", "stage0_components": ["糹", "宀", "頁", "八"], "stage2_components": ["糹", "賓"] },
+      { "answer": "盡", "meaning": "盡頭、盡力", "stage0_components": ["聿", "灬", "皿"], "stage2_components": ["聿\n皿"] }
+    ]
+  },
+  "6": {
+    "name": "第六課",
+    "title": "🧩 第六課 生字轉轉轉",
+    "questions": [
+      { "answer": "秀", "meaning": "優秀、秀麗", "stage0_components": ["禾", "乃"], "stage2_components": ["禾\n乃"] },
+      { "answer": "稱", "meaning": "稱讚、名稱", "stage0_components": ["禾", "爫", "冉"], "stage2_components": ["禾", "爯"] },
+      { "answer": "朗", "meaning": "開朗、晴朗", "stage0_components": ["良", "月"], "stage2_components": ["良", "月"] },
+      { "answer": "登", "meaning": "登山、登記", "stage0_components": ["癶", "豆"], "stage2_components": ["癶\n豆"] },
+      { "answer": "穆", "meaning": "肅穆、穆斯林", "stage0_components": ["禾", "白", "小", "彡"], "stage2_components": ["禾", "㣎"] },
+      { "answer": "瑪", "meaning": "瑪瑙、瑪格麗特", "stage0_components": ["王", "馬"], "stage2_components": ["王", "馬"] },
+      { "answer": "峰", "meaning": "山峰、高峰", "stage0_components": ["山", "夂", "丰"], "stage2_components": ["山", "夆"] },
+      { "answer": "母", "meaning": "母親、父母", "stage0_components": ["毋", "丶"], "stage2_components": ["毋\n丶"] },
+      { "answer": "酷", "meaning": "殘酷、酷熱", "stage0_components": ["酉", "告"], "stage2_components": ["酉", "告"] },
+      { "answer": "磨", "meaning": "磨練、折磨", "stage0_components": ["麻", "石"], "stage2_components": ["麻\n石"] },
+      { "answer": "攀", "meaning": "攀登、攀岩", "stage0_components": ["木", "爻", "木", "大", "手"], "stage2_components": ["樊\n手"] },
+      { "answer": "氧", "meaning": "氧氣、缺氧", "stage0_components": ["气", "羊"], "stage2_components": ["气", "羊"] },
+      { "answer": "訓", "meaning": "訓練、教訓", "stage0_components": ["言", "川"], "stage2_components": ["言", "川"] },
+      { "answer": "谷", "meaning": "山谷、峽谷", "stage0_components": ["八", "人", "口"], "stage2_components": ["𠔉\n口"] },
+      { "answer": "響", "meaning": "影響、響亮", "stage0_components": ["鄉", "音"], "stage2_components": ["鄉\n音"] }
+    ]
+  },
+  "7": {
+    "name": "第七課",
+    "title": "🧩 第七課 生字轉轉轉",
+    "questions": [
+      { "answer": "薄", "meaning": "薄荷、稀薄", "stage0_components": ["艹", "氵", "甫", "寸"], "stage2_components": ["艹\n溥"] },
+      { "answer": "烙", "meaning": "烙印、烙餅", "stage0_components": ["火", "夂", "口"], "stage2_components": ["火", "各"] },
+      { "answer": "沾", "meaning": "沾水、沾光", "stage0_components": ["氵", "卜", "口"], "stage2_components": ["氵", "占"] },
+      { "answer": "咖", "meaning": "咖啡、咖哩", "stage0_components": ["口", "力", "口"], "stage2_components": ["口", "加"] },
+      { "answer": "哩", "meaning": "咖哩、哩程", "stage0_components": ["口", "日", "土"], "stage2_components": ["口", "里"] },
+      { "answer": "印", "meaning": "列印、印章", "stage0_components": ["𠂋", "卩"], "stage2_components": ["𠂋", "卩"] },
+      { "answer": "甩", "meaning": "甩開、甩頭", "stage0_components": ["冂", "一", "乚"], "stage2_components": ["冂", "乚"] },
+      { "answer": "材", "meaning": "材料、木材", "stage0_components": ["木", "才"], "stage2_components": ["木", "才"] },
+      { "answer": "醬", "meaning": "醬油、果醬", "stage0_components": ["丬", "月", "寸", "酉"], "stage2_components": ["將\n酉"] },
+      { "answer": "義", "meaning": "義大利、正義", "stage0_components": ["羊", "禾", "戈"], "stage2_components": ["羊\n我"] },
+      { "answer": "麵", "meaning": "麵包、麵條", "stage0_components": ["麥", "面"], "stage2_components": ["麥", "面"] },
+      { "answer": "郁", "meaning": "濃郁、馥郁", "stage0_components": ["𠂇", "月", "阝"], "stage2_components": ["有", "阝"] },
+      { "answer": "壽", "meaning": "壽命、長壽", "stage0_components": ["士", "乛", "工", "口", "寸"], "stage2_components": ["𠂤\n寸"] },
+      { "answer": "醋", "meaning": "烏醋、吃醋", "stage0_components": ["酉", "廿", "日"], "stage2_components": ["酉", "昔"] },
+      { "answer": "未", "meaning": "未來、未定", "stage0_components": ["一", "木"], "stage2_components": ["一\n木"] }
+    ]
+  },
+  "8": {
+    "name": "第八課",
+    "title": "🧩 第八課 生字轉轉轉",
+    "questions": [
+      { "answer": "臨", "meaning": "降臨、面臨", "stage0_components": ["臣", "人", "品"], "stage2_components": ["臣", "𦣝"] },
+      { "answer": "樓", "meaning": "樓梯、高樓", "stage0_components": ["木", "串", "女"], "stage2_components": ["木", "婁"] },
+      { "answer": "頸", "meaning": "頸部、瓶頸", "stage0_components": ["一", "巛", "工", "頁"], "stage2_components": ["巠", "頁"] },
+      { "answer": "代", "meaning": "代表、代替", "stage0_components": ["亻", "弋"], "stage2_components": ["亻", "弋"] },
+      { "answer": "濟", "meaning": "經濟、救濟", "stage0_components": ["氵", "文", "刀", "丫"], "stage2_components": ["氵", "齊"] },
+      { "answer": "阻", "meaning": "阻止、阻礙", "stage0_components": ["阝", "月", "一"], "stage2_components": ["阝", "且"] },
+      { "answer": "尼", "meaning": "尼姑、尼龍", "stage0_components": ["尸", "匕"], "stage2_components": ["尸\n匕"] },
+      { "answer": "器", "meaning": "機器、器官", "stage0_components": ["口", "口", "犬", "口", "口"], "stage2_components": ["吅\n犬\n吅"] },
+      { "answer": "震", "meaning": "地震、震動", "stage0_components": ["雨", "厂", "二", "𠄌", "㇏"], "stage2_components": ["雨\n辰"] },
+      { "answer": "京", "meaning": "東京、京城", "stage0_components": ["亠", "口", "小"], "stage2_components": ["亠\n口\n小"] },
+      { "answer": "晴", "meaning": "晴天、放晴", "stage0_components": ["日", "龶", "月"], "stage2_components": ["日", "青"] },
+      { "answer": "塔", "meaning": "寶塔、燈塔", "stage0_components": ["土", "艹", "合"], "stage2_components": ["土", "荅"] },
+      { "answer": "訊", "meaning": "資訊、通訊", "stage0_components": ["言", "卂"], "stage2_components": ["言", "卂"] },
+      { "answer": "吉", "meaning": "吉利、吉他", "stage0_components": ["士", "口"], "stage2_components": ["士\n口"] },
+      { "answer": "橋", "meaning": "橋梁、木橋", "stage0_components": ["木", "夭", "冂", "口"], "stage2_components": ["木", "喬"] }
+    ]
+  },
+  "9": {
+    "name": "第九課",
+    "title": "🧩 第九課 生字轉轉轉",
+    "questions": [
+      { "answer": "佛", "meaning": "佛教、神佛", "stage0_components": ["亻", "弓", "丿", "丨"], "stage2_components": ["亻", "弗"] },
+      { "answer": "泰", "meaning": "泰國、泰山", "stage0_components": ["三", "人", "氺"], "stage2_components": ["𡗗\n氺"] },
+      { "answer": "廟", "meaning": "寺廟、廟宇", "stage0_components": ["广", "𠦝", "月"], "stage2_components": ["广", "朝"] },
+      { "answer": "華", "meaning": "華麗、中華", "stage0_components": ["艹", "一", "幺", "幺", "十"], "stage2_components": ["艹\n垂"] },
+      { "answer": "尚", "meaning": "高尚、和尚", "stage0_components": ["⺌", "冂", "口"], "stage2_components": ["⺌\n冋"] },
+      { "answer": "逛", "meaning": "逛街、閒逛", "stage0_components": ["辶", "犭", "王"], "stage2_components": ["辶", "狂"] },
+      { "answer": "埃", "meaning": "埃及、塵埃", "stage0_components": ["土", "厶", "矢"], "stage2_components": ["土", "矣"] },
+      { "answer": "羅", "meaning": "羅馬、網羅", "stage0_components": ["罒", "糸", "隹"], "stage2_components": ["罒\n維"] },
+      { "answer": "勢", "meaning": "姿勢、勢力", "stage0_components": ["幸", "丸", "力"], "stage2_components": ["執\n力"] },
+      { "answer": "窪", "meaning": "低窪、水窪", "stage0_components": ["穴", "氵", "圭"], "stage2_components": ["穴\n洼"] },
+      { "answer": "堤", "meaning": "堤防、河堤", "stage0_components": ["土", "日", "疋"], "stage2_components": ["土", "是"] },
+      { "answer": "防", "meaning": "防止、預防", "stage0_components": ["阝", "方"], "stage2_components": ["阝", "方"] },
+      { "answer": "潮", "meaning": "潮溼、潮水", "stage0_components": ["氵", "𠦝", "月"], "stage2_components": ["氵", "朝"] },
+      { "answer": "鬱", "meaning": "憂鬱、鬱卒", "stage0_components": ["林", "缶", "冖", "鬯", "彡"], "stage2_components": ["鬱"] },
+      { "answer": "划", "meaning": "划船、划算", "stage0_components": ["戈", "刂"], "stage2_components": ["戈", "刂"] }
+    ]
+  },
+  "10": {
+    "name": "第十課",
+    "title": "🧩 第十課 生字轉轉轉",
+    "questions": [
+      { "answer": "幻", "meaning": "幻想、幻滅", "stage0_components": ["幺", "乚"], "stage2_components": ["幺", "乚"] },
+      { "answer": "旋", "meaning": "旋轉、盤旋", "stage0_components": ["方", "𠂉", "疋"], "stage2_components": ["方", "𠂉\n疋"] },
+      { "answer": "扁", "meaning": "扁平、壓扁", "stage0_components": ["戶", "冊"], "stage2_components": ["戶\n冊"] },
+      { "answer": "瞬", "meaning": "瞬間、一瞬", "stage0_components": ["目", "爫", "冖", "舛"], "stage2_components": ["目", "舜"] },
+      { "answer": "驗", "meaning": "實驗、測驗", "stage0_components": ["馬", "人", "一", "口", "人", "人"], "stage2_components": ["馬", "僉"] },
+      { "answer": "牙", "meaning": "牙齒、象牙", "stage0_components": ["一", "𠄌", "丿", "丶"], "stage2_components": ["牙"] },
+      { "answer": "芝", "meaning": "靈芝、芝麻", "stage0_components": ["艹", "之"], "stage2_components": ["艹\n之"] },
+      { "answer": "盜", "meaning": "強盜、盜賊", "stage0_components": ["氵", "欠", "皿"], "stage2_components": ["次\n皿"] },
+      { "answer": "邁", "meaning": "邁進、年邁", "stage0_components": ["辶", "艹", "萬"], "stage2_components": ["辶", "萬"] },
+      { "answer": "困", "meaning": "困難、困住", "stage0_components": ["囗", "木"], "stage2_components": ["囗", "木"] },
+      { "answer": "龐", "meaning": "龐大、臉龐", "stage0_components": ["广", "立", "月", "卜", "己"], "stage2_components": ["广\n龍"] },
+      { "answer": "搓", "meaning": "搓手、搓揉", "stage0_components": ["扌", "羊", "工"], "stage2_components": ["扌", "差"] },
+      { "answer": "榮", "meaning": "榮譽、光榮", "stage0_components": ["火", "火", "冖", "木"], "stage2_components": ["𤇾\n木"] },
+      { "answer": "富", "meaning": "豐富、富有", "stage0_components": ["宀", "一", "口", "田"], "stage2_components": ["宀\n畐"] },
+      { "answer": "遍", "meaning": "遍布、普遍", "stage0_components": ["辶", "戶", "冊"], "stage2_components": ["辶", "扁"] }
+    ]
+  },
+  "11": {
+    "name": "第十一課",
+    "title": "🧩 第十一課 生字轉轉轉",
+    "questions": [
+      { "answer": "背", "meaning": "背面、背影", "stage0_components": ["北", "月"], "stage2_components": ["北\n月"] },
+      { "answer": "錶", "meaning": "手錶、鐘錶", "stage0_components": ["金", "表"], "stage2_components": ["金", "表"] },
+      { "answer": "掉", "meaning": "掉落、忘掉", "stage0_components": ["扌", "卜", "日", "十"], "stage2_components": ["扌", "卓"] },
+      { "answer": "深", "meaning": "深刻、深淺", "stage0_components": ["氵", "冖", "八", "木"], "stage2_components": ["氵", "罙"] },
+      { "answer": "鎖", "meaning": "鎖頭、上鎖", "stage0_components": ["金", "小", "貝"], "stage2_components": ["金", "𧴯"] },
+      { "answer": "鑰", "meaning": "鑰匙、鎖鑰", "stage0_components": ["金", "侖", "月"], "stage2_components": ["金", "龠"] },
+      { "answer": "匙", "meaning": "鑰匙、湯匙", "stage0_components": ["日", "疋", "匕"], "stage2_components": ["是", "匕"] },
+      { "answer": "汁", "meaning": "果汁、墨汁", "stage0_components": ["氵", "十"], "stage2_components": ["氵", "十"] },
+      { "answer": "示", "meaning": "表示、指示", "stage0_components": ["二", "小"], "stage2_components": ["二\n小"] },
+      { "answer": "迫", "meaning": "逼迫、強迫", "stage0_components": ["辶", "白"], "stage2_components": ["辶", "白"] },
+      { "answer": "袋", "meaning": "口袋、提袋", "stage0_components": ["代", "衣"], "stage2_components": ["代\n衣"] },
+      { "answer": "哭", "meaning": "哭泣、大哭", "stage0_components": ["口", "口", "犬"], "stage2_components": ["吅\n犬"] },
+      { "answer": "盒", "meaning": "盒子、紙盒", "stage0_components": ["合", "皿"], "stage2_components": ["合\n皿"] },
+      { "answer": "扇", "meaning": "電風扇、扇子", "stage0_components": ["戶", "羽"], "stage2_components": ["戶\n羽"] },
+      { "answer": "遲", "meaning": "遲到、延遲", "stage0_components": ["辶", "尸", "羊"], "stage2_components": ["辶", "犀"] }
+    ]
+  },
+  "12": {
+    "name": "第十二課",
+    "title": "🧩 第十二課 生字轉轉轉",
+    "questions": [
+      { "answer": "妻", "meaning": "妻子、夫妻", "stage0_components": ["十", "彐", "女"], "stage2_components": ["⺕\n女"] },
+      { "answer": "耐", "meaning": "耐心、忍耐", "stage0_components": ["而", "寸"], "stage2_components": ["而", "寸"] },
+      { "answer": "革", "meaning": "皮革、革命", "stage0_components": ["廿", "口", "十"], "stage2_components": ["廿\n口\n十"] },
+      { "answer": "賣", "meaning": "買賣、拍賣", "stage0_components": ["士", "罒", "貝"], "stage2_components": ["士\n買"] },
+      { "answer": "倍", "meaning": "兩倍、加倍", "stage0_components": ["亻", "立", "口"], "stage2_components": ["亻", "咅"] },
+      { "answer": "謎", "meaning": "謎語、猜謎", "stage0_components": ["言", "辶", "米"], "stage2_components": ["言", "迷"] },
+      { "answer": "鐘", "meaning": "時鐘、分鐘", "stage0_components": ["金", "立", "里"], "stage2_components": ["金", "童"] },
+      { "answer": "敲", "meaning": "敲打、敲門", "stage0_components": ["高", "攴"], "stage2_components": ["高", "攴"] },
+      { "answer": "靈", "meaning": "靈魂、機靈", "stage0_components": ["雨", "口", "口", "口", "巫"], "stage2_components": ["雨\n巫"] },
+      { "answer": "鎚", "meaning": "鐵鎚、釘鎚", "stage0_components": ["金", "追"], "stage2_components": ["金", "追"] },
+      { "answer": "嘖", "meaning": "嘖嘖、嘖嘖稱奇", "stage0_components": ["口", "責"], "stage2_components": ["口", "責"] },
+      { "answer": "足", "meaning": "足球、十足", "stage0_components": ["口", "止"], "stage2_components": ["口\n止"] },
+      { "answer": "蹈", "meaning": "舞蹈、手舞足蹈", "stage0_components": ["𧾷", "爫", "臼", "舀"], "stage2_components": ["𧾷", "舀"] },
+      { "answer": "蹦", "meaning": "蹦跳、蹦蹦跳跳", "stage0_components": ["𧾷", "山", "朋"], "stage2_components": ["𧾷", "崩"] },
+      { "answer": "內", "meaning": "內部、內衣", "stage0_components": ["冂", "人"], "stage2_components": ["冂\n人"] }
+    ]
+  }
+};
     "questions": [
       {
         "answer": "充",
