@@ -444,788 +444,222 @@
     }
 
     // 生字資料庫
-    const lessonData = {
-  "1": {
-    "name": "第一課",
-    "title": "🎯 康軒四上第一課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "充",
-        "meaning": "充滿、充份"
-      },
-      {
-        "char": "滿",
-        "meaning": "滿滿、飽滿"
-      },
-      {
-        "char": "巷",
-        "meaning": "小巷、巷弄"
-      },
-      {
-        "char": "弄",
-        "meaning": "弄堂、擺弄"
-      },
-      {
-        "char": "矮",
-        "meaning": "矮小、矮牆"
-      },
-      {
-        "char": "側",
-        "meaning": "側面、身側"
-      },
-      {
-        "char": "抹",
-        "meaning": "抹上、塗抹"
-      },
-      {
-        "char": "斑",
-        "meaning": "斑點、斑紋"
-      },
-      {
-        "char": "駁",
-        "meaning": "斑駁、駁斥"
-      },
-      {
-        "char": "磚",
-        "meaning": "磚塊、紅磚"
-      },
-      {
-        "char": "染",
-        "meaning": "渲染、染料"
-      },
-      {
-        "char": "透",
-        "meaning": "透明、穿透"
-      },
-      {
-        "char": "痕",
-        "meaning": "痕跡、印痕"
-      },
-      {
-        "char": "跡",
-        "meaning": "古跡、奇蹟"
-      },
-      {
-        "char": "印",
-        "meaning": "腳印、印刷"
-      }
-    ]
-  },
-  "2": {
-    "name": "第二課",
-    "title": "🎯 康軒四上第二課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "縣",
-        "meaning": "縣市、縣府"
-      },
-      {
-        "char": "鄉",
-        "meaning": "鄉村、故鄉"
-      },
-      {
-        "char": "梯",
-        "meaning": "梯田、階梯"
-      },
-      {
-        "char": "耕",
-        "meaning": "耕耘、耕種"
-      },
-      {
-        "char": "依",
-        "meaning": "依照、依靠"
-      },
-      {
-        "char": "陡",
-        "meaning": "陡峭、陡坡"
-      },
-      {
-        "char": "峭",
-        "meaning": "峭壁、高峭"
-      },
-      {
-        "char": "嶺",
-        "meaning": "山嶺、高嶺"
-      },
-      {
-        "char": "築",
-        "meaning": "建築、築起"
-      },
-      {
-        "char": "層",
-        "meaning": "層次、樓層"
-      },
-      {
-        "char": "沿",
-        "meaning": "沿著、沿海"
-      },
-      {
-        "char": "引",
-        "meaning": "引用、引導"
-      },
-      {
-        "char": "湧",
-        "meaning": "泉湧、湧現"
-      },
-      {
-        "char": "源",
-        "meaning": "泉源、來源"
-      },
-      {
-        "char": "順",
-        "meaning": "順利、順流"
-      }
-    ]
-  },
-  "3": {
-    "name": "第三課",
-    "title": "🎯 康軒四上第三課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "晨",
-        "meaning": "清晨、早晨"
-      },
-      {
-        "char": "斜",
-        "meaning": "斜坡、傾斜"
-      },
-      {
-        "char": "照",
-        "meaning": "照射、照光"
-      },
-      {
-        "char": "淡",
-        "meaning": "清淡、淡水"
-      },
-      {
-        "char": "薄",
-        "meaning": "薄片、稀薄"
-      },
-      {
-        "char": "紗",
-        "meaning": "紗布、薄紗"
-      },
-      {
-        "char": "披",
-        "meaning": "披上、身披"
-      },
-      {
-        "char": "朦",
-        "meaning": "朦朧、朦朧美"
-      },
-      {
-        "char": "朧",
-        "meaning": "月色朦朧"
-      },
-      {
-        "char": "甦",
-        "meaning": "甦醒、復甦"
-      },
-      {
-        "char": "波",
-        "meaning": "波浪、微波"
-      },
-      {
-        "char": "映",
-        "meaning": "倒映、反映"
-      },
-      {
-        "char": "絢",
-        "meaning": "絢麗、絢爛"
-      },
-      {
-        "char": "彩",
-        "meaning": "彩霞、色彩"
-      }
-    ]
-  },
-  "4": {
-    "name": "第四課",
-    "title": "🎯 康軒四上第四課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "攀",
-        "meaning": "攀爬、攀登"
-      },
-      {
-        "char": "登",
-        "meaning": "登陸、登山"
-      },
-      {
-        "char": "拔",
-        "meaning": "拔河、挺拔"
-      },
-      {
-        "char": "峰",
-        "meaning": "山峰、高峰"
-      },
-      {
-        "char": "挑",
-        "meaning": "挑戰、挑選"
-      },
-      {
-        "char": "戰",
-        "meaning": "戰勝、作戰"
-      },
-      {
-        "char": "冒",
-        "meaning": "冒險、冒雨"
-      },
-      {
-        "char": "涉",
-        "meaning": "跋涉、涉及"
-      },
-      {
-        "char": "險",
-        "meaning": "危險、冒險"
-      },
-      {
-        "char": "陡",
-        "meaning": "陡坡、陡壁"
-      },
-      {
-        "char": "窄",
-        "meaning": "狹窄、窄門"
-      },
-      {
-        "char": "緩",
-        "meaning": "緩慢、平緩"
-      },
-      {
-        "char": "巨",
-        "meaning": "巨人、巨大"
-      },
-      {
-        "char": "俯",
-        "meaning": "俯瞰、俯視"
-      },
-      {
-        "char": "豪",
-        "meaning": "自豪、豪氣"
-      }
-    ]
-  },
-  "5": {
-    "name": "第五課",
-    "title": "🎯 康軒四上第五課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "創",
-        "meaning": "創造、創新"
-      },
-      {
-        "char": "意",
-        "meaning": "意思、靈感"
-      },
-      {
-        "char": "廣",
-        "meaning": "廣告、寬廣"
-      },
-      {
-        "char": "告",
-        "meaning": "告訴、通告"
-      },
-      {
-        "char": "晰",
-        "meaning": "清晰、明晰"
-      },
-      {
-        "char": "標",
-        "meaning": "標誌、標題"
-      },
-      {
-        "char": "魅",
-        "meaning": "魅力、魅影"
-      },
-      {
-        "char": "惑",
-        "meaning": "誘惑、疑惑"
-      },
-      {
-        "char": "構",
-        "meaning": "結構、構想"
-      },
-      {
-        "char": "思",
-        "meaning": "思想、思念"
-      },
-      {
-        "char": "幽",
-        "meaning": "幽默、清幽"
-      },
-      {
-        "char": "默",
-        "meaning": "默契、沉默"
-      },
-      {
-        "char": "宣",
-        "meaning": "宣傳、宣布"
-      },
-      {
-        "char": "傳",
-        "meaning": "傳遞、傳播"
-      },
-      {
-        "char": "印",
-        "meaning": "印象、印章"
-      }
-    ]
-  },
-  "6": {
-    "name": "第六課",
-    "title": "🎯 康軒四上第六課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "演",
-        "meaning": "表演、演員"
-      },
-      {
-        "char": "戲",
-        "meaning": "戲劇、演戲"
-      },
-      {
-        "char": "偶",
-        "meaning": "木偶、偶爾"
-      },
-      {
-        "char": "控",
-        "meaning": "操縱、控制"
-      },
-      {
-        "char": "制",
-        "meaning": "製造、制作"
-      },
-      {
-        "char": "靈",
-        "meaning": "靈活、機靈"
-      },
-      {
-        "char": "巧",
-        "meaning": "巧妙、巧思"
-      },
-      {
-        "char": "劇",
-        "meaning": "劇院、短劇"
-      },
-      {
-        "char": "角",
-        "meaning": "角色、角落"
-      },
-      {
-        "char": "色",
-        "meaning": "顏色、角色"
-      },
-      {
-        "char": "臺",
-        "meaning": "戲臺、舞臺"
-      },
-      {
-        "char": "掌",
-        "meaning": "鼓掌、手掌"
-      },
-      {
-        "char": "幕",
-        "meaning": "開幕、夜幕"
-      },
-      {
-        "char": "精",
-        "meaning": "精彩、精靈"
-      }
-    ]
-  },
-  "7": {
-    "name": "第七課",
-    "title": "🎯 康軒四上第七課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "博",
-        "meaning": "博物館、博學"
-      },
-      {
-        "char": "館",
-        "meaning": "圖書館、展覽館"
-      },
-      {
-        "char": "藏",
-        "meaning": "收藏、寶藏"
-      },
-      {
-        "char": "珍",
-        "meaning": "珍貴、珍寶"
-      },
-      {
-        "char": "寶",
-        "meaning": "寶石、寶貝"
-      },
-      {
-        "char": "雕",
-        "meaning": "雕刻、石雕"
-      },
-      {
-        "char": "塑",
-        "meaning": "塑造、雕塑"
-      },
-      {
-        "char": "展",
-        "meaning": "展覽、展示"
-      },
-      {
-        "char": "覽",
-        "meaning": "參覽、導覽"
-      },
-      {
-        "char": "銅",
-        "meaning": "青銅、黃銅"
-      },
-      {
-        "char": "陶",
-        "meaning": "陶瓷、陶器"
-      },
-      {
-        "char": "瓷",
-        "meaning": "白瓷、瓷碗"
-      },
-      {
-        "char": "畫",
-        "meaning": "圖畫、繪畫"
-      },
-      {
-        "char": "品",
-        "meaning": "作品、藝術品"
-      }
-    ]
-  },
-  "8": {
-    "name": "第八課",
-    "title": "🎯 康軒四上第八課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "藝",
-        "meaning": "藝術、才藝"
-      },
-      {
-        "char": "術",
-        "meaning": "技術、魔術"
-      },
-      {
-        "char": "巡",
-        "meaning": "巡迴、巡邏"
-      },
-      {
-        "char": "迴",
-        "meaning": "迴旋、巡迴"
-      },
-      {
-        "char": "表",
-        "meaning": "表演、表達"
-      },
-      {
-        "char": "演",
-        "meaning": "演出、演奏"
-      },
-      {
-        "char": "舞",
-        "meaning": "舞蹈、舞步"
-      },
-      {
-        "char": "蹈",
-        "meaning": "舞蹈、躍蹈"
-      },
-      {
-        "char": "樂",
-        "meaning": "音樂、歡樂"
-      },
-      {
-        "char": "器",
-        "meaning": "樂器、器材"
-      },
-      {
-        "char": "奏",
-        "meaning": "演奏、奏樂"
-      },
-      {
-        "char": "劇",
-        "meaning": "話劇、戲劇"
-      },
-      {
-        "char": "眾",
-        "meaning": "觀眾、大眾"
-      },
-      {
-        "char": "喝",
-        "meaning": "喝采、喝彩"
-      },
-      {
-        "char": "采",
-        "meaning": "喝采、風采"
-      }
-    ]
-  },
-  "9": {
-    "name": "第九課",
-    "title": "🎯 康軒四上第九課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "傳",
-        "meaning": "傳奇、傳說"
-      },
-      {
-        "char": "統",
-        "meaning": "傳統、系統"
-      },
-      {
-        "char": "節",
-        "meaning": "節日、節氣"
-      },
-      {
-        "char": "慶",
-        "meaning": "慶祝、國慶"
-      },
-      {
-        "char": "粽",
-        "meaning": "肉粽、粽子"
-      },
-      {
-        "char": "糯",
-        "meaning": "糯米、軟糯"
-      },
-      {
-        "char": "餡",
-        "meaning": "餡料、內餡"
-      },
-      {
-        "char": "葉",
-        "meaning": "竹葉、葉子"
-      },
-      {
-        "char": "包",
-        "meaning": "包裹、包粽"
-      },
-      {
-        "char": "綁",
-        "meaning": "綁緊、捆綁"
-      },
-      {
-        "char": "煮",
-        "meaning": "水煮、煮飯"
-      },
-      {
-        "char": "香",
-        "meaning": "香氣、香味"
-      },
-      {
-        "char": "味",
-        "meaning": "味道、美味"
-      },
-      {
-        "char": "全",
-        "meaning": "全部、全家"
-      },
-      {
-        "char": "聚",
-        "meaning": "團聚、聚會"
-      }
-    ]
-  },
-  "10": {
-    "name": "第十課",
-    "title": "🎯 康軒四上第十課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "科",
-        "meaning": "科學、科技"
-      },
-      {
-        "char": "技",
-        "meaning": "技術、技能"
-      },
-      {
-        "char": "創",
-        "meaning": "創新、創業"
-      },
-      {
-        "char": "造",
-        "meaning": "造型、造就"
-      },
-      {
-        "char": "未",
-        "meaning": "未來、未知"
-      },
-      {
-        "char": "來",
-        "meaning": "來往、來自"
-      },
-      {
-        "char": "智",
-        "meaning": "智慧、智能"
-      },
-      {
-        "char": "慧",
-        "meaning": "聰慧、智慧"
-      },
-      {
-        "char": "生",
-        "meaning": "生活、生命"
-      },
-      {
-        "char": "活",
-        "meaning": "活潑、活動"
-      },
-      {
-        "char": "網",
-        "meaning": "網路、網頁"
-      },
-      {
-        "char": "路",
-        "meaning": "道路、路線"
-      },
-      {
-        "char": "便",
-        "meaning": "便利、方便"
-      },
-      {
-        "char": "捷",
-        "meaning": "快捷、捷運"
-      },
-      {
-        "char": "訊",
-        "meaning": "資訊、訊息"
-      }
-    ]
-  },
-  "11": {
-    "name": "第十一課",
-    "title": "🎯 康軒四上第十一課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "環",
-        "meaning": "環境、環保"
-      },
-      {
-        "char": "保",
-        "meaning": "保護、守護"
-      },
-      {
-        "char": "節",
-        "meaning": "節約、節省"
-      },
-      {
-        "char": "能",
-        "meaning": "能量、能源"
-      },
-      {
-        "char": "減",
-        "meaning": "減少、減碳"
-      },
-      {
-        "char": "碳",
-        "meaning": "碳排、木碳"
-      },
-      {
-        "char": "資",
-        "meaning": "資源、資格"
-      },
-      {
-        "char": "源",
-        "meaning": "能源、源頭"
-      },
-      {
-        "char": "回",
-        "meaning": "回收、回來"
-      },
-      {
-        "char": "收",
-        "meaning": "收集、收入"
-      },
-      {
-        "char": "綠",
-        "meaning": "綠色、綠化"
-      },
-      {
-        "char": "化",
-        "meaning": "變化、造化"
-      },
-      {
-        "char": "地",
-        "meaning": "地球、大地"
-      },
-      {
-        "char": "球",
-        "meaning": "全球、足球"
-      },
-      {
-        "char": "愛",
-        "meaning": "愛護、愛心"
-      }
-    ]
-  },
-  "12": {
-    "name": "第十二課",
-    "title": "🎯 康軒四上第十二課生字猜謎九宮格",
-    "items": [
-      {
-        "char": "探",
-        "meaning": "探索、探險"
-      },
-      {
-        "char": "索",
-        "meaning": "索取、線索"
-      },
-      {
-        "char": "宇",
-        "meaning": "宇宙、宇航"
-      },
-      {
-        "char": "宙",
-        "meaning": "宇宙、宙斯"
-      },
-      {
-        "char": "星",
-        "meaning": "星空、星球"
-      },
-      {
-        "char": "空",
-        "meaning": "天空、太空"
-      },
-      {
-        "char": "奧",
-        "meaning": "深奧、奧祕"
-      },
-      {
-        "char": "祕",
-        "meaning": "神祕、祕密"
-      },
-      {
-        "char": "觀",
-        "meaning": "觀察、觀測"
-      },
-      {
-        "char": "測",
-        "meaning": "測試、測量"
-      },
-      {
-        "char": "遙",
-        "meaning": "遙遠、遙望"
-      },
-      {
-        "char": "遠",
-        "meaning": "遠方、永遠"
-      },
-      {
-        "char": "夢",
-        "meaning": "夢想、美夢"
-      },
-      {
-        "char": "想",
-        "meaning": "想像、思考"
-      },
-      {
-        "char": "追",
-        "meaning": "追求、追逐"
-      }
-    ]
-  }
-};
+    const lessonData = {"7":{"title":"🎯 康軒四上第7課生字猜謎九宮格",
+"name":"第7課",
+"items":[{"meaning":"薄荷、單薄",
+"char":"薄"},{"meaning":"烙印、烙鐵",
+"char":"烙"},{"meaning":"沾光、沾水",
+"char":"沾"},{"meaning":"咖啡、咖哩",
+"char":"咖"},{"meaning":"咖哩、英哩",
+"char":"哩"},{"meaning":"印象、印刷",
+"char":"印"},{"meaning":"甩開、甩掉",
+"char":"甩"},{"meaning":"材料、木材",
+"char":"材"},{"meaning":"醬油、果醬",
+"char":"醬"},{"meaning":"意義、正義",
+"char":"義"},{"meaning":"麵包、麵條",
+"char":"麵"},{"meaning":"濃郁、憂郁",
+"char":"郁"},{"meaning":"壽命、長壽",
+"char":"壽"},{"meaning":"烏醋、白醋",
+"char":"醋"},{"meaning":"未來、未必",
+"char":"未"}]},
+"9":{"title":"🎯 康軒四上第9課生字猜謎九宮格",
+"name":"第9課",
+"items":[{"meaning":"佛教、佛像",
+"char":"佛"},{"meaning":"泰國、泰山",
+"char":"泰"},{"meaning":"寺廟、宗廟",
+"char":"廟"},{"meaning":"華麗、中華",
+"char":"華"},{"meaning":"高尚、和尚",
+"char":"尚"},{"meaning":"逛街、閒逛",
+"char":"逛"},{"meaning":"塵埃、埃及",
+"char":"埃"},{"meaning":"羅馬、網羅",
+"char":"羅"},{"meaning":"勢力、姿勢",
+"char":"勢"},{"meaning":"低窪、水窪",
+"char":"窪"},{"meaning":"堤防、河堤",
+"char":"堤"},{"meaning":"預防、防守",
+"char":"防"},{"meaning":"潮濕、潮水",
+"char":"潮"},{"meaning":"憂鬱、鬱悶",
+"char":"鬱"},{"meaning":"划船、划算",
+"char":"划"}]},
+"10":{"title":"🎯 康軒四上第10課生字猜謎九宮格",
+"name":"第10課",
+"items":[{"meaning":"幻想、幻滅",
+"char":"幻"},{"meaning":"旋轉、盤旋",
+"char":"旋"},{"meaning":"扁平、壓扁",
+"char":"扁"},{"meaning":"瞬間、一瞬",
+"char":"瞬"},{"meaning":"實驗、測驗",
+"char":"驗"},{"meaning":"牙齒、象牙",
+"char":"牙"},{"meaning":"靈芝、芝麻",
+"char":"芝"},{"meaning":"強盜、盜賊",
+"char":"盜"},{"meaning":"邁進、年邁",
+"char":"邁"},{"meaning":"困難、困住",
+"char":"困"},{"meaning":"龐大、臉龐",
+"char":"龐"},{"meaning":"搓手、搓揉",
+"char":"搓"},{"meaning":"榮譽、光榮",
+"char":"榮"},{"meaning":"豐富、富有",
+"char":"富"},{"meaning":"遍布、普遍",
+"char":"遍"}]},
+"3":{"title":"🎯 康軒四上第3課生字猜謎九宮格",
+"name":"第3課",
+"items":[{"meaning":"社會、報社",
+"char":"社"},{"meaning":"邀請、邀約",
+"char":"邀"},{"meaning":"參與、給與",
+"char":"與"},{"meaning":"遙遠、遙控",
+"char":"遙"},{"meaning":"投入、投球",
+"char":"投"},{"meaning":"熟悉、成熟",
+"char":"熟"},{"meaning":"巧妙、乖巧",
+"char":"巧"},{"meaning":"彈簧、子彈",
+"char":"彈"},{"meaning":"曾經、未曾",
+"char":"曾"},{"meaning":"揮手、指揮",
+"char":"揮"},{"meaning":"彼此、彼岸",
+"char":"彼"},{"meaning":"秒針、分秒",
+"char":"秒"},{"meaning":"喧嘩、喧鬧",
+"char":"喧"},{"meaning":"優秀、優雅",
+"char":"優"},{"meaning":"弧線、圓弧",
+"char":"弧"}]},
+"11":{"title":"🎯 康軒四上第11課生字猜謎九宮格",
+"name":"第11課",
+"items":[{"meaning":"背面、背影",
+"char":"背"},{"meaning":"手錶、鐘錶",
+"char":"錶"},{"meaning":"掉落、忘掉",
+"char":"掉"},{"meaning":"深刻、深淺",
+"char":"深"},{"meaning":"鎖頭、上鎖",
+"char":"鎖"},{"meaning":"鑰匙、鎖鑰",
+"char":"鑰"},{"meaning":"鑰匙、湯匙",
+"char":"匙"},{"meaning":"果汁、墨汁",
+"char":"汁"},{"meaning":"表示、指示",
+"char":"示"},{"meaning":"逼迫、強迫",
+"char":"迫"},{"meaning":"口袋、提袋",
+"char":"袋"},{"meaning":"哭泣、大哭",
+"char":"哭"},{"meaning":"盒子、紙盒",
+"char":"盒"},{"meaning":"電風扇、扇子",
+"char":"扇"},{"meaning":"遲到、延遲",
+"char":"遲"}]},
+"2":{"title":"🎯 康軒四上第2課生字猜謎九宮格",
+"name":"第2課",
+"items":[{"meaning":"招手、招待",
+"char":"招"},{"meaning":"喝湯、熱湯",
+"char":"湯"},{"meaning":"拋棄、拋物",
+"char":"拋"},{"meaning":"糧食、乾糧",
+"char":"糧"},{"meaning":"姐姐、小姐",
+"char":"姐"},{"meaning":"爭取、戰爭",
+"char":"爭"},{"meaning":"警察、警告",
+"char":"警"},{"meaning":"小偷、偷偷",
+"char":"偷"},{"meaning":"規則、原則",
+"char":"則"},{"meaning":"繩子、跳繩",
+"char":"繩"},{"meaning":"依靠、依然",
+"char":"依"},{"meaning":"捨得、施捨",
+"char":"捨"},{"meaning":"結束、花束",
+"char":"束"},{"meaning":"暫時、短暫",
+"char":"暫"},{"meaning":"幸福、幸運",
+"char":"幸"}]},
+"1":{"title":"🎯 康軒四上第1課生字猜謎九宮格",
+"name":"第1課",
+"items":[{"meaning":"游泳、泳池",
+"char":"泳"},{"meaning":"串聯、客串",
+"char":"串"},{"meaning":"一般、百般",
+"char":"般"},{"meaning":"姿勢、舞姿",
+"char":"姿"},{"meaning":"溜冰、溜走",
+"char":"溜"},{"meaning":"耳朵、木耳",
+"char":"耳"},{"meaning":"老鷹、獵鷹",
+"char":"鷹"},{"meaning":"滑倒、光滑",
+"char":"滑"},{"meaning":"遨遊、遨翔",
+"char":"遨"},{"meaning":"緩慢、舒緩",
+"char":"緩"},{"meaning":"陀螺、佛陀",
+"char":"陀"},{"meaning":"海螺、田螺",
+"char":"螺"},{"meaning":"轉動、旋轉",
+"char":"轉"},{"meaning":"雀躍、跳躍",
+"char":"躍"},{"meaning":"煩惱、麻煩",
+"char":"煩"}]},
+"12":{"title":"🎯 康軒四上第12課生字猜謎九宮格",
+"name":"第12課",
+"items":[{"meaning":"妻子、夫妻",
+"char":"妻"},{"meaning":"耐心、忍耐",
+"char":"耐"},{"meaning":"皮革、革命",
+"char":"革"},{"meaning":"買賣、拍賣",
+"char":"賣"},{"meaning":"兩倍、加倍",
+"char":"倍"},{"meaning":"謎語、猜謎",
+"char":"謎"},{"meaning":"時鐘、分鐘",
+"char":"鐘"},{"meaning":"敲打、敲門",
+"char":"敲"},{"meaning":"靈魂、機靈",
+"char":"靈"},{"meaning":"鐵鎚、釘鎚",
+"char":"鎚"},{"meaning":"嘖嘖、嘖嘖稱奇",
+"char":"嘖"},{"meaning":"足球、十足",
+"char":"足"},{"meaning":"舞蹈、手舞足蹈",
+"char":"蹈"},{"meaning":"蹦跳、蹦蹦跳跳",
+"char":"蹦"},{"meaning":"內部、內衣",
+"char":"內"}]},
+"4":{"title":"🎯 康軒四上第4課生字猜謎九宮格",
+"name":"第4課",
+"items":[{"meaning":"偕同、白頭偕老",
+"char":"偕"},{"meaning":"醫生、醫院",
+"char":"醫"},{"meaning":"生命、命令",
+"char":"命"},{"meaning":"奉獻、信奉",
+"char":"奉"},{"meaning":"貢獻、奉獻",
+"char":"獻"},{"meaning":"治療、醫療",
+"char":"療"},{"meaning":"衛生、保衛",
+"char":"衛"},{"meaning":"藥物、吃藥",
+"char":"藥"},{"meaning":"治療、治理",
+"char":"治"},{"meaning":"翻書、翻轉",
+"char":"翻"},{"meaning":"山嶺、高嶺",
+"char":"嶺"},{"meaning":"捐款、捐血",
+"char":"捐"},{"meaning":"宿舍、住宿",
+"char":"宿"},{"meaning":"課堂、天堂",
+"char":"堂"},{"meaning":"濃淡、濃厚",
+"char":"濃"}]},
+"6":{"title":"🎯 康軒四上第6課生字猜謎九宮格",
+"name":"第6課",
+"items":[{"meaning":"優秀、秀麗",
+"char":"秀"},{"meaning":"稱呼、名稱",
+"char":"稱"},{"meaning":"晴朗、開朗",
+"char":"朗"},{"meaning":"登山、登錄",
+"char":"登"},{"meaning":"肅穆、穆斯林",
+"char":"穆"},{"meaning":"瑪瑙、瑪雅",
+"char":"瑪"},{"meaning":"山峰、高峰",
+"char":"峰"},{"meaning":"母親、父母",
+"char":"母"},{"meaning":"殘酷、酷熱",
+"char":"酷"},{"meaning":"磨練、折磨",
+"char":"磨"},{"meaning":"攀岩、攀登",
+"char":"攀"},{"meaning":"氧氣、缺氧",
+"char":"氧"},{"meaning":"訓練、教訓",
+"char":"訓"},{"meaning":"山谷、峽谷",
+"char":"谷"},{"meaning":"影響、聲響",
+"char":"響"}]},
+"5":{"title":"🎯 康軒四上第5課生字猜謎九宮格",
+"name":"第5課",
+"items":[{"meaning":"凱歌、凱旋",
+"char":"凱"},{"meaning":"勒索、勒令",
+"char":"勒"},{"meaning":"畢業、學業",
+"char":"業"},{"meaning":"鼓勵、勉勵",
+"char":"勵"},{"meaning":"安寧、寧靜",
+"char":"寧"},{"meaning":"視力、視覺",
+"char":"視"},{"meaning":"注意、注射",
+"char":"注"},{"meaning":"憑據、憑證",
+"char":"憑"},{"meaning":"蓓蕾、蓓蓓",
+"char":"蓓"},{"meaning":"蓓蕾、花蕾",
+"char":"蕾"},{"meaning":"幾何、任何",
+"char":"何"},{"meaning":"地毯、毛毯",
+"char":"毯"},{"meaning":"適合、適應",
+"char":"適"},{"meaning":"繽紛、五彩繽紛",
+"char":"繽"},{"meaning":"盡力、盡頭",
+"char":"盡"}]},
+"8":{"title":"🎯 康軒四上第8課生字猜謎九宮格",
+"name":"第8課",
+"items":[{"meaning":"降臨、面臨",
+"char":"臨"},{"meaning":"樓房、高樓",
+"char":"樓"},{"meaning":"頸部、瓶頸",
+"char":"頸"},{"meaning":"代表、代替",
+"char":"代"},{"meaning":"經濟、救濟",
+"char":"濟"},{"meaning":"阻止、阻礙",
+"char":"阻"},{"meaning":"尼姑、尼龍",
+"char":"尼"},{"meaning":"機器、器官",
+"char":"器"},{"meaning":"震動、地震",
+"char":"震"},{"meaning":"北京、東京",
+"char":"京"},{"meaning":"晴天、晴朗",
+"char":"晴"},{"meaning":"寶塔、燈塔",
+"char":"塔"},{"meaning":"資訊、通訊",
+"char":"訊"},{"meaning":"吉祥、吉利",
+"char":"吉"},{"meaning":"橋梁、天橋",
+"char":"橋"}]}};
 
     let revealedBlocks = new Set();
     let totalBlocks = 9;
