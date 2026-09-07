@@ -407,37 +407,90 @@
             return 'other';
         }
 
+        const STATIC_FILES = [
+            "一位數加法小朋友下樓梯.html",
+            "三位數直式減法計算練習.html",
+            "三位數除以一位數直式除法.html",
+            "九九乘法小朋友下樓梯.html",
+            "二位數減法小朋友下樓梯.html",
+            "二位數直式減法.html",
+            "多人射擊遊戲.html",
+            "多人貪食蛇.html",
+            "學校考試儀表板.html",
+            "客製化圖片9宮格猜謎遊戲.html",
+            "客製化填生字猜猜看九宮格.html",
+            "康軒一上生字多寶.html",
+            "康軒一上生字猜謎遊戲九宮格.html",
+            "康軒一上生字猜謎遊戲四宮格.html",
+            "康軒五上生字多寶.html",
+            "康軒五上生字猜謎遊戲九宮格.html",
+            "康軒五上生字猜謎遊戲四宮格.html",
+            "康軒五上生字轉轉轉.html",
+            "康軒五上語詞洞察先機遊戲.html",
+            "康軒六上第7到12課生字多寶.html",
+            "康軒四上生字多寶.html",
+            "康軒四上生字猜謎遊戲九宮格.html",
+            "康軒四上生字猜謎遊戲四宮格.html",
+            "康軒四上生字轉轉轉.html",
+            "康軒四上語詞洞察先機遊戲.html",
+            "康軒國語五上語詞賓果遊戲4x4.html",
+            "康軒國語五上語詞賓果遊戲5x5.html",
+            "康軒國語六上7-12生字猜謎遊戲4宮格.html",
+            "康軒國語六上7-12生字猜謎遊戲9宮格.html",
+            "康軒國語六上7-12課語詞賓果4x4.html",
+            "康軒國語六上第7-12課生字打地鼠.html",
+            "康軒國語六上第7到12課語詞洞察先機.html",
+            "康軒國語六上第七課生字多寶.html",
+            "康軒國語六上第九課語詞解釋賓果.html",
+            "康軒國語六下語詞賓果遊戲5x5.html",
+            "康軒國語四上語詞賓果遊戲4x4.html",
+            "康軒國語四上語詞賓果遊戲5x5.html",
+            "數學二位數減法平板比賽.html",
+            "數學拔河大賽18以內加法大象.html",
+            "數學拔河大賽乘法大象.html",
+            "數學拔河大賽二位數加法大象.html",
+            "數學拔河大賽二位數減法大象.html",
+            "數學拔河大賽加減法.html",
+            "數學拔河大賽除法.html",
+            "文字雲展示.html",
+            "文字雲投稿.html",
+            "考試儀表板可上傳.html",
+            "自訂國語生字多寶遊戲.html",
+            "自訂圖片9宮格猜謎.html"
+        ];
+
         async function fetchFileList() {
             const repoInfo = getRepoInfo();
             const currentPath = getCurrentPath();
             const apiPath = currentPath ? `${currentPath}/` : '';
             const apiUrl = `https://api.github.com/repos/${repoInfo.username}/${repoInfo.repo}/contents/${apiPath}`;
 
+            let fileListNames = [];
+
             try {
                 const response = await fetch(apiUrl);
-
                 if (!response.ok) {
                     throw new Error(`HTTP 錯誤: ${response.status}`);
                 }
-
                 const files = await response.json();
-
-                allFiles = files
-                    .filter(file =>
-                        file.type === 'file' &&
-                        file.name.endsWith('.html') &&
-                        file.name !== 'index.html'
-                    )
-                    .map(file => ({ name: file.name, categoryId: categorize(file.name) }))
-                    .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
-
-                renderSidebar();
-                renderCards();
-
+                if (Array.isArray(files)) {
+                    fileListNames = files
+                        .filter(file => file.type === 'file' && file.name.endsWith('.html') && file.name !== 'index.html')
+                        .map(file => file.name);
+                } else {
+                    throw new Error('回傳資料格式不符');
+                }
             } catch (error) {
-                console.error('錯誤:', error);
-                showError(`無法載入檔案列表: ${error.message}<br><br>請確認：<br>1. 倉庫是公開的<br>2. GitHub API 可以正常訪問<br>3. 路徑設定正確`);
+                console.warn('GitHub API 載入失敗或受限，自動切換至靜態備用列表:', error);
+                fileListNames = STATIC_FILES;
             }
+
+            allFiles = fileListNames
+                .map(name => ({ name: name, categoryId: categorize(name) }))
+                .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+
+            renderSidebar();
+            renderCards();
         }
 
         function renderSidebar() {
