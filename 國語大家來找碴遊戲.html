@@ -135,7 +135,7 @@
                 </div>
             </div>
 
-            <!-- 方式二：讀取 GitHub -->
+            <!-- 方式二：讀取遊戲圖庫 -->
             <div id="fetch-github-btn" class="p-4 border-2 border-dashed border-transparent bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors cursor-pointer text-center group flex flex-col justify-center items-center h-40">
                 <div class="space-y-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-indigo-400 group-hover:text-indigo-600 transition-colors" fill="currentColor" viewBox="0 0 24 24">
@@ -143,7 +143,7 @@
                     </svg>
                     <div>
                         <p class="text-base text-indigo-700 font-bold">方式二</p>
-                        <p class="text-xs text-indigo-600">GitHub 圖庫</p>
+                        <p class="text-xs text-indigo-600">遊戲圖庫</p>
                     </div>
                 </div>
             </div>
@@ -374,18 +374,18 @@
 
     async function openGitHubMode() {
         resetModalState();
-        modalTitle.innerText = "選擇 GitHub 圖片";
-        modalSubtitle.innerText = "來源：happy690331/teacher/images";
+        modalTitle.innerText = "選擇遊戲圖庫圖片";
+        modalSubtitle.innerText = "來源：ai9550/teacher/遊戲圖庫";
         driveConfigPanel.classList.add('hidden'); 
         
         selectionModal.classList.remove('hidden');
         modalLoading.classList.remove('hidden');
         
         try {
-            const repoOwner = 'happy690331';
+            const repoOwner = 'ai9550';
             const repoName = 'teacher';
-            const path = 'images';
-            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`;
+            const path = '遊戲圖庫';
+            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${encodeURIComponent(path)}`;
 
             const response = await fetch(apiUrl);
             if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
