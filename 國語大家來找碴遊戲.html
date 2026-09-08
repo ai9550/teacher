@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大家來找碴 - 記憶挑戰賽</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .card-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            backface-visibility: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+        }
+        .card-back {
+            background-color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            transform: rotateY(180deg);
+        }
+        .result-overlay {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+        }
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Gallery Selection Styles */
+        .gallery-item.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: scale(0.95);
+        }
+        .gallery-item.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Compare Popup Animation */
+        .compare-popup {
+            animation: pop-up 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes pop-up {
+            from { opacity: 0; transform: scale(0.5) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans flex flex-col">
+
+<div id="app" class="w-full max-w-7xl mx-auto p-4 flex-1 flex flex-col">
+    <!-- 第一頁：上傳介面 -->
+    <div id="upload-view" class="bg-white rounded-2xl shadow-lg p-6 relative transition-all duration-300 flex-1 flex flex-col">
+        <!-- 標題區域 -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex-1 text-center relative">
+                <h1 class="text-2xl font-bold text-slate-800 mb-1">大家來找碴：圖片挑戰</h1>
+                <p class="text-slate-500 text-xs">規則：檔名前兩個字相同即為一組（最少 1 組即可開始）</p>
+            </div>
+            <!-- 上傳頁面的重新選擇按鈕 -->
+            <button id="reset-selection-btn" class="hidden absolute top-0 right-0 md:static text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                重選
+            </button>
+        </div>
+        
+        <!-- 選擇方式區域 (強制 3 欄，縮減高度) -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <!-- 方式一：手動上傳 -->
+            <div class="p-4 border-2 border-dashed border-slate-200 rounded-xl hover:border-blue-400 hover:bg-slate-50 transition-colors cursor-pointer text-center group flex flex-col justify-center items-center h-40" id="drop-zone">
+                <input type="file" id="file-input" multiple accept="image/*" class="hidden">
+                <div class="space-y-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                        <p class="text-base text-slate-600 font-bold">方式一</p>
+                        <p class="text-xs text-slate-500">本機上傳</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方式二：讀取 GitHub -->
+            <div id="fetch-github-btn" class="p-4 border-2 border-dashed border-transparent bg-indigo-50 rounded-xl hover:bg-indigo-100 transition-colors cursor-pointer text-center group flex flex-col justify-center items-center h-40">
+                <div class="space-y-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-indigo-400 group-hover:text-indigo-600 transition-colors" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    <div>
+                        <p class="text-base text-indigo-700 font-bold">方式二</p>
+                        <p class="text-xs text-indigo-600">GitHub 圖庫</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 方式三：Google Drive -->
+            <div id="fetch-drive-btn" class="p-4 border-2 border-dashed border-transparent bg-green-50 rounded-xl hover:bg-green-100 transition-colors cursor-pointer text-center group flex flex-col justify-center items-center h-40">
+                <div class="space-y-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto text-green-500 group-hover:text-green-700 transition-colors" viewBox="0 0 87.3 78" fill="currentColor">
+                        <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                        <path d="M43.65 25l13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2l13.75 23.8z" fill="#00ac47"/>
+                        <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l3.85-6.65c.8-1.4 1.2-2.95 1.2-4.5h-27.5l13.75 23.8c1.55 0 3.1-.4 5.4-1.2z" fill="#ea4335"/>
+                        <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3l-20 34.6c-.8 1.4-1.2 2.95-1.2 4.5h27.5L43.65 25z" fill="#00832d"/>
+                        <path d="M43.65 25H16.15L2.4 48.8c.8 1.4 1.95 2.5 3.3 3.3l20 34.6c.8 1.4 2.35 2.3 4.15 2.3h13.8L43.65 25z" fill="#2684fc"/>
+                        <path d="M86.7 48.8l-13.75-23.8C72.15 23.6 70.6 22.7 69 22.7h-27.5l13.75 23.8 26.15 45.3c1.4-.8 2.5-1.9 3.3-3.3l2-3.45.05-.05 2-3.45c.75-1.45 1.15-2.95 1.15-4.5z" fill="#ffba00"/>
+                    </svg>
+                    <div>
+                        <p class="text-base text-green-700 font-bold">方式三</p>
+                        <p class="text-xs text-green-600">Google Drive</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配對結果預覽區域 -->
+        <div id="file-status" class="hidden space-y-4 border-t pt-4 animate-fade-in flex-1 overflow-y-auto">
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center mb-2">
+                    <p class="text-blue-800 font-bold text-sm" id="status-summary"></p>
+                </div>
+                <div id="pair-list" class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-blue-700 max-h-32 overflow-y-auto">
+                    <!-- 配對清單會顯示在這裡 -->
+                </div>
+            </div>
+            
+            <div id="error-list" class="text-xs text-red-500 italic"></div>
+
+            <div class="text-center pt-2">
+                <button id="start-game-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto text-sm">
+                    開始遊戲
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用圖片選擇 Modal -->
+    <div id="selection-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <div>
+                    <h3 id="modal-title" class="text-xl font-bold text-slate-800">選擇要遊玩的圖片</h3>
+                    <p id="modal-subtitle" class="text-sm text-slate-500">來源：</p>
+                </div>
+                <button id="close-modal-btn" class="text-slate-400 hover:text-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div id="modal-loading" class="hidden flex-1 flex flex-col items-center justify-center p-12">
+                <div class="spinner mb-4"></div>
+                <p id="loading-text" class="text-slate-500">正在讀取資料...</p>
+            </div>
+            
+            <div id="drive-config-panel" class="hidden p-4 bg-yellow-50 border-b border-yellow-100 text-sm">
+                <p class="font-bold text-yellow-800 mb-2">⚠️ 權限設定：</p>
+                <p class="text-yellow-700 mb-2">Google Drive 資料夾需要有效的 API Key 才能透過網頁讀取檔案列表。</p>
+                <div class="flex flex-col gap-2">
+                    <div class="flex flex-col md:flex-row gap-2">
+                        <input type="text" id="drive-folder-id" value="1INMzVETSpP0bXUj2V9WxCr6FcZ6_gQ9O" placeholder="資料夾 ID" class="border p-2 rounded flex-1 text-slate-600 bg-slate-100" readonly title="預設資料夾 ID">
+                        <input type="text" id="drive-api-key" placeholder="在此輸入您的 Google Drive API Key" class="border p-2 rounded flex-[2]">
+                        <button id="drive-connect-btn" class="bg-green-600 text-white px-4 py-2 rounded font-bold hover:bg-green-700 whitespace-nowrap cursor-pointer">讀取資料夾</button>
+                    </div>
+                    <div class="text-right">
+                        <button id="drive-demo-btn" class="text-blue-600 hover:text-blue-800 underline text-sm cursor-pointer">沒有 Key？使用試用範例 (免 Key)</button>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">提示：API Key 需在 Google Cloud Console 啟用 Drive API 並設定。</p>
+            </div>
+
+            <div id="modal-content-area" class="flex-1 overflow-y-auto p-6 bg-slate-100 hidden">
+                <div id="modal-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                </div>
+            </div>
+
+            <div id="modal-footer" class="hidden p-6 border-t bg-white rounded-b-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="text-sm text-slate-600 flex items-center gap-4">
+                    <span>已選擇 <span id="modal-selected-count" class="font-bold text-blue-600">0</span> 張圖片</span>
+                    <button id="modal-select-all-btn" class="text-blue-600 hover:text-blue-800 font-medium text-sm cursor-pointer">全選</button>
+                    <button id="modal-deselect-all-btn" class="text-slate-500 hover:text-slate-700 font-medium text-sm cursor-pointer">取消全選</button>
+                </div>
+                <div class="space-x-2 w-full md:w-auto flex justify-end">
+                    <button id="cancel-modal-btn" class="px-4 py-2 text-slate-500 hover:text-slate-700 cursor-pointer">取消</button>
+                    <button id="confirm-modal-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2 rounded-lg font-bold shadow transition-colors cursor-pointer">
+                        確定選取
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第二頁：遊戲介面 -->
+    <div id="game-view" class="hidden space-y-6">
+        <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-md">
+            <div class="flex items-center">
+                <span class="text-slate-500">進度:</span>
+                <span id="progress-text" class="text-xl font-bold text-blue-600 ml-2">1 / 4</span>
+            </div>
+            <h2 id="game-instruction" class="text-lg font-medium text-slate-700 text-center flex-1 mx-2">請記住這些卡片...</h2>
+            <div>
+                <button id="reselect-btn" class="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    重新選擇
+                </button>
+            </div>
+        </div>
+
+        <!-- 卡片網格：改為使用 flexbox 以支援最後一行置中 -->
+        <div id="card-grid" class="flex flex-wrap justify-center content-center gap-4 min-h-[400px]">
+            <!-- 卡片會動態生成於此 -->
+        </div>
+
+        <div class="flex justify-center space-x-4">
+            <button id="memorize-btn" class="bg-amber-500 hover:bg-amber-600 text-white px-10 py-4 rounded-xl font-bold shadow-lg transition-all">
+                記住了！
+            </button>
+            <button id="start-search-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold shadow-lg transition-all">
+                開始找
+            </button>
+            <button id="next-round-btn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 rounded-xl font-bold shadow-lg transition-all">
+                換下一題
+            </button>
+        </div>
+    </div>
+
+    <!-- 結算頁面 -->
+    <div id="result-view" class="hidden bg-white rounded-2xl shadow-xl p-12 text-center">
+        <h1 class="text-4xl font-bold text-slate-800 mb-4">挑戰結束！</h1>
+        <p class="text-xl text-slate-600 mb-8">太棒了！你已經辨識完所有更換過的卡片。</p>
+        <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-bold shadow-lg">
+            重新玩
+        </button>
+    </div>
+</div>
+
+<script>
+    const state = {
+        allPairs: {}, 
+        currentSet: [], 
+        gridCards: [], 
+        targetIndex: -1, 
+        usedTargetIds: new Set(), 
+        stage: 'upload', 
+        round: 0,
+        maxRounds: 0,
+        fetchedFiles: [],
+        selectedFileNames: new Set()
+    };
+
+    const uploadView = document.getElementById('upload-view');
+    const gameView = document.getElementById('game-view');
+    const resultView = document.getElementById('result-view');
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+    const startBtn = document.getElementById('start-game-btn');
+    const cardGrid = document.getElementById('card-grid');
+    const memorizeBtn = document.getElementById('memorize-btn');
+    const startSearchBtn = document.getElementById('start-search-btn');
+    const nextBtn = document.getElementById('next-round-btn');
+    const instruction = document.getElementById('game-instruction');
+    const progressText = document.getElementById('progress-text');
+    const pairListContainer = document.getElementById('pair-list');
+    const errorListContainer = document.getElementById('error-list');
+    const statusSummary = document.getElementById('status-summary');
+    const reselectBtn = document.getElementById('reselect-btn');
+    const resetSelectionBtn = document.getElementById('reset-selection-btn');
+    
+    const fetchGitHubBtn = document.getElementById('fetch-github-btn');
+    const fetchDriveBtn = document.getElementById('fetch-drive-btn');
+
+    const selectionModal = document.getElementById('selection-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalSubtitle = document.getElementById('modal-subtitle');
+    const modalLoading = document.getElementById('modal-loading');
+    const modalContentArea = document.getElementById('modal-content-area');
+    const modalFooter = document.getElementById('modal-footer');
+    const modalGrid = document.getElementById('modal-grid');
+    const driveConfigPanel = document.getElementById('drive-config-panel');
+    const driveApiKeyInput = document.getElementById('drive-api-key');
+    const driveFolderIdInput = document.getElementById('drive-folder-id');
+    const driveConnectBtn = document.getElementById('drive-connect-btn');
+    const driveDemoBtn = document.getElementById('drive-demo-btn');
+    
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const cancelModalBtn = document.getElementById('cancel-modal-btn');
+    const confirmModalBtn = document.getElementById('confirm-modal-btn');
+    const modalSelectedCount = document.getElementById('modal-selected-count');
+    const selectAllBtn = document.getElementById('modal-select-all-btn');
+    const deselectAllBtn = document.getElementById('modal-deselect-all-btn');
+
+    dropZone.onclick = () => fileInput.click();
+    fileInput.onchange = (e) => handleFiles(Array.from(e.target.files));
+    
+    fetchGitHubBtn.onclick = () => openGitHubMode();
+    fetchDriveBtn.onclick = () => openDriveMode();
+
+    closeModalBtn.onclick = () => selectionModal.classList.add('hidden');
+    cancelModalBtn.onclick = () => selectionModal.classList.add('hidden');
+    
+    selectAllBtn.onclick = () => {
+        state.fetchedFiles.forEach(file => state.selectedFileNames.add(file.name));
+        updateModalUI();
+    };
+
+    deselectAllBtn.onclick = () => {
+        state.selectedFileNames.clear();
+        updateModalUI();
+    };
+
+    confirmModalBtn.onclick = (e) => {
+        e.preventDefault();
+        handleModalConfirm();
+    };
+    driveConnectBtn.onclick = fetchDriveFiles;
+    driveDemoBtn.onclick = loadDriveDemoData;
+
+    async function openGitHubMode() {
+        resetModalState();
+        modalTitle.innerText = "選擇 GitHub 圖片";
+        modalSubtitle.innerText = "來源：happy690331/teacher/images";
+        driveConfigPanel.classList.add('hidden'); 
+        
+        selectionModal.classList.remove('hidden');
+        modalLoading.classList.remove('hidden');
+        
+        try {
+            const repoOwner = 'happy690331';
+            const repoName = 'teacher';
+            const path = 'images';
+            const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`;
+
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error(`GitHub API Error: ${response.status}`);
+            const data = await response.json();
+            
+            const imageFiles = data.filter(item => item.type === 'file' && /\.(jpg|jpeg|png|gif|webp)$/i.test(item.name))
+                                   .map(item => ({ name: item.name, url: item.download_url }));
+
+            if (imageFiles.length === 0) {
+                alert('找不到圖片檔案。');
+                selectionModal.classList.add('hidden');
+                return;
+            }
+
+            state.fetchedFiles = imageFiles;
+            renderModalGrid();
+            modalLoading.classList.add('hidden');
+            modalContentArea.classList.remove('hidden');
+            modalFooter.classList.remove('hidden');
+
+        } catch (error) {
+            console.error(error);
+            alert(`讀取失敗: ${error.message}`);
+            selectionModal.classList.add('hidden');
+        }
+    }
+
+    function openDriveMode() {
+        resetModalState();
+        modalTitle.innerText = "選擇 Google Drive 圖片";
+        modalSubtitle.innerText = "來源：Google Drive Folder (需 API Key)";
+        
+        selectionModal.classList.remove('hidden');
+        modalLoading.classList.add('hidden');
+        modalContentArea.classList.add('hidden');
+        modalFooter.classList.add('hidden');
+        driveConfigPanel.classList.remove('hidden');
+    }
+
+    function loadDriveDemoData() {
+        driveConfigPanel.classList.add('hidden');
+        modalLoading.classList.remove('hidden');
+
+        setTimeout(() => {
+            state.fetchedFiles = [
+                { name: "玩具_1.jpg", url: "https://placehold.co/300x300/orange/white?text=玩具+1" },
+                { name: "玩具_2.jpg", url: "https://placehold.co/300x300/orange/white?text=玩具+2" },
+                { name: "花朵_A.jpg", url: "https://placehold.co/300x300/pink/white?text=花朵+A" },
+                { name: "花朵_B.jpg", url: "https://placehold.co/300x300/pink/white?text=花朵+B" },
+                { name: "小狗_左.jpg", url: "https://placehold.co/300x300/amber/white?text=小狗+左" },
+                { name: "小狗_右.jpg", url: "https://placehold.co/300x300/amber/white?text=小狗+右" },
+                { name: "貓咪_1.jpg", url: "https://placehold.co/300x300/cyan/white?text=貓咪+1" },
+                { name: "貓咪_2.jpg", url: "https://placehold.co/300x300/cyan/white?text=貓咪+2" }
+            ];
+            
+            renderModalGrid();
+            modalLoading.classList.add('hidden');
+            modalContentArea.classList.remove('hidden');
+            modalFooter.classList.remove('hidden');
+            modalSubtitle.innerText = "來源：Google Drive (模擬試用資料)";
+        }, 800);
+    }
+
+    async function fetchDriveFiles() {
+        const apiKey = driveApiKeyInput.value.trim();
+        const folderId = driveFolderIdInput.value.trim();
+
+        if (!apiKey) {
+            alert("請輸入 Google Drive API Key！");
+            return;
+        }
+
+        modalLoading.classList.remove('hidden');
+        driveConfigPanel.classList.add('hidden'); 
+
+        try {
+            const query = `'${folderId}' in parents and trashed = false and mimeType contains 'image/'`;
+            const fields = "files(id, name, thumbnailLink, webContentLink)";
+            const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&key=${apiKey}`;
+
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.error) {
+                console.error("API Error Details:", result.error);
+                let msg = result.error.message;
+                if (result.error.code === 403) {
+                    msg += "\n\n(提示：API Key 可能權限不足或未啟用 Drive API)";
+                } else if (result.error.code === 400) {
+                     msg += "\n\n(提示：金鑰格式錯誤)";
+                }
+                throw new Error(msg);
+            }
+
+            if (!result.files || result.files.length === 0) {
+                throw new Error("資料夾內沒有圖片或權限不足。");
+            }
+
+            state.fetchedFiles = result.files.map(f => ({
+                name: f.name,
+                url: f.thumbnailLink ? f.thumbnailLink.replace(/=s\d+/, '=s400') : `https://lh3.googleusercontent.com/d/${f.id}`
+            }));
+
+            renderModalGrid();
+            modalLoading.classList.add('hidden');
+            modalContentArea.classList.remove('hidden');
+            modalFooter.classList.remove('hidden');
+
+        } catch (error) {
+            console.error(error);
+            alert(`讀取 Drive 失敗:\n${error.message}\n\n請檢查 API Key 是否正確且已啟用 Drive API。`);
+            modalLoading.classList.add('hidden');
+            driveConfigPanel.classList.remove('hidden');
+        }
+    }
+
+    function resetModalState() {
+        state.fetchedFiles = [];
+        state.selectedFileNames.clear();
+        modalGrid.innerHTML = '';
+        modalSelectedCount.innerText = '0';
+        modalContentArea.classList.add('hidden');
+        modalFooter.classList.add('hidden');
+        driveConfigPanel.classList.add('hidden');
+    }
+
+    function renderModalGrid() {
+        modalGrid.innerHTML = '';
+        state.fetchedFiles.forEach(file => {
+            const isSelected = state.selectedFileNames.has(file.name);
+            const div = document.createElement('div');
+            div.className = `gallery-item relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all h-32 bg-gray-100 ${isSelected ? 'selected' : 'border-slate-200 hover:border-blue-300'}`;
+            div.onclick = () => toggleSelection(file.name);
+
+            div.innerHTML = `
+                <img src="${file.url}" 
+                     alt="${file.name}" 
+                     class="w-full h-full object-cover"
+                     loading="lazy"
+                     onerror="this.src='https://placehold.co/100?text=Error'">
+                <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 truncate text-center">
+                    ${file.name}
+                </div>
+            `;
+            modalGrid.appendChild(div);
+        });
+        updateModalUI();
+    }
+
+    function toggleSelection(name) {
+        if (state.selectedFileNames.has(name)) {
+            state.selectedFileNames.delete(name);
+        } else {
+            state.selectedFileNames.add(name);
+        }
+        updateModalUI();
+    }
+
+    function updateModalUI() {
+        modalSelectedCount.innerText = state.selectedFileNames.size;
+        const items = modalGrid.children;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const name = state.fetchedFiles[i].name;
+            if (state.selectedFileNames.has(name)) {
+                item.classList.add('selected');
+                item.classList.remove('border-slate-200', 'hover:border-blue-300');
+            } else {
+                item.classList.remove('selected');
+                item.classList.add('border-slate-200', 'hover:border-blue-300');
+            }
+        }
+    }
+
+    // --- 優化後的確認選取邏輯 ---
+    function handleModalConfirm() {
+        try {
+            const selectedNames = Array.from(state.selectedFileNames);
+            if (selectedNames.length === 0) {
+                alert("請至少選擇圖片！");
+                return;
+            }
+
+            const selectedFiles = selectedNames.map(name => 
+                state.fetchedFiles.find(f => f.name === name)
+            ).filter(f => !!f);
+
+            const groups = {};
+            selectedFiles.forEach(file => {
+                const prefix = file.name.substring(0, 2);
+                if (!groups[prefix]) groups[prefix] = [];
+                groups[prefix].push(file);
+            });
+
+            const finalPairs = {};
+            const errors = [];
+            let pairCount = 0;
+
+            for (const [prefix, files] of Object.entries(groups)) {
+                if (files.length % 2 !== 0) {
+                    errors.push(`「${prefix}」開頭的檔案數量為 ${files.length} 張 (必須是偶數/成對)`);
+                } else {
+                    files.sort((a, b) => a.name.localeCompare(b.name));
+                    for (let i = 0; i < files.length; i += 2) {
+                        const pairKey = files.length === 2 ? prefix : `${prefix}-${(i/2)+1}`;
+                        finalPairs[pairKey] = [files[i].url, files[i+1].url];
+                        pairCount++;
+                    }
+                }
+            }
+
+            if (errors.length > 0) {
+                alert(`選取問題：\n\n${errors.join('\n')}\n\n請補齊配對 (每組需為偶數張)。`);
+                return;
+            }
+
+            if (pairCount < 1) {
+                alert("最少需要 1 組配對 (2 張) 才能開始。");
+                return;
+            }
+
+            state.allPairs = finalPairs;
+            updateFileStatusUI(finalPairs, [], pairCount);
+            selectionModal.classList.add('hidden');
+
+        } catch (err) {
+            console.error(err);
+            alert("系統錯誤: " + err.message);
+        }
+    }
+
+    startBtn.onclick = () => {
+        if (Object.keys(state.allPairs).length < 1) return;
+        initGame();
+        showView('game');
+    };
+
+    memorizeBtn.onclick = () => startHiding();
+    startSearchBtn.onclick = () => startSearching();
+    nextBtn.onclick = () => setupRound();
+    reselectBtn.onclick = () => showView('upload');
+    resetSelectionBtn.onclick = resetUploadState;
+
+    function resetUploadState() {
+        state.allPairs = {};
+        pairListContainer.innerHTML = '';
+        errorListContainer.innerHTML = '';
+        statusSummary.innerText = '';
+        fileInput.value = '';
+        document.getElementById('file-status').classList.add('hidden');
+        resetSelectionBtn.classList.add('hidden'); 
+    }
+
+    function handleFiles(files) {
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        if (imageFiles.length === 0 && files.length > 0) {
+            alert("沒有選取到圖片檔案。");
+            return;
+        }
+        
+        const tempMap = {};
+        imageFiles.forEach(file => {
+            const fileName = file.name;
+            const baseName = fileName.substring(0, 2);
+            if (!tempMap[baseName]) tempMap[baseName] = [];
+            tempMap[baseName].push(URL.createObjectURL(file));
+        });
+
+        processPairs(tempMap);
+    }
+
+    function processPairs(tempMap) {
+        const validPairs = {};
+        const singles = [];
+        let pairCount = 0;
+
+        for (const word in tempMap) {
+            if (tempMap[word].length >= 2) {
+                validPairs[word] = [tempMap[word][0], tempMap[word][1]];
+                pairCount++;
+            } else {
+                singles.push(word);
+            }
+        }
+
+        state.allPairs = validPairs;
+        updateFileStatusUI(validPairs, singles, pairCount);
+    }
+
+    function updateFileStatusUI(pairs, singles, count) {
+        pairListContainer.innerHTML = '';
+        errorListContainer.innerHTML = '';
+        document.getElementById('file-status').classList.remove('hidden');
+        resetSelectionBtn.classList.remove('hidden'); 
+
+        for (const word in pairs) {
+            const item = document.createElement('div');
+            item.innerHTML = `✅ ${word}... (2張)`;
+            pairListContainer.appendChild(item);
+        }
+
+        if (singles.length > 0) {
+            errorListContainer.innerText = `注意：以下開頭的檔案只有 1 張，無法成對：${singles.join(', ')}`;
+        }
+
+        if (count >= 1) {
+            statusSummary.innerText = `目前已準備好 ${count} 組配對！`;
+            statusSummary.className = "text-green-600 font-bold mb-2";
+            startBtn.disabled = false;
+        } else {
+            statusSummary.innerText = `目前僅有 ${count} 組配對，還差 ${1 - count} 組才能開始。`;
+            statusSummary.className = "text-amber-600 font-bold mb-2";
+            startBtn.disabled = true;
+        }
+    }
+
+    function showView(viewName) {
+        uploadView.classList.add('hidden');
+        gameView.classList.add('hidden');
+        resultView.classList.add('hidden');
+        if (viewName === 'upload') uploadView.classList.remove('hidden');
+        if (viewName === 'game') gameView.classList.remove('hidden');
+        if (viewName === 'result') resultView.classList.remove('hidden');
+    }
+
+    function initGame() {
+        const keys = Object.keys(state.allPairs);
+        const shuffled = keys.sort(() => 0.5 - Math.random());
+        const cardCount = Math.min(keys.length, 9); 
+        state.currentSet = shuffled.slice(0, cardCount);
+        state.maxRounds = cardCount;
+        state.usedTargetIds.clear();
+        state.round = 0;
+        cardGrid.className = "flex flex-wrap justify-center content-center gap-4 min-h-[400px]";
+        setupRound();
+    }
+
+    function getLayoutClass(count) {
+        if (count === 3 || count === 5 || count === 6 || count === 9) {
+            return "w-[30%] h-64"; 
+        } else {
+            return "w-[22%] h-64";
+        }
+    }
+
+    function setupRound() {
+        state.round++;
+        state.stage = 'memorizing';
+        instruction.innerText = "請記住這些卡片...";
+        progressText.innerText = `${state.round} / ${state.maxRounds}`;
+        
+        memorizeBtn.classList.remove('hidden');
+        startSearchBtn.classList.add('hidden');
+        nextBtn.classList.add('hidden');
+
+        const displayOrder = [...state.currentSet].sort(() => 0.5 - Math.random());
+        
+        state.gridCards = displayOrder.map(word => ({
+            word: word,
+            currentUrl: state.allPairs[word][0], 
+            version: 0 
+        }));
+
+        renderGrid(false);
+    }
+
+    function renderGrid(isFlipped) {
+        cardGrid.innerHTML = '';
+        const layoutClass = getLayoutClass(state.maxRounds);
+
+        state.gridCards.forEach((card, index) => {
+            const container = document.createElement('div');
+            container.className = `card-container relative cursor-pointer ${layoutClass} ${isFlipped ? 'card-flipped' : ''}`;
+            container.onclick = () => handleCardClick(index);
+
+            const cardInner = document.createElement('div');
+            cardInner.className = 'card-inner w-full h-full shadow-lg rounded-xl';
+
+            const cardFront = document.createElement('div');
+            cardFront.className = 'card-front bg-white p-2 border border-slate-200 relative';
+            
+            const img = document.createElement('img');
+            img.src = card.currentUrl;
+            img.className = 'w-full h-full object-contain rounded-lg transition-opacity duration-300';
+            img.alt = card.word;
+            
+            const fallback = document.createElement('div');
+            fallback.className = 'hidden absolute inset-0 flex flex-col items-center justify-center text-slate-400 font-bold bg-slate-50 rounded-lg p-2 text-center';
+            fallback.innerHTML = `<span class="text-4xl mb-2">🖼️</span><span>${card.word}</span>`;
+
+            img.onerror = () => {
+                img.style.display = 'none';
+                fallback.classList.remove('hidden');
+            };
+
+            cardFront.appendChild(img);
+            cardFront.appendChild(fallback);
+
+            const cardBack = document.createElement('div');
+            cardBack.className = 'card-back border-4 border-white';
+            cardBack.innerHTML = '<span class="text-4xl">?</span>';
+
+            cardInner.appendChild(cardFront);
+            cardInner.appendChild(cardBack);
+            container.appendChild(cardInner);
+
+            const feedback = document.createElement('div');
+            feedback.id = `feedback-${index}`;
+            feedback.className = 'result-overlay opacity-0 transition-opacity';
+            
+            container.appendChild(feedback);
+            cardGrid.appendChild(container);
+        });
+    }
+
+    function startHiding() {
+        state.stage = 'hidden';
+        instruction.innerText = "正在變換中...";
+        memorizeBtn.classList.add('hidden');
+        
+        const containers = document.querySelectorAll('.card-container');
+        containers.forEach(c => c.classList.add('card-flipped'));
+
+        const availableIndices = [];
+        state.gridCards.forEach((card, idx) => {
+            if (!state.usedTargetIds.has(card.word)) {
+                availableIndices.push(idx);
+            }
+        });
+
+        const targetIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+        state.targetIndex = targetIdx;
+        state.usedTargetIds.add(state.gridCards[targetIdx].word);
+
+        setTimeout(() => {
+            const targetCard = state.gridCards[targetIdx];
+            targetCard.version = 1;
+            targetCard.currentUrl = state.allPairs[targetCard.word][1];
+            
+            const container = containers[targetIdx];
+            const img = container.querySelector('img');
+            const fallback = container.querySelector('.card-front > div'); 
+            
+            img.style.display = 'block';
+            fallback.classList.add('hidden');
+            img.src = targetCard.currentUrl;
+
+            instruction.innerText = "變換完成！";
+            startSearchBtn.classList.remove('hidden');
+        }, 800);
+    }
+
+    function startSearching() {
+        state.stage = 'searching';
+        instruction.innerText = "哪一張卡片被換過了？";
+        startSearchBtn.classList.add('hidden');
+
+        const containers = document.querySelectorAll('.card-container');
+        containers.forEach(c => c.classList.remove('card-flipped'));
+    }
+
+    function handleCardClick(index) {
+        if (state.stage !== 'searching') return;
+
+        const feedback = document.getElementById(`feedback-${index}`);
+        feedback.classList.remove('opacity-0');
+
+        if (index === state.targetIndex) {
+            feedback.innerHTML = `
+                <svg viewBox="0 0 100 100" class="w-32 h-32 text-green-500 fill-current">
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" stroke-width="8" fill="none" />
+                </svg>
+            `;
+            instruction.innerText = "答對了！太厲害了！";
+            state.stage = 'result';
+            
+            // --- 核心修改：顯示「上一張」對照卡 ---
+            const card = state.gridCards[index];
+            const pair = state.allPairs[card.word];
+            // 找出變身前的圖片 (與目前顯示的圖片不同的那張)
+            const prevUrl = pair.find(u => u !== card.currentUrl);
+
+            // 建立浮動視窗
+            const compareDiv = document.createElement('div');
+            // 設定樣式：絕對定位、浮動在上方、帶有動畫
+            compareDiv.className = 'compare-popup absolute z-50 w-32 h-32 bg-white border-4 border-amber-400 rounded-xl shadow-2xl flex flex-col items-center justify-center overflow-hidden';
+            // 位置設定：稍微偏移，製造浮動感
+            compareDiv.style.top = '-20%';
+            compareDiv.style.right = '-20%';
+            
+            compareDiv.innerHTML = `
+                <div class="w-full bg-amber-400 text-white text-xs font-bold text-center py-1">變身前</div>
+                <div class="flex-1 w-full h-full p-1 bg-white">
+                    <img src="${prevUrl}" class="w-full h-full object-contain">
+                </div>
+            `;
+            
+            // 加到該卡片的容器中 (因為容器有 perspective，通常不會切掉 absolute 元素)
+            const container = document.querySelectorAll('.card-container')[index];
+            // 提高被點擊卡片的層級，確保浮動視窗蓋過隔壁卡片
+            container.style.zIndex = '50'; 
+            container.appendChild(compareDiv);
+
+            setTimeout(() => {
+                if (state.usedTargetIds.size >= state.maxRounds) {
+                    showView('result');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                }
+            }, 1500); // 稍微延長時間讓玩家看清楚對照
+        } else {
+            feedback.innerHTML = `
+                <svg viewBox="0 0 100 100" class="w-32 h-32 text-red-500">
+                    <line x1="20" y1="20" x2="80" y2="80" stroke="currentColor" stroke-width="12" stroke-linecap="round" />
+                    <line x1="80" y1="20" x2="20" y2="80" stroke="currentColor" stroke-width="12" stroke-linecap="round" />
+                </svg>
+            `;
+            instruction.innerText = "答錯囉，再仔細看看！";
+        }
+    }
+</script>
+</body>
+</html>
