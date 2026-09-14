@@ -412,18 +412,18 @@
   <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
 
   <div class="lesson-buttons" id="lessonButtonsContainer">
-    <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1', this)">第一課</button>
-    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2', this)">第二課</button>
-    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3', this)">第三課</button>
-    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4', this)">第四課</button>
-    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5', this)">第五課</button>
-    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6', this)">第六課</button>
-    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7', this)">第七課</button>
-    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8', this)">第八課</button>
-    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9', this)">第九課</button>
-    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10', this)">第十課</button>
-    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11', this)">第十一課</button>
-    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12', this)">第十二課</button>
+    <button class="lesson-btn active" data-lesson="1" onclick="switchLesson('1', this)">第一課 水陸小高手</button>
+    <button class="lesson-btn" data-lesson="2" onclick="switchLesson('2', this)">第二課 放學後</button>
+    <button class="lesson-btn" data-lesson="3" onclick="switchLesson('3', this)">第三課 我的籃球夢</button>
+    <button class="lesson-btn" data-lesson="4" onclick="switchLesson('4', this)">第四課 永遠的馬偕</button>
+    <button class="lesson-btn" data-lesson="5" onclick="switchLesson('5', this)">第五課 假如給我三天光明</button>
+    <button class="lesson-btn" data-lesson="6" onclick="switchLesson('6', this)">第六課 攀登生命的高峰</button>
+    <button class="lesson-btn" data-lesson="7" onclick="switchLesson('7', this)">第七課 美味的一堂課</button>
+    <button class="lesson-btn" data-lesson="8" onclick="switchLesson('8', this)">第八課 建築界的長頸鹿</button>
+    <button class="lesson-btn" data-lesson="9" onclick="switchLesson('9', this)">第九課 請到我的家鄉來</button>
+    <button class="lesson-btn" data-lesson="10" onclick="switchLesson('10', this)">第十課 奇幻旋律</button>
+    <button class="lesson-btn" data-lesson="11" onclick="switchLesson('11', this)">第十一課 兔子先生等等我</button>
+    <button class="lesson-btn" data-lesson="12" onclick="switchLesson('12', this)">第十二課 老鞋匠和小精靈</button>
     <button class="lesson-btn" data-lesson="all" onclick="switchLesson('all', this)">🌟 全冊挑戰</button>
     
   </div>
@@ -1032,16 +1032,16 @@
     // 生成題目清單
     function generateQuestions() {
       gameQuestions = [];
-      const total = characters.length;
+      const answerOrder = [...new Set(characters)].sort(() => Math.random() - 0.5);
+      const total = answerOrder.length;
       for (let i = 0; i < total; i++) {
-        const question = generateQuestion(i);
+        const question = generateQuestion(answerOrder[i]);
         gameQuestions.push(question);
       }
     }
 
     // 生成單題
-    function generateQuestion(qIndex) {
-      const targetAns = characters[qIndex % characters.length];
+    function generateQuestion(targetAns) {
       const otherPool = characters.filter(c => c !== targetAns).sort(() => Math.random() - 0.5);
 
       const M = characters.length;
