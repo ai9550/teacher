@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 考卷朗讀輔助系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js core and worker -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            overflow: hidden; /* 隱藏整體滾動，由各區域獨立滾動 */
+        }
+
+        /* 頁面切換邏輯 (使用 data-mode 控制顯示與隱藏) */
+        body[data-mode="page1"] #view-page1 { display: flex; }
+        body[data-mode="page1"] #view-pdf-container { display: none; }
+        body[data-mode="page1"] #toolbar-page2 { display: none; }
+
+        body[data-mode="page2"] #view-page1 { display: none; }
+        body[data-mode="page2"] #view-pdf-container { display: block; }
+        body[data-mode="page2"] #toolbar-page2 { display: flex; }
+
+        /* PDF 顯示區域樣式 */
+        #view-pdf-container {
+            height: calc(100vh - 64px); /* 扣除頂部 toolbar 高度 */
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #e5e7eb;
+        }
+
+        .pdf-page {
+            position: relative;
+            margin: 0 auto 30px auto;
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .pdf-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 文字層：保留以利於動態擷取文字 */
+        .textLayer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0; 
+            line-height: 1.0;
+        }
+        .textLayer > span {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            transform-origin: 0% 0%;
+        }
+
+        /* 互動層：放置紅框 */
+        .interaction-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none; /* 穿透點擊 */
+            z-index: 10;
+        }
+
+        /* 互動紅框共用樣式 (報讀模式) */
+        .question-box {
+            position: absolute;
+            pointer-events: auto;
+            border-radius: 4px;
+            box-sizing: border-box;
+            cursor: pointer;
+            /* 預設完全隱藏紅框，連滑鼠經過也不顯示，讓考卷看起來完全像原貌 */
+            background-color: transparent; 
+            border: 3px solid transparent; 
+            transition: all 0.2s;
+        }
+        
+        /* 點擊後的紅框樣式 (報讀中) */
+        .question-box.active-read {
+            background-color: rgba(239, 68, 68, 0.1) !important; /* 淡紅色背景 */
+            border: 3px solid #ef4444 !important; /* 紅色邊框，這時候才唯一顯示出紅框 */
+            z-index: 20;
+        }
+
+        /* 自訂滾動條 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body data-mode="page1" class="text-gray-800">
+
+    <!-- ==================== PAGE 1: 上傳與開始辨識 ==================== -->
+    <div id="view-page1" class="h-screen w-full flex-col items-center justify-center bg-white p-4">
+        <!-- 調整寬度以容納三個區塊 -->
+        <div class="max-w-5xl w-full text-center space-y-6">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-700 mb-2">PDF 考卷朗讀輔助系統</h1>
+                <p class="text-gray-500">請選擇載入考卷的方式並點擊開始辨識</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 方式一：本機上傳 -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">方式一：本機上傳</h2>
+                    <label for="pdf-upload" class="cursor-pointer flex flex-col items-center gap-3 w-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <span id="file-name-display" class="text-md font-medium text-gray-700">選擇 PDF 檔案</span>
+                        <input type="file" id="pdf-upload" accept="application/pdf" class="hidden">
+                    </label>
+                </div>
+
+                <!-- 方式二：GitHub 題庫 -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">方式二：從線上題庫載入</h2>
+                    <div class="w-full flex flex-col items-center justify-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <select id="github-pdf-select" class="w-full max-w-[250px] p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700 cursor-pointer">
+                            <option value="">載入題庫中...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 方式三：雲端硬碟 (密碼框+下拉選單) -->
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition flex flex-col items-center justify-center">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">方式三：從雲端硬碟載入</h2>
+                    <div class="w-full flex flex-col items-center justify-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                        <div class="w-full flex gap-2">
+                            <input type="password" id="gdrive-api-key" placeholder="請貼上 API 金鑰" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
+                            <button id="load-gdrive-btn" class="px-3 py-2 bg-green-500 text-white rounded-md text-sm font-bold hover:bg-green-600 shrink-0 transition">載入</button>
+                        </div>
+                        <select id="gdrive-pdf-select" class="w-full max-w-[250px] p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700 cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed" disabled>
+                            <option value="">請先輸入上方金鑰並載入</option>
+                        </select>
+                        <span class="text-xs text-gray-500 text-center">雲端資料夾：1u5VANt...</span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-btn" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg text-xl transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                開始辨識與報讀
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 頂部 Toolbar: PAGE 2 (報讀模式) ==================== -->
+    <div id="toolbar-page2" class="h-16 bg-white shadow-md w-full items-center px-6 justify-between shrink-0">
+        <div class="flex items-center gap-4">
+            <button id="back-to-p1-btn" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md font-medium transition">
+                🔙 回到主選單
+            </button>
+            <span class="font-bold text-lg text-blue-800 hidden md:block">語音報讀模式</span>
+            <span class="text-sm text-gray-500 hidden xl:block">點擊畫面上的紅框範圍即可朗讀</span>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4">
+            <!-- 排版切換 (支援直書/橫書) -->
+            <div class="flex items-center gap-1 md:gap-2 mr-1">
+                <span class="text-sm font-bold text-gray-700 hidden lg:block">排版:</span>
+                <select id="reading-direction" class="w-24 p-1 border border-gray-300 rounded text-sm text-gray-700 outline-none cursor-pointer">
+                    <option value="horizontal">橫排(左至右)</option>
+                    <option value="vertical">直排(右至左)</option>
+                </select>
+            </div>
+
+            <!-- 語音切換 -->
+            <div class="flex items-center gap-1 md:gap-2 mr-1">
+                <span class="text-sm font-bold text-gray-700 hidden lg:block">人聲:</span>
+                <select id="voice-select" class="w-28 p-1 border border-gray-300 rounded text-sm text-gray-700 outline-none cursor-pointer">
+                    <option value="">載入語音中...</option>
+                </select>
+            </div>
+
+            <!-- 速度調整 (預設為 0.7) -->
+            <div class="flex items-center gap-1 md:gap-2 mr-1">
+                <span class="text-sm font-bold text-gray-700 hidden lg:block">語速: <span id="rate-display">0.7</span>x</span>
+                <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="0.7" class="w-20">
+            </div>
+            
+            <!-- 播放控制 -->
+            <button id="pause-btn" class="px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded-md shadow transition disabled:opacity-50" disabled>
+                暫停
+            </button>
+            <button id="cancel-read-btn" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-md shadow transition disabled:opacity-50" disabled>
+                取消報讀
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== PDF 渲染容器 (Page 2) ==================== -->
+    <div id="view-pdf-container">
+        <!-- Loading 狀態 -->
+        <div id="loading-indicator" class="hidden flex-col items-center justify-center h-full text-blue-600">
+            <svg class="animate-spin h-12 w-12 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-xl font-bold">正在掃描紅框標記並還原考卷原貌...</p>
+        </div>
+        
+        <!-- PDF 頁面注入區 -->
+        <div id="pdf-pages-wrapper" class="flex flex-col items-center"></div>
+    </div>
+
+    <script>
+        // PDF.js 設置
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/cmaps/';
+        const CMAP_PACKED = true;
+
+        // ================= 設定區 =================
+        const GDRIVE_FOLDER_ID = '1u5VANtBOPraiVsnKOvln9XME43UWtW-T'; // 您的雲端資料夾ID
+        // ==========================================
+
+        // 全域變數
+        let pdfSource = null; 
+        let pdfDocument = null;
+        const synth = window.speechSynthesis;
+        let availableVoices = []; 
+        let isReading = false;
+        let isPaused = false;
+        let activeBox = null;
+        let textChunks = [];    
+        let chunkIndex = 0;     
+        let chunkTimeout = null;
+        let currentSessionId = 0; // 【核心修正】：給每次發音任務唯一的身份證，防止互相干擾
+
+        // DOM 元素
+        const body = document.body;
+        const fileInput = document.getElementById('pdf-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const githubPdfSelect = document.getElementById('github-pdf-select');
+        const gdriveApiKeyInput = document.getElementById('gdrive-api-key'); 
+        const loadGdriveBtn = document.getElementById('load-gdrive-btn'); 
+        const gdrivePdfSelect = document.getElementById('gdrive-pdf-select'); 
+        const startBtn = document.getElementById('start-btn');
+        const pdfPagesWrapper = document.getElementById('pdf-pages-wrapper');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        const voiceSelect = document.getElementById('voice-select'); 
+        const rateSlider = document.getElementById('rate-slider');
+        const rateDisplay = document.getElementById('rate-display');
+        const pauseBtn = document.getElementById('pause-btn');
+        const cancelReadBtn = document.getElementById('cancel-read-btn');
+
+        // 載入 GitHub 題庫清單
+        async function loadGitHubPdfs() {
+            try {
+                const response = await fetch('https://api.github.com/repos/happy690331/teacher/contents/exam%20paper2');
+                if (!response.ok) throw new Error('無法讀取題庫');
+                const data = await response.json();
+                
+                githubPdfSelect.innerHTML = '<option value="">-- 請選擇線上考卷 --</option>';
+                data.forEach(item => {
+                    if (item.name.endsWith('.pdf')) {
+                        const option = document.createElement('option');
+                        option.value = item.download_url;
+                        option.textContent = item.name;
+                        githubPdfSelect.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('GitHub 題庫載入失敗:', error);
+                githubPdfSelect.innerHTML = '<option value="">載入失敗，請確認網路或 API 限制</option>';
+            }
+        }
+
+        // 載入 Google Drive 題庫清單
+        async function loadGoogleDrivePdfs(apiKey) {
+            if (!apiKey) {
+                gdrivePdfSelect.innerHTML = '<option value="">請先輸入上方金鑰並載入</option>';
+                gdrivePdfSelect.disabled = true;
+                return;
+            }
+            try {
+                gdrivePdfSelect.innerHTML = '<option value="">載入雲端題庫中...</option>';
+                gdrivePdfSelect.disabled = true;
+                const url = `https://www.googleapis.com/drive/v3/files?q='${GDRIVE_FOLDER_ID}'+in+parents+and+mimeType='application/pdf'&key=${apiKey}&fields=files(id,name)`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('無法讀取雲端硬碟');
+                const data = await response.json();
+                
+                gdrivePdfSelect.innerHTML = '<option value="">-- 請選擇雲端考卷 --</option>';
+                data.files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file.id;
+                    option.textContent = file.name;
+                    gdrivePdfSelect.appendChild(option);
+                });
+                gdrivePdfSelect.disabled = false; 
+            } catch (error) {
+                console.error('雲端硬碟載入失敗:', error);
+                gdrivePdfSelect.innerHTML = '<option value="">載入失敗，請確認 API 金鑰是否正確</option>';
+                gdrivePdfSelect.disabled = true;
+                localStorage.removeItem('gdrive_api_key'); 
+            }
+        }
+
+        loadGitHubPdfs();
+        
+        const savedApiKey = localStorage.getItem('gdrive_api_key');
+        if (savedApiKey) {
+            gdriveApiKeyInput.value = savedApiKey;
+            loadGoogleDrivePdfs(savedApiKey);
+        }
+
+        loadGdriveBtn.addEventListener('click', () => {
+            const key = gdriveApiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('gdrive_api_key', key); 
+                loadGoogleDrivePdfs(key);
+            } else {
+                alert('請先輸入 API 金鑰');
+            }
+        });
+
+        // 事件綁定
+        document.getElementById('back-to-p1-btn').addEventListener('click', () => {
+            stopSpeaking(true);
+            switchMode('page1');
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                pdfSource = { type: 'local', file: file };
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.add('text-blue-600');
+                
+                githubPdfSelect.value = "";
+                gdrivePdfSelect.value = "";
+                startBtn.disabled = false;
+            } else {
+                alert('請上傳有效的 PDF 檔案。');
+                startBtn.disabled = true;
+            }
+        });
+
+        githubPdfSelect.addEventListener('change', function(e) {
+            const url = e.target.value;
+            if (url) {
+                const fileName = e.target.options[e.target.selectedIndex].text;
+                pdfSource = { type: 'url', url: url, name: fileName };
+                
+                fileInput.value = "";
+                fileNameDisplay.textContent = "選擇 PDF 檔案";
+                fileNameDisplay.classList.remove('text-blue-600');
+                gdrivePdfSelect.value = "";
+                startBtn.disabled = false;
+            } else {
+                if (!fileInput.files.length && !gdrivePdfSelect.value) {
+                    startBtn.disabled = true;
+                    pdfSource = null;
+                }
+            }
+        });
+
+        gdrivePdfSelect.addEventListener('change', function(e) {
+            const fileId = e.target.value;
+            if (fileId) {
+                const fileName = e.target.options[e.target.selectedIndex].text;
+                
+                const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
+                
+                pdfSource = { type: 'url', url: proxyUrl, name: fileName };
+                
+                fileInput.value = "";
+                fileNameDisplay.textContent = "選擇 PDF 檔案";
+                fileNameDisplay.classList.remove('text-blue-600');
+                githubPdfSelect.value = "";
+                
+                startBtn.disabled = false;
+            } else {
+                if (!fileInput.files.length && !githubPdfSelect.value) {
+                    startBtn.disabled = true;
+                    pdfSource = null;
+                }
+            }
+        });
+
+        startBtn.addEventListener('click', async () => {
+            if (!pdfSource) return;
+            switchMode('page2');
+            pdfPagesWrapper.innerHTML = ''; 
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.classList.add('flex');
+            
+            try {
+                let arrayBuffer;
+                
+                if (pdfSource.type === 'local') {
+                    arrayBuffer = await pdfSource.file.arrayBuffer();
+                } else if (pdfSource.type === 'url') {
+                    const loadText = loadingIndicator.querySelector('p');
+                    const originalText = loadText.textContent;
+                    loadText.textContent = `正在從線上下載：${pdfSource.name}...`;
+                    
+                    const response = await fetch(pdfSource.url);
+                    if (!response.ok) throw new Error('線上考卷下載失敗');
+                    arrayBuffer = await response.arrayBuffer();
+                    
+                    loadText.textContent = originalText;
+                }
+
+                pdfDocument = await pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: CMAP_URL,
+                    cMapPacked: CMAP_PACKED
+                }).promise;
+
+                for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                    await renderPage(pageNum);
+                }
+            } catch (error) {
+                console.error("PDF 載入失敗:", error);
+                alert("解析 PDF 時發生錯誤: " + error.message);
+                switchMode('page1');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                loadingIndicator.classList.remove('flex');
+            }
+        });
+
+        function switchMode(mode) {
+            body.dataset.mode = mode;
+            stopSpeaking(true);
+        }
+
+        async function renderPage(pageNum) {
+            const page = await pdfDocument.getPage(pageNum);
+            const scale = 1.5; 
+            const viewport = page.getViewport({ scale });
+
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            pageDiv.style.width = viewport.width + 'px';
+            pageDiv.style.height = viewport.height + 'px';
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            pageDiv.appendChild(canvas);
+            await page.render({ canvasContext: context, viewport }).promise;
+
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            pageDiv.appendChild(textLayerDiv);
+            const textContent = await page.getTextContent();
+            await pdfjsLib.renderTextLayer({
+                textContent, container: textLayerDiv, viewport, textDivs: []
+            }).promise;
+
+            const interactionLayer = document.createElement('div');
+            interactionLayer.className = 'interaction-layer';
+            pageDiv.appendChild(interactionLayer);
+
+            pdfPagesWrapper.appendChild(pageDiv);
+
+            if (pageNum === 1) {
+                autoSetReadingDirection(textLayerDiv, viewport.width, viewport.height);
+            }
+
+            detectRedBoxesFromCanvas(canvas, interactionLayer);
+        }
+
+        function autoSetReadingDirection(textLayer, pageWidth, pageHeight) {
+            const spans = Array.from(textLayer.querySelectorAll('span'));
+            if (spans.length === 0) return;
+
+            let isVertical = false;
+
+            if (pageWidth > pageHeight) {
+                let maxFontSize = 0;
+                let titleCenterX = 0;
+
+                spans.forEach(span => {
+                    let fontSize = parseFloat(span.style.fontSize);
+                    if (isNaN(fontSize)) fontSize = span.offsetHeight;
+                    
+                    if (fontSize > maxFontSize) {
+                        maxFontSize = fontSize;
+                        let left = parseFloat(span.style.left);
+                        if (isNaN(left)) left = span.offsetLeft;
+                        titleCenterX = left + (span.offsetWidth / 2);
+                    }
+                });
+
+                if (titleCenterX > pageWidth * 0.75) {
+                    isVertical = true;
+                }
+            }
+
+            const directionSelect = document.getElementById('reading-direction');
+            if (isVertical) {
+                directionSelect.value = 'vertical';
+                console.log("自動偵測：橫式考卷且大標題在右方，已切換為 直排(右至左)");
+            } else {
+                directionSelect.value = 'horizontal';
+                console.log("自動偵測：維持預設 橫排(左至右)");
+            }
+        }
+
+        function detectRedBoxesFromCanvas(canvas, interactionLayer) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            const redPixels = new Uint8Array(width * height);
+            for (let i = 0; i < width * height; i++) {
+                const idx = i * 4;
+                const r = data[idx], g = data[idx+1], b = data[idx+2], a = data[idx+3];
+
+                if (a > 30 && r > 130 && g < r * 0.7 && b < r * 0.7) {
+                    redPixels[i] = 1;
+                    data[idx] = 255;   
+                    data[idx+1] = 255; 
+                    data[idx+2] = 255; 
+                    data[idx+3] = 255; 
+                }
+            }
+            
+            ctx.putImageData(imgData, 0, 0);
+
+            const boxes = [];
+            const q = new Int32Array(width * height);
+            
+            for (let i = 0; i < width * height; i++) {
+                if (redPixels[i] === 1) {
+                    let left = width, right = 0, top = height, bottom = 0;
+                    let head = 0, tail = 0;
+                    
+                    q[tail++] = i;
+                    redPixels[i] = 2; 
+                    
+                    while (head < tail) {
+                        let curr = q[head++];
+                        let cy = Math.floor(curr / width);
+                        let cx = curr % width;
+                        
+                        if (cx < left) left = cx;
+                        if (cx > right) right = cx;
+                        if (cy < top) top = cy;
+                        if (cy > bottom) bottom = cy;
+                        
+                        for (let dy = -2; dy <= 2; dy++) {
+                            for (let dx = -2; dx <= 2; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                let nx = cx + dx;
+                                let ny = cy + dy;
+                                
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                                    let ni = ny * width + nx;
+                                    if (redPixels[ni] === 1) {
+                                        redPixels[ni] = 2; 
+                                        q[tail++] = ni;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if ((right - left) > 15 && (bottom - top) > 15) {
+                        boxes.push({left, right, top, bottom});
+                    }
+                }
+            }
+
+            if (boxes.length > 0) {
+                boxes.forEach(b => {
+                    createBoxElement(interactionLayer, b.left, b.top, b.right - b.left, b.bottom - b.top);
+                });
+            }
+        }
+
+        function createBoxElement(layer, left, top, width, height) {
+            const box = document.createElement('div');
+            box.className = 'question-box';
+            box.style.left = left + 'px';
+            box.style.top = top + 'px';
+            box.style.width = width + 'px';
+            box.style.height = height + 'px';
+
+            box.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pageDiv = box.closest('.pdf-page');
+                const textLayer = pageDiv.querySelector('.textLayer');
+                const textToRead = extractTextFromBoxCoords(box, textLayer);
+                
+                if (textToRead.trim()) {
+                    speakText(textToRead, box);
+                } else {
+                    const originalBg = box.style.backgroundColor;
+                    box.style.backgroundColor = "rgba(239, 68, 68, 0.4)";
+                    setTimeout(() => box.style.backgroundColor = originalBg, 300);
+                }
+            });
+
+            layer.appendChild(box);
+            return box;
+        }
+
+        // ==================== 【核心修正：分行/分欄排序演算法】 ====================
+        function extractTextFromBoxCoords(box, textLayer) {
+            const boxRect = box.getBoundingClientRect();
+            const spans = Array.from(textLayer.querySelectorAll('span'));
+            
+            const insideSpans = spans.filter(span => {
+                const spanRect = span.getBoundingClientRect();
+                
+                // 【終極修正：只要沾到紅框邊就抓】確保不論排版如何都不會漏字
+                const overlapW = Math.max(0, Math.min(spanRect.right, boxRect.right) - Math.max(spanRect.left, boxRect.left));
+                const overlapH = Math.max(0, Math.min(spanRect.bottom, boxRect.bottom) - Math.max(spanRect.top, boxRect.top));
+
+                return overlapW > 0 && overlapH > 0; // 改為大於 0，確保最敏銳的抓取
+            });
+
+            const direction = document.getElementById('reading-direction').value;
+            let sortedSpans = [];
+
+            if (direction === 'vertical') {
+                // 【直式排版】：由右至左分欄，同欄由上而下
+                let columns = [];
+                insideSpans.forEach(span => {
+                    const rect = span.getBoundingClientRect();
+                    const centerX = rect.left + (rect.width / 2);
+                    const centerY = rect.top + (rect.height / 2);
+                    
+                    let added = false;
+                    for (let col of columns) {
+                        const threshold = Math.max(10, Math.min(rect.width, col.width) * 0.6);
+                        if (Math.abs(col.centerX - centerX) <= threshold) {
+                            col.spans.push({span, rect, centerX, centerY});
+                            added = true;
+                            break;
+                        }
+                    }
+                    if (!added) {
+                        columns.push({ centerX, width: rect.width, spans: [{span, rect, centerX, centerY}] });
+                    }
+                });
+
+                columns.sort((a, b) => b.centerX - a.centerX);
+                columns.forEach(col => {
+                    col.spans.sort((a, b) => a.centerY - b.centerY);
+                    sortedSpans.push(...col.spans.map(s => s.span));
+                });
+
+            } else {
+                // 【橫式排版】：由上至下分行，同行由左至右
+                let lines = [];
+                insideSpans.forEach(span => {
+                    const rect = span.getBoundingClientRect();
+                    const centerX = rect.left + (rect.width / 2);
+                    const centerY = rect.top + (rect.height / 2);
+                    
+                    let added = false;
+                    for (let line of lines) {
+                        const threshold = Math.max(10, Math.min(rect.height, line.height) * 0.6);
+                        if (Math.abs(line.centerY - centerY) <= threshold) {
+                            line.spans.push({span, rect, centerX, centerY});
+                            added = true;
+                            break;
+                        }
+                    }
+                    if (!added) {
+                        lines.push({ centerY, height: rect.height, spans: [{span, rect, centerX, centerY}] });
+                    }
+                });
+
+                lines.sort((a, b) => a.centerY - b.centerY);
+                lines.forEach(line => {
+                    line.spans.sort((a, b) => a.centerX - b.centerX);
+                    sortedSpans.push(...line.spans.map(s => s.span));
+                });
+            }
+
+            return sortedSpans.map(s => s.textContent).join('');
+        }
+
+        rateSlider.addEventListener('input', function() {
+            rateDisplay.textContent = this.value;
+        });
+
+        // 【核心修正：讓舊語音的殘留訊號徹底失效】
+        function stopSpeaking(clearHighlight = true) {
+            currentSessionId++; // 發配新的身份證，阻擋所有過期幽靈事件
+            synth.cancel();
+            clearTimeout(chunkTimeout); 
+            isReading = false;
+            isPaused = false;
+            updateBtnStates();
+            if (clearHighlight) {
+                clearHighlights();
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.question-box').forEach(b => b.classList.remove('active-read'));
+            activeBox = null;
+        }
+
+        function speakText(text, boxElement) {
+            if (activeBox === boxElement && isReading && !isPaused) return;
+
+            stopSpeaking(false); 
+
+            document.querySelectorAll('.question-box').forEach(b => b.classList.remove('active-read'));
+            activeBox = boxElement;
+            activeBox.classList.add('active-read');
+            
+            const cleanText = text
+                .replace(/(\d)([.,:])(?=\d)/g, "$1{{$2}}")
+                .replace(/ˇ|\b[Vv]\b/g, "打勾")
+                .replace(/[(（]([a-zA-Z\uFF21-\uFF3A\uFF41-\uFF5A])[)）]/g, "選項$1@@500@@")
+                .replace(/[(（]\s*[1１]\s*[)）]/g, "選項一@@500@@")
+                .replace(/[(（]\s*[2２]\s*[)）]/g, "選項二@@500@@")
+                .replace(/[(（]\s*[3３]\s*[)）]/g, "選項三@@500@@")
+                .replace(/[(（]\s*[4４]\s*[)）]/g, "選項四@@500@@")
+                .replace(/(?:○|〇|◯|⭕)\s*[1１]|①|➀|❶|/g, "選項一@@500@@")
+                .replace(/(?:○|〇|◯|⭕)\s*[2２]|②|➁|❷|/g, "選項二@@500@@")
+                .replace(/(?:○|〇|◯|⭕)\s*[3３]|③|➂|❸|/g, "選項三@@500@@")
+                .replace(/(?:○|〇|◯|⭕)\s*[4４]|④|➃|❹|/g, "選項四@@500@@")
+                .replace(/[.,:;?!()[\]{}"'~^_\\|，。、：；？！（）「」『』《》〈〉【】〔〕——…]+/g, "@@500@@")
+                .replace(/\{\{([.,:])\}\}/g, "$1")
+                .replace(/([a-zA-Z\uFF21-\uFF3A\uFF41-\uFF5A]+)/g, "$1@@500@@")
+                .replace(/□+/g, "@@1000@@")
+                .replace(/(@@500@@)+/g, "@@500@@");
+
+            const parts = cleanText.split(/(@@\d+@@)/);
+            
+            textChunks = parts.filter(p => p.trim() !== ''); 
+            chunkIndex = 0;
+            isReading = true;
+            isPaused = false;
+            updateBtnStates();
+
+            currentSessionId++; // 設定本次報讀的新身份證
+            const sessionId = currentSessionId;
+            
+            // 【核心修正：50毫秒深呼吸】，確保 cancel() 已徹底清空舊狀態
+            setTimeout(() => {
+                if (sessionId === currentSessionId) {
+                    playNextChunk(sessionId);
+                }
+            }, 50);
+        }
+
+        // 加入 sessionId 判斷，防禦殘留事件干擾
+        function playNextChunk(sessionId) {
+            if (sessionId !== currentSessionId) return; // 幽靈事件防護盾
+            if (!isReading || isPaused) return;
+
+            if (chunkIndex >= textChunks.length) {
+                isReading = false;
+                updateBtnStates();
+                return;
+            }
+
+            const chunk = textChunks[chunkIndex].trim();
+            if (!chunk) {
+                chunkIndex++;
+                playNextChunk(sessionId);
+                return;
+            }
+
+            const pauseMatch = chunk.match(/^@@(\d+)@@$/);
+            if (pauseMatch) {
+                const delay = parseInt(pauseMatch[1], 10);
+                chunkIndex++;
+                chunkTimeout = setTimeout(() => playNextChunk(sessionId), delay);
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(chunk);
+            utterance.lang = 'zh-TW';
+            utterance.rate = parseFloat(rateSlider.value);
+            
+            const selectedVoiceName = voiceSelect.value;
+            const selectedVoice = availableVoices.find(v => v.name === selectedVoiceName);
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            } else {
+                const twVoice = synth.getVoices().find(v => v.lang.toLowerCase().includes('zh'));
+                if (twVoice) utterance.voice = twVoice;
+            }
+
+            utterance.onstart = () => { 
+                if (sessionId !== currentSessionId) return; // 幽靈事件防護盾
+                isReading = true; 
+                isPaused = false; 
+                updateBtnStates(); 
+            };
+            
+            utterance.onend = () => { 
+                if (sessionId !== currentSessionId || !isReading) return; // 幽靈事件防護盾
+                chunkIndex++;
+                playNextChunk(sessionId);
+            }; 
+            
+            utterance.onerror = () => { 
+                if (sessionId !== currentSessionId || !isReading) return; // 幽靈事件防護盾
+                chunkIndex++;
+                playNextChunk(sessionId);
+            }; 
+
+            synth.speak(utterance);
+        }
+
+        pauseBtn.addEventListener('click', () => {
+            if (isReading) {
+                if (isPaused) {
+                    isPaused = false;
+                    if (!synth.speaking && !synth.pending) {
+                        playNextChunk(currentSessionId);
+                    } else {
+                        synth.resume();
+                    }
+                } else {
+                    isPaused = true;
+                    synth.pause();
+                    clearTimeout(chunkTimeout); 
+                }
+                updateBtnStates();
+            }
+        });
+
+        cancelReadBtn.addEventListener('click', () => stopSpeaking(true));
+
+        function updateBtnStates() {
+            if (isReading || isPaused) {
+                pauseBtn.disabled = false;
+                cancelReadBtn.disabled = false;
+                pauseBtn.textContent = isPaused ? "繼續" : "暫停";
+            } else {
+                pauseBtn.disabled = true;
+                cancelReadBtn.disabled = true;
+                pauseBtn.textContent = "暫停";
+            }
+        }
+
+        function populateVoices() {
+            let voices = synth.getVoices();
+            availableVoices = voices.filter(v => v.lang.toLowerCase().includes('zh'));
+            
+            if (availableVoices.length === 0) {
+                availableVoices = voices;
+            }
+
+            voiceSelect.innerHTML = '';
+            if (availableVoices.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = '無可用語音';
+                voiceSelect.appendChild(option);
+                return;
+            }
+
+            availableVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.name;
+                option.textContent = voice.name.replace('Microsoft ', '').replace('Google ', '').replace('Online (Natural) - ', '');
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+        populateVoices();
+    </script>
+</body>
+</html>
