@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#111a13">
+<title>多人坦克大戰｜數學合作闖關</title>
+<style>
+:root{color-scheme:dark;--bg:#101711;--panel:#1b281b;--panel2:#253626;--ink:#f6f1d1;--muted:#b8c3a7;--gold:#ffcf58;--green:#8edd74;--red:#ff7167;--line:#566547}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Microsoft JhengHei",sans-serif;touch-action:manipulation;user-select:none;-webkit-user-select:none}button,input,select{font:inherit}button{touch-action:manipulation}
+#lobby{position:fixed;inset:0;z-index:10;overflow:auto;padding:20px;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0,#35482b 0,#18241a 52%,#0d140f 100%)}
+.lobby-card{width:min(760px,100%);max-height:calc(100dvh - 40px);overflow:auto;background:rgba(24,35,25,.96);border:3px solid #798354;border-radius:16px;padding:clamp(18px,4vw,34px);box-shadow:0 16px 0 #0a100c,0 28px 70px #0009}
+.brand{display:flex;align-items:center;justify-content:center;gap:12px}.brand-icon{font-size:clamp(42px,9vw,68px);filter:drop-shadow(3px 4px #10150f)}h1{margin:0;color:var(--gold);font-size:clamp(28px,6vw,48px);letter-spacing:2px;text-shadow:3px 4px #10150f}.subtitle{text-align:center;color:#d2d9bc;margin:5px 0 20px;font-size:15px}
+.instructions{border:1px solid #566547;background:#121b14;border-radius:10px;padding:12px 15px;line-height:1.65;color:#d9e0c5;font-size:14px;margin:12px 0 18px}.instructions b{color:var(--gold)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;color:#d5dfbd;font-weight:bold}.field input,.field select{width:100%;min-height:46px;border:2px solid #566547;border-radius:8px;background:#0e160f;color:#fff4cf;padding:9px 12px;outline:none}.field input:focus,.field select:focus{border-color:var(--gold)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}.pixel-btn{border:2px solid #d0d795;border-radius:8px;background:#586b3d;color:#fff7d7;padding:12px 17px;min-height:48px;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #27331d;transition:transform .08s,filter .12s}.pixel-btn:hover{filter:brightness(1.12)}.pixel-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #27331d}.pixel-btn.primary{background:#a27623;border-color:#f5dc83}.pixel-btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
+#status{min-height:24px;margin:12px 0 0;color:#e3e9cf;font-size:14px}.room-panel{display:none;margin-top:18px;padding:14px;border:2px dashed #839065;border-radius:12px;background:#111a12}.room-code{font-size:clamp(28px,7vw,44px);font-weight:1000;color:var(--gold);letter-spacing:8px;text-align:center;margin:3px 0 10px}.seat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.seat{border:1px solid #556447;border-radius:8px;background:#1c281c;padding:9px;min-height:58px;display:flex;align-items:center;gap:8px}.seat-color{width:22px;height:22px;border-radius:5px;border:2px solid #ffffffa0;flex:none}.seat-name{font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seat-info{font-size:12px;color:#c0cbb2}.seat.ready .seat-name:after{content:"　✓準備";color:var(--green);font-size:12px}.seat.empty{color:#8f9b84;border-style:dashed}.small-note{font-size:12px;color:#aebaa3;line-height:1.55;margin-top:10px}
+#game{display:none;position:fixed;inset:0;background:#101711;overflow:hidden}#arena{position:absolute;inset:56px 0 0;width:100%;height:calc(100% - 56px);touch-action:none;image-rendering:pixelated}
+.topbar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 12px;background:#172018;border-bottom:2px solid #546043;z-index:2}.top-brand{font-weight:1000;color:var(--gold);white-space:nowrap}.top-stats{display:flex;gap:clamp(7px,2vw,18px);align-items:center;overflow:hidden}.pill{background:#293628;border:1px solid #5a694b;border-radius:999px;padding:6px 10px;font-size:13px;white-space:nowrap}.player-mini{display:flex;gap:5px;align-items:center}.tiny-dot{width:12px;height:12px;border-radius:3px;display:inline-block}.top-action{border:1px solid #74815e;border-radius:7px;padding:6px 9px;background:#34442e;color:#fff4d0;font-weight:bold;white-space:nowrap}
+.touch-controls{position:absolute;inset:56px 0 0;pointer-events:none;z-index:3}.joystick{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:142px;height:142px;border:3px solid #edf1c866;border-radius:50%;background:#21321dbb;box-shadow:inset 0 0 0 17px #ffffff0a,0 4px 14px #0009;pointer-events:auto;touch-action:none}.joy-stick{position:absolute;left:42px;top:42px;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2edaf,#8ba462 72%,#465839);border:2px solid #fff8;box-shadow:0 4px 9px #0008;pointer-events:none}.action-buttons{position:absolute;right:max(20px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;gap:15px;pointer-events:auto}.action-btn{width:clamp(68px,12vw,92px);height:clamp(68px,12vw,92px);border-radius:50%;border:4px solid #fff9;color:#fff;font-size:25px;font-weight:1000;text-shadow:0 2px 3px #000;box-shadow:0 5px 0 #1118,0 6px 14px #0008;touch-action:none}.action-btn.a{background:radial-gradient(circle at 33% 25%,#ff9b68,#bb3933 75%)}.action-btn.b{background:radial-gradient(circle at 33% 25%,#9fcaff,#315eab 75%);margin-bottom:36px}.action-btn:active,.action-btn.active{transform:translateY(3px);filter:brightness(1.25);box-shadow:0 2px 0 #1118}.action-label{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:12px;text-shadow:0 2px 3px #000}
+.hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:2;background:#101711c9;border:1px solid #566547;border-radius:999px;padding:6px 12px;color:#e4e8d4;font-size:12px;white-space:nowrap;pointer-events:none}.rotate-hint{display:none}
+.modal{position:fixed;inset:0;z-index:20;display:none;place-items:center;background:#090e0bd9;padding:18px}.modal-card{width:min(440px,100%);background:#1b281b;border:3px solid var(--gold);border-radius:16px;padding:22px;text-align:center;box-shadow:0 10px 0 #0a100c,0 24px 70px #000b}.modal-card h2{color:var(--gold);margin:0 0 8px;font-size:25px}.question-text{font-size:clamp(32px,8vw,52px);font-weight:1000;margin:16px 0;color:white}.answer-row{display:flex;gap:8px}.answer-row input{min-width:0;flex:1;height:54px;font-size:28px;text-align:center;border:2px solid #829064;border-radius:8px;background:#0c130d;color:white}.answer-row button{flex:none}.answer-feedback{min-height:22px;color:var(--gold);margin-top:9px;font-weight:bold}.game-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;text-align:center;font-size:clamp(24px,6vw,42px);font-weight:1000;color:var(--gold);text-shadow:0 3px #000,0 0 20px #000;background:#172018cc;padding:12px 20px;border:2px solid #b4b87b;border-radius:12px;pointer-events:none;display:none}
+@media(max-width:680px){.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.lobby-card{padding:18px}.topbar{height:50px;padding:4px 7px}.top-brand{font-size:13px}.pill{font-size:11px;padding:5px 7px}.top-stats{gap:4px}.top-action{font-size:12px;padding:5px 7px}.joystick{width:128px;height:128px}.joy-stick{left:37px;top:37px}.action-buttons{gap:10px}.hint{display:none}.rotate-hint{display:block;position:absolute;top:60px;right:8px;color:#d8dfc6;background:#111a12bf;padding:4px 7px;border-radius:6px;font-size:11px;z-index:2}}
+@media(orientation:portrait) and (max-width:680px){.top-stats .pill:nth-child(2){display:none}.joystick{width:116px;height:116px}.joy-stick{left:31px;top:31px}.action-btn.b{margin-bottom:26px}}
+</style>
+</head>
+<body>
+<section id="lobby">
+  <div class="lobby-card">
+    <div class="brand"><span class="brand-icon">🛡️</span><h1>坦克大戰</h1><span class="brand-icon">💥</span></div>
+    <div class="subtitle">四人合作・數學闖關・五大戰場</div>
+    <div class="instructions"><b>玩法：</b>每關擊退 20 台敵軍，共 5 關。每位玩家每擊毀 5 台敵坦克，就要完成一道自己選的數學題；答對繼續，答錯扣 1 條命。每人 3 條命，隊伍全員失去生命時遊戲結束。<br><b>平板：</b>左下搖桿移動，右下 A 射擊、B 開啟護盾。支援橫向畫面。</div>
+    <div class="form-grid">
+      <div class="field"><label for="playerName">玩家暱稱</label><input id="playerName" maxlength="10" autocomplete="nickname" placeholder="輸入你的名字"></div>
+      <div class="field"><label for="mathType">我的數學題型</label><select id="mathType"><option value="add20">加法（20 以內）</option><option value="addsub100">加減法（100 以內）</option><option value="mul">九九乘法</option><option value="div">整除除法</option><option value="mixed">四則混合</option></select></div>
+      <div class="field full"><label for="roomCode">房間碼（加入遊戲時輸入）</label><input id="roomCode" maxlength="6" inputmode="text" autocomplete="off" placeholder="例如：A7K2Q9" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:900"></div>
+    </div>
+    <div class="actions"><button id="createBtn" class="pixel-btn primary">建立新房間</button><button id="joinBtn" class="pixel-btn">加入房間</button><button id="homeBtn" class="pixel-btn">回教學首頁</button></div>
+    <div id="status" role="status">正在連線至 Firebase…</div>
+    <div id="roomPanel" class="room-panel">
+      <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div>
+      <div id="seatList" class="seat-list"></div>
+      <div class="actions" style="justify-content:center"><button id="readyBtn" class="pixel-btn">我準備好了</button><button id="startBtn" class="pixel-btn primary" disabled>開始闖關</button></div>
+      <div class="small-note">每台平板選擇自己的數學題型並按「準備好了」。房主等所有已加入玩家準備完成後即可開始；未滿四人也可開戰。</div>
+    </div>
+    <div class="small-note">首次使用請在 Firebase Authentication 完成設定並啟用「匿名登入」，再合併部署專用 Firestore 規則；GitHub Pages 網址也須加入 Firebase 授權網域。遊戲不需要個人帳號。</div>
+  </div>
+</section>
+
+<main id="game">
+  <header class="topbar"><div class="top-brand">🛡️ 坦克大戰</div><div class="top-stats"><span id="roomPill" class="pill">房間 ------</span><span id="stagePill" class="pill">第 1 / 5 關</span><span id="enemyPill" class="pill">敵軍 20</span><span id="playerPill" class="pill player-mini"></span></div><button id="exitBtn" class="top-action">離開</button></header>
+  <canvas id="arena" aria-label="坦克戰場"></canvas>
+  <div class="rotate-hint">平板建議橫向遊玩</div>
+  <div class="touch-controls"><div id="joystick" class="joystick" aria-label="移動搖桿"><div id="joyStick" class="joy-stick"></div></div><div class="action-buttons"><button id="btnB" class="action-btn b" aria-label="B 特殊護盾">B<span class="action-label">護盾</span></button><button id="btnA" class="action-btn a" aria-label="A 射擊">A<span class="action-label">射擊</span></button></div></div>
+  <div class="hint">鍵盤：方向鍵 / WASD 移動　Space 射擊　Shift 護盾</div>
+  <div id="gameMessage" class="game-message"></div>
+</main>
+
+<div id="quizModal" class="modal"><div class="modal-card"><h2 id="quizTitle">數學挑戰</h2><div id="quizPrompt" class="question-text">5 + 6 = ?</div><div class="answer-row"><input id="answerInput" type="number" inputmode="numeric" aria-label="答案"><button id="answerBtn" class="pixel-btn primary">送出</button></div><div id="answerFeedback" class="answer-feedback"></div></div></div>
+<div id="endModal" class="modal"><div class="modal-card"><h2 id="endTitle">關卡完成！</h2><div id="endText" style="font-size:18px;line-height:1.6;margin:14px 0"></div><button id="returnBtn" class="pixel-btn primary">回房間大廳</button></div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getFirestore, doc, collection, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+// 使用「多人貪食蛇」既有的 Firebase 專案設定；此為 Firebase Web 公開設定，不是伺服器金鑰。
+const firebaseConfig = {
+  projectId: "mygame-1af09",
+  appId: "1:388340775447:web:0769fb994834e68939ba52",
+  storageBucket: "mygame-1af09.firebasestorage.app",
+  apiKey: "AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM",
+  authDomain: "mygame-1af09.firebaseapp.com",
+  messagingSenderId: "388340775447"
+};
+
+const app = initializeApp(firebaseConfig, "tank-battle");
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const COLORS = ["#57d3ff", "#ffcf58", "#ff7474", "#a8ed70"];
+const MATH_NAMES = {add20:"加法（20 以內）",addsub100:"加減法（100 以內）",mul:"九九乘法",div:"整除除法",mixed:"四則混合"};
+let uid = null, roomId = "", isHost = false, mySeat = -1, myQuestion = null;
+let roomData = null, seats = [], world = null, inputByUid = {};
+let offRoom = null, offSeats = null, offWorld = null, offInputs = null, offAnswers = null, offQuestion = null;
+let hostTimer = 0, publishTimer = 0, heartbeatTimer = 0, renderFrame = 0, unsubscribed = false;
+let gameRunning = false, lastFrame = 0, lastHostPublish = 0, enemyId = 0;
+const writeTimes = new Map(), processingAnswers = new Set(), controls = {dir:"",fire:false,b:false};
+const INPUT_SYNC_MS = 180, WORLD_SYNC_MS = 200;
+const colorBySeat = seat => COLORS[Number(seat) % COLORS.length];
+const roomRef = code => doc(db,"tankRooms",code);
+const seatRef = (code,seat) => doc(db,"tankRooms",code,"seats",String(seat));
+const worldRef = code => doc(db,"tankRooms",code,"state","world");
+const inputRef = (code,playerUid) => doc(db,"tankRooms",code,"inputs",playerUid);
+const questionRef = (code,playerUid) => doc(db,"tankRooms",code,"questions",playerUid);
+const privateAnswerRef = (code,playerUid) => doc(db,"tankRooms",code,"privateAnswers",playerUid);
+const answerRef = (code,playerUid) => doc(db,"tankRooms",code,"answers",playerUid);
+
+const M = [
+ ["0000000000000","0110311103110","0100300000310","0012002300210","0000120021000","0030101101000","0000000000000","0112010302110","0000010001000","0101100001010","0000031103000","0000000000000","0000000000000"],
+ ["0000000000000","0102100012010","0102000002010","0001103300000","0012000000210","0010111401000","0000000000000","0001000200000","0113000003110","0000000000000","0100114400100","0000000000000","0000000000000"],
+ ["0000000000000","0113000003110","0001102200000","0104000000401","0100115100100","0000100001000","0000000000000","0023011010320","0000000000000","0110100301010","0000010001000","0000000000000","0000000000000"],
+ ["0000000000000","0100102200100","0100000000010","0011110031110","0000010401000","0110001100010","0000000000000","0000111110000","0030000010002","0110105000110","0000000000000","0000000000000","0000000000000"],
+ ["0000000000000","0110100005110","0002102201000","0100000000010","0101110002110","0000000000000","0013003300310","0000000000000","0110000000110","0001102200000","0100000000010","0000000000000","0000000000000"]
+].map(level => level.map(row => row.split("").map(Number)));
+
+function say(message, error = false) { $("status").textContent = message; $("status").style.color = error ? "#ff9b89" : "#e3e9cf"; }
+function safeText(value, max=12) { return String(value || "").trim().replace(/[<>]/g,"").slice(0,max) || "玩家"; }
+function makeRoomCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; return Array.from({length:6},()=>alphabet[Math.floor(Math.random()*alphabet.length)]).join(""); }
+function randomInt(min,max) { return min + Math.floor(Math.random() * (max-min+1)); }
+function makeQuestion(type) {
+  let a,b,op,answer;
+  if(type==="add20"){a=randomInt(1,12);b=randomInt(1,20-a);op="+";answer=a+b;}
+  else if(type==="addsub100") { if(Math.random()<.5){a=randomInt(10,79);b=randomInt(1,99-a);op="+";answer=a+b;}else{a=randomInt(20,99);b=randomInt(1,a);op="−";answer=a-b;} }
+  else if(type==="mul"){a=randomInt(2,9);b=randomInt(2,9);op="×";answer=a*b;}
+  else if(type==="div"){b=randomInt(2,9);answer=randomInt(2,9);a=b*answer;op="÷";}
+  else {const kind=randomInt(0,3);if(kind===0){a=randomInt(10,60);b=randomInt(2,30);op="+";answer=a+b;}else if(kind===1){a=randomInt(20,90);b=randomInt(2,a);op="−";answer=a-b;}else if(kind===2){a=randomInt(2,9);b=randomInt(2,9);op="×";answer=a*b;}else{b=randomInt(2,9);answer=randomInt(2,9);a=b*answer;op="÷";}}
+  return {prompt:`${a} ${op} ${b} = ?`,answer:String(answer),type};
+}
+
+async function connectFirebase() {
+  try {
+    const cred = await signInAnonymously(auth);
+    uid = cred.user.uid;
+    const savedName = localStorage.getItem("tankBattleName");
+    if(savedName) $("playerName").value = savedName;
+    say("Firebase 已連線，可以建立或加入房間。" );
+  } catch(err) {
+    console.error(err);
+    say(["auth/operation-not-allowed","auth/configuration-not-found"].includes(err.code) ? "Firebase Authentication 尚未完成設定或未啟用匿名登入：請至 Authentication → 開始使用 → Sign-in method 開啟 Anonymous。" : `Firebase 連線失敗：${err.message}`, true);
+    $("createBtn").disabled = $("joinBtn").disabled = true;
+  }
+}
+
+function detachRoomListeners() {
+  for(const off of [offRoom,offSeats,offWorld,offInputs,offAnswers,offQuestion]) if(typeof off==="function") off();
+  offRoom=offSeats=offWorld=offInputs=offAnswers=offQuestion=null;
+  if(hostTimer) clearInterval(hostTimer); if(publishTimer) clearInterval(publishTimer); if(heartbeatTimer) clearInterval(heartbeatTimer);
+  hostTimer=publishTimer=heartbeatTimer=0; gameRunning=false;
+  if(renderFrame) cancelAnimationFrame(renderFrame); renderFrame=0;
+}
+
+async function createRoom() {
+  if(!uid) return;
+  const name=safeText($("playerName").value,10), topic=$("mathType").value;
+  localStorage.setItem("tankBattleName",name);
+  $("createBtn").disabled=true; say("正在建立房間…");
+  try {
+    let created=false;
+    for(let i=0;i<4&&!created;i++) {
+      const code=makeRoomCode(), r=roomRef(code), hostSeat=seatRef(code,0);
+      try { await runTransaction(db,async tx=>{const old=await tx.get(r);if(old.exists()) throw new Error("ROOM_EXISTS");tx.set(r,{hostUid:uid,status:"lobby",level:1,createdAt:serverTimestamp(),hostBeat:serverTimestamp()});tx.set(hostSeat,{uid,name,topic,ready:false,seat:0,joinedAt:serverTimestamp()});}); roomId=code;isHost=true;mySeat=0;created=true; }
+      catch(err){if(err.message!=="ROOM_EXISTS") throw err;}
+    }
+    if(!created) throw new Error("暫時無法取得房間碼，請再試一次。");
+    enterRoom(); say("房間已建立，請分享代碼並等待隊友加入。");
+  } catch(err) {console.error(err);say(`建立房間失敗：${err.message}`,true);$("createBtn").disabled=false;}
+}
+
+async function joinRoom() {
+  if(!uid) return;
+  const code=$("roomCode").value.trim().toUpperCase();
+  if(!/^[A-HJ-NP-Z2-9]{6}$/.test(code)){say("請輸入 6 碼房間碼。",true);return;}
+  const name=safeText($("playerName").value,10), topic=$("mathType").value;
+  localStorage.setItem("tankBattleName",name); $("joinBtn").disabled=true; say("正在加入房間…");
+  try {
+    const r=roomRef(code); let assigned=-1;
+    await runTransaction(db,async tx=>{
+      const room=await tx.get(r); if(!room.exists()) throw new Error("找不到這個房間碼。");
+      if(room.data().status!=="lobby") throw new Error("遊戲已經開始，不能加入。");
+      const refs=[0,1,2,3].map(i=>seatRef(code,i)); const snaps=[]; for(const ref of refs) snaps.push(await tx.get(ref));
+      for(let i=0;i<snaps.length;i++) if(snaps[i].exists()&&snaps[i].data().uid===uid){assigned=i;return;}
+      assigned=snaps.findIndex(s=>!s.exists()); if(assigned<0) throw new Error("房間已滿，最多 4 位玩家。");
+      tx.set(refs[assigned],{uid,name,topic,ready:false,seat:assigned,joinedAt:serverTimestamp()});
+    });
+    roomId=code;mySeat=assigned;isHost=false;enterRoom();say("已加入房間，選好題型後請按準備。");
+  } catch(err) {console.error(err);say(`加入失敗：${err.message}`,true);$("joinBtn").disabled=false;}
+}
+
+function enterRoom() {
+  unsubscribed=false; $("createBtn").disabled=$("joinBtn").disabled=true; $("roomPanel").style.display="block";$("roomCodeDisplay").textContent=roomId;$("roomPill").textContent=`房間 ${roomId}`;
+  offRoom=onSnapshot(roomRef(roomId),snap=>{
+    if(!snap.exists()){say("房間已關閉。",true);return;}
+    roomData=snap.data();
+    if(roomData.status==="playing"||roomData.status==="intermission") startGameView();
+  },err=>say(`房間讀取失敗：${err.message}`,true));
+  offSeats=onSnapshot(collection(db,"tankRooms",roomId,"seats"),snap=>{
+    seats=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.id)-Number(b.id));
+    renderSeats();
+    if(seats.some(s=>s.uid===uid)) mySeat=Number(seats.find(s=>s.uid===uid).id);
+    if(isHost){
+      const occupied=seats.length>0, ready=occupied&&seats.every(s=>s.ready);
+      $("startBtn").disabled=!ready||roomData?.status!=="lobby";
+    }
+  },err=>say(`玩家列表讀取失敗：${err.message}`,true));
+  if(isHost){
+    heartbeatTimer=setInterval(()=>updateDoc(roomRef(roomId),{hostBeat:serverTimestamp()}).catch(()=>{}),5000);
+  }
+}
+
+function renderSeats() {
+  const box=$("seatList"); box.innerHTML="";
+  for(let i=0;i<4;i++) {
+    const p=seats.find(s=>Number(s.id)===i); const div=document.createElement("div");div.className=`seat ${p?.ready?"ready":""} ${p?"":"empty"}`;
+    if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${i===0?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";}
+    else div.innerHTML=`<span class="seat-color" style="background:#3a4737"></span><span>坦克 ${i+1}・等待加入</span>`;
+    box.append(div);
+  }
+  const mine=seats.find(s=>s.uid===uid); if(mine){$("readyBtn").textContent=mine.ready?"取消準備":"我準備好了";$("mathType").value=mine.topic||$("mathType").value;$("playerName").value=mine.name||$("playerName").value;}
+  if(isHost) $("startBtn").disabled=seats.length===0||!seats.every(s=>s.ready)||roomData?.status!=="lobby";
+}
+
+function makeWorld(level, previous=null) {
+  const players={};
+  seats.forEach(s=>{
+    const old=previous?.players?.[s.uid];
+    const pos=spawnFor(Number(s.id));
+    players[s.uid]=old?{...old,x:pos.x,y:pos.y,dir:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,shieldUntil:0,shieldReadyAt:0,respawnAt:0,lastFireAt:0,lastBAt:0}:{uid:s.uid,seat:Number(s.id),name:s.name||"玩家",topic:s.topic||"add20",x:pos.x,y:pos.y,dir:0,lives:3,kills:0,score:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,shieldUntil:0,shieldReadyAt:0,respawnAt:0,lastFireAt:0,lastBAt:0};
+  });
+  return {status:"playing",level,map:level-1,mapTiles:M[level-1].map(row=>[...row]),players,enemies:[],bullets:[],remainingToSpawn:20,destroyed:0,spawnAt:Date.now()+300,enemySeq:0,startedAt:Date.now(),updatedAt:Date.now()};
+}
+function spawnFor(seat) { const col=[2,5,7,10][seat]??6; return {x:(col+.5)*40,y:11.4*40}; }
+function createEnemy(w) {
+  if(w.remainingToSpawn<=0||w.enemies.length>=5) return;
+  const cols=[1,6,11], col=cols[w.enemySeq%3], x=(col+.5)*40, y=20;
+  if(w.enemies.some(e=>Math.abs(e.x-x)<31&&e.y<55)) return;
+  const heavy=w.enemySeq%5===4;
+  w.enemies.push({id:`e${w.level}-${w.enemySeq++}`,x,y,dir:2,hp:heavy?2:1,maxHp:heavy?2:1,speed:heavy?43:58,turnAt:Date.now()+500,fireAt:Date.now()+randomInt(800,1600)});
+  w.remainingToSpawn--;
+}
+
+async function startMatch() {
+  if(!isHost||!seats.length||!seats.every(s=>s.ready)) return;
+  $("startBtn").disabled=true; say("整備完成！準備進入第一關…");
+  try {
+    const initial=makeWorld(1); world=initial;
+    await setDoc(worldRef(roomId),initial);
+    await updateDoc(roomRef(roomId),{status:"playing",level:1,hostBeat:serverTimestamp()});
+    startGameView();
+  } catch(err) {console.error(err);say(`開始失敗：${err.message}`,true);$("startBtn").disabled=false;}
+}
+
+function startGameView() {
+  if(offWorld) return;
+  $("game").style.display="block"; $("lobby").style.display="none";
+  offWorld=onSnapshot(worldRef(roomId),snap=>{
+    if(!snap.exists()) return;
+    world=snap.data(); gameRunning=["playing","intermission"].includes(world.status);
+    if(world.status==="playing"||world.status==="intermission") {$("endModal").style.display="none";}
+    if(world.status==="finished"||world.status==="gameover") showEnd(world.status);
+    updateHud();
+    if(!renderFrame) renderFrame=requestAnimationFrame(drawLoop);
+  },err=>console.error("world listener",err));
+  if(isHost) {
+    offInputs=onSnapshot(collection(db,"tankRooms",roomId,"inputs"),snap=>{inputByUid={};snap.forEach(d=>inputByUid[d.id]=d.data());});
+    offAnswers=onSnapshot(collection(db,"tankRooms",roomId,"answers"),snap=>snap.docChanges().forEach(change=>{if(change.type==="added"||change.type==="modified") processAnswer(change.doc.id,change.doc.data()).catch(console.error);}));
+    hostTimer=setInterval(hostTick,50);
+    publishTimer=setInterval(()=>{if(world&&["playing","intermission","finished","gameover"].includes(world.status))publishWorld();},WORLD_SYNC_MS);
+  }
+  offQuestion=onSnapshot(questionRef(roomId,uid),snap=>{
+    if(!snap.exists()){myQuestion=null;$("quizModal").style.display="none";return;}
+    const q=snap.data(); myQuestion=q;
+    if(q.result){$("answerFeedback").textContent=q.result;$("answerInput").disabled=$("answerBtn").disabled=true;setTimeout(()=>{if(myQuestion?.id===q.id){myQuestion=null;$("quizModal").style.display="none";}},1200);}
+    else {$("quizTitle").textContent=`${q.topicName||"數學挑戰"}｜第 ${q.killMilestone} 次擊殺`;$("quizPrompt").textContent=q.prompt;$("answerFeedback").textContent="答對繼續作戰，答錯會失去一條生命。";$("answerInput").value="";$("answerInput").disabled=$("answerBtn").disabled=false;$("quizModal").style.display="grid";setTimeout(()=>$("answerInput").focus(),100);}
+  },err=>console.error("question listener",err));
+  if(!renderFrame) renderFrame=requestAnimationFrame(drawLoop);
+}
+
+async function publishWorld() {
+  if(!isHost||!world||!roomId)return;
+  try {world.updatedAt=Date.now();await setDoc(worldRef(roomId),world);}
+  catch(err){console.error("world write",err);showToast("連線不穩，正在嘗試同步…");}
+}
+
+async function writeInput(force=false) {
+  if(!roomId||!uid||mySeat<0)return;
+  const now=Date.now(),last=writeTimes.get("input")||0;
+  if(!force&&now-last<INPUT_SYNC_MS)return;
+  writeTimes.set("input",now);
+  try{await setDoc(inputRef(roomId,uid),{uid,dir:controls.dir,fire:controls.fire,b:controls.b,at:now});}catch(err){console.error("input write",err);}
+}
+
+function hostTick() {
+  if(!isHost||!world)return;
+  const now=Date.now();
+  if(world.status==="intermission") {
+    if(now>=(world.nextLevelAt||now+999999)) {
+      if(world.level>=5){world.status="finished";updateDoc(roomRef(roomId),{status:"finished",hostBeat:serverTimestamp()}).catch(console.error);publishWorld();return;}
+      const next=makeWorld(world.level+1,world); world=next; updateDoc(roomRef(roomId),{status:"playing",level:next.level,hostBeat:serverTimestamp()}).catch(console.error); publishWorld();
+    }
+    return;
+  }
+  if(world.status!=="playing")return;
+  const dt=Math.min(.12,Math.max(.015,(now-(world._tickAt||now-50))/1000)); world._tickAt=now;
+  for(const p of Object.values(world.players||{})) {
+    if(p.lives<=0||p.pausedForQuiz)continue;
+    const input=inputByUid[p.uid]||{};
+    if(p.respawnAt&&now>=p.respawnAt){const pos=spawnFor(p.seat);p.x=pos.x;p.y=pos.y;p.dir=0;p.respawnAt=0;p.invulnerableUntil=now+1800;}
+    if(input.dir){const dir=dirIndex(input.dir); if(dir>=0)p.dir=dir; const v=DIRS[p.dir]; const nx=p.x+v.x*102*dt,ny=p.y+v.y*102*dt; if(canMoveTank(world,nx,ny,p.uid,false)) {p.x=nx;p.y=ny;}}
+    if(input.fire&&now-(p.lastFireAt||0)>430){p.lastFireAt=now;world.bullets.push(makeBullet(p,p.dir,p.uid,false));}
+    if(input.b&&now-(p.lastBAt||0)>900){p.lastBAt=now;if(now>=(p.shieldReadyAt||0)){p.shieldUntil=now+4200;p.shieldReadyAt=now+10000;}}
+    p.shieldActive=(p.shieldUntil||0)>now;
+  }
+  for(const e of world.enemies||[]) {
+    if(now>=e.turnAt){const target=nearestLivingPlayer(world,e);if(target&&Math.random()<.58)e.dir=Math.abs(target.x-e.x)>Math.abs(target.y-e.y)?(target.x>e.x?1:3):(target.y>e.y?2:0);else e.dir=randomInt(0,3);e.turnAt=now+randomInt(400,1000);}
+    const v=DIRS[e.dir],nx=e.x+v.x*e.speed*dt,ny=e.y+v.y*e.speed*dt;
+    if(canMoveTank(world,nx,ny,e.id,true)){e.x=nx;e.y=ny;}else{e.dir=randomInt(0,3);e.turnAt=now+220;}
+    if(now>=(e.fireAt||0)){world.bullets.push(makeBullet(e,e.dir,null,true));e.fireAt=now+randomInt(1100,2300);}
+  }
+  if(now>=(world.spawnAt||0)){createEnemy(world);world.spawnAt=now+650;}
+  updateBullets(world,dt,now);
+  const allOut=Object.values(world.players||{}).length>0&&Object.values(world.players).every(p=>p.lives<=0);
+  if(allOut){world.status="gameover";updateDoc(roomRef(roomId),{status:"gameover",hostBeat:serverTimestamp()}).catch(console.error);publishWorld();return;}
+  if(world.destroyed>=20&&world.remainingToSpawn===0&&world.enemies.length===0){
+    world.status="intermission";world.nextLevelAt=now+2600;updateDoc(roomRef(roomId),{status:world.level===5?"finished":"intermission",level:world.level,hostBeat:serverTimestamp()}).catch(console.error);showToast(world.level===5?"五關全破！":"關卡完成！準備下一關…");
+    if(world.level===5){world.status="finished";publishWorld();}
+  }
+}
+
+const DIRS=[{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
+function dirIndex(value){return ({up:0,right:1,down:2,left:3})[value]??-1;}
+function makeBullet(tank,dir,owner,enemy) {const v=DIRS[dir],speed=enemy?195:245;return{id:`b${Date.now()}-${Math.random().toString(36).slice(2,7)}`,x:tank.x+v.x*15,y:tank.y+v.y*15,dir,owner,enemy,speed,ttl:2.8};}
+function tileAt(w,x,y){const col=Math.floor(x/40),row=Math.floor(y/40);if(row<0||row>=13||col<0||col>=13)return 2;return w.mapTiles?.[row]?.[col]??0;}
+function blocks(w,x,y){const r=11;for(const [px,py] of [[x-r,y-r],[x+r,y-r],[x-r,y+r],[x+r,y+r]]){const t=tileAt(w,px,py);if(t===1||t===2||t===4)return true;}if(Math.abs(x-260)<21&&Math.abs(y-500)<21)return true;return false;}
+function canMoveTank(w,x,y,id,isEnemy){if(blocks(w,x,y))return false;
+  if(isEnemy){for(const p of Object.values(w.players||{}))if(p.lives>0&&p.uid!==id&&Math.hypot(x-p.x,y-p.y)<27)return false;for(const e of w.enemies||[])if(e.id!==id&&Math.hypot(x-e.x,y-e.y)<27)return false;}
+  else {for(const p of Object.values(w.players||{}))if(p.uid!==id&&p.lives>0&&Math.hypot(x-p.x,y-p.y)<27)return false;for(const e of w.enemies||[])if(Math.hypot(x-e.x,y-e.y)<27)return false;}
+  return true;
+}
+function nearestLivingPlayer(w,from){return Object.values(w.players||{}).filter(p=>p.lives>0).sort((a,b)=>Math.hypot(a.x-from.x,a.y-from.y)-Math.hypot(b.x-from.x,b.y-from.y))[0];}
+
+function updateBullets(w,dt,now) {
+  const survivors=[];
+  for(const b of w.bullets||[]) {
+    const v=DIRS[b.dir];b.x+=v.x*b.speed*dt;b.y+=v.y*b.speed*dt;b.ttl-=dt;
+    const tile=tileAt(w,b.x,b.y);
+    if(tile===1){if(w.mapTiles?.[Math.floor(b.y/40)])w.mapTiles[Math.floor(b.y/40)][Math.floor(b.x/40)]=0;continue;}
+    if(tile===2||tile===4||b.ttl<=0){continue;}
+    let hit=false;
+    if(b.enemy){for(const p of Object.values(w.players||{})){if(p.lives<=0||Math.hypot(p.x-b.x,p.y-b.y)>17)continue;if((p.shieldUntil||0)>now||(p.invulnerableUntil||0)>now){hit=true;break;}p.lives--;p.respawnAt=p.lives>0?now+1300:0;p.x=-80;p.y=-80;p.pausedForQuiz=false;hit=true;showToast(`${p.name} 坦克受擊${p.lives>0?"，即將重生":"，失去最後一條命"}`);break;}}
+    else {const e=w.enemies.find(t=>Math.hypot(t.x-b.x,t.y-b.y)<17);if(e){e.hp--;hit=true;if(e.hp<=0){w.enemies=w.enemies.filter(t=>t.id!==e.id);w.destroyed++;const owner=w.players[b.owner];if(owner){owner.kills++;owner.score+=e.maxHp===2?200:100;if(owner.kills%5===0)issueQuestion(owner).catch(console.error);}}}}
+    if(!hit)survivors.push(b);
+  }
+  w.bullets=survivors;
+}
+
+async function issueQuestion(player) {
+  if(!isHost||player.pausedForQuiz||player.lives<=0)return;
+  player.pausedForQuiz=true;
+  const q=makeQuestion(player.topic),id=`${roomId}-${player.uid}-${player.kills}-${Date.now()}`;
+  try {
+    await setDoc(privateAnswerRef(roomId,player.uid),{id,answer:q.answer});
+    await setDoc(questionRef(roomId,player.uid),{id,prompt:q.prompt,topicName:MATH_NAMES[q.type]||"數學挑戰",killMilestone:player.kills,createdAt:serverTimestamp()});
+    showToast(`${player.name} 進入數學挑戰`);
+  } catch(err) {console.error("issue question",err);player.pausedForQuiz=false;showToast("題目同步失敗，請確認 Firestore 權限。");}
+}
+
+async function processAnswer(playerUid,answerData) {
+  if(!isHost||processingAnswers.has(playerUid)||!answerData?.id)return;
+  processingAnswers.add(playerUid);
+  try {
+    const [qSnap,aSnap]=await Promise.all([getDoc(questionRef(roomId,playerUid)),getDoc(privateAnswerRef(roomId,playerUid))]);
+    if(!qSnap.exists()||!aSnap.exists()||qSnap.data().id!==answerData.id||aSnap.data().id!==answerData.id)return;
+    const p=world?.players?.[playerUid];if(!p)return;
+    const correct=String(answerData.answer).trim()===String(aSnap.data().answer);
+    if(!correct)p.lives=Math.max(0,p.lives-1);
+    p.pausedForQuiz=false;
+    await setDoc(questionRef(roomId,playerUid),{...qSnap.data(),result:correct?"答對了！繼續作戰！":"答錯了，失去一條生命。"});
+    await deleteDoc(answerRef(roomId,playerUid)).catch(()=>{});
+    await deleteDoc(privateAnswerRef(roomId,playerUid)).catch(()=>{});
+    if(Object.values(world.players).every(item=>item.lives<=0)){world.status="gameover";await updateDoc(roomRef(roomId),{status:"gameover",hostBeat:serverTimestamp()});}
+    setTimeout(()=>deleteDoc(questionRef(roomId,playerUid)).catch(()=>{}),1600);
+  } catch(err) {console.error("answer check",err);}
+  finally {processingAnswers.delete(playerUid);}
+}
+
+async function submitAnswer() {
+  if(!myQuestion||myQuestion.result)return;
+  const value=$("answerInput").value.trim();if(!value){$("answerFeedback").textContent="請先輸入答案。";return;}
+  $("answerBtn").disabled=$("answerInput").disabled=true;$("answerFeedback").textContent="正在確認答案…";
+  try{await setDoc(answerRef(roomId,uid),{id:myQuestion.id,answer:value,submittedAt:serverTimestamp()});}
+  catch(err){console.error(err);$("answerBtn").disabled=$("answerInput").disabled=false;$("answerFeedback").textContent="送出失敗，請檢查連線後再試。";}
+}
+
+function updateHud() {
+  if(!world)return;
+  $("stagePill").textContent=`第 ${Math.min(world.level,5)} / 5 關`;
+  $("enemyPill").textContent=`敵軍 ${Math.max(0,world.remainingToSpawn||0)+(world.enemies?.length||0)}｜已擊破 ${world.destroyed||0}/20`;
+  const mine=world.players?.[uid];
+  $("playerPill").innerHTML="";
+  Object.values(world.players||{}).sort((a,b)=>a.seat-b.seat).forEach(p=>{
+    const item=document.createElement("span");item.className="pill player-mini";
+    const dot=document.createElement("i");dot.className="tiny-dot";dot.style.background=colorBySeat(p.seat);
+    const label=document.createElement("span");label.textContent=`${p.uid===uid?"你":""}${safeText(p.name,6)}　♥${p.lives}`;
+    if(p.lives===0)label.style.textDecoration="line-through";
+    item.append(dot,label);$("playerPill").append(item);
+  });
+  if(!isHost&&roomData?.hostBeat?.toMillis&&Date.now()-roomData.hostBeat.toMillis()>18000)showToast("房主連線中斷，遊戲同步暫停");
+  if(mine?.lives===0&&!Object.values(world.players||{}).every(p=>p.lives<=0))showToast("你的坦克已被擊倒，可觀戰隊友！");
+}
+
+let toastTimer=0;
+function showToast(message) { const box=$("gameMessage");box.textContent=message;box.style.display="block";if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>box.style.display="none",1900); }
+
+const canvas=$("arena"),ctx=canvas.getContext("2d");
+function drawLoop(now) {
+  renderFrame=0;
+  const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(window.devicePixelRatio||1,2);
+  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle="#131a14";ctx.fillRect(0,0,w,h);
+  if(world)drawBattlefield(w,h,now);
+  renderFrame=requestAnimationFrame(drawLoop);
+}
+
+function drawBattlefield(w,h,now) {
+  const boardSize=Math.max(260,Math.min(620,w-20,h-142));
+  const tile=boardSize/13,left=(w-boardSize)/2,top=(h-boardSize)/2+4;
+  ctx.fillStyle="#263126";ctx.fillRect(left-8,top-8,boardSize+16,boardSize+16);
+  ctx.strokeStyle="#8d9969";ctx.lineWidth=3;ctx.strokeRect(left-7,top-7,boardSize+14,boardSize+14);
+  ctx.fillStyle="#1d291e";ctx.fillRect(left,top,boardSize,boardSize);
+  ctx.save();ctx.translate(left,top);ctx.scale(tile/40,tile/40);
+  for(let row=0;row<13;row++)for(let col=0;col<13;col++)drawTile(ctx,col*40,row*40,world.mapTiles?.[row]?.[col]||0);
+  drawBase(ctx,260,500);
+  const activePlayers=Object.values(world.players||{});
+  for(const enemy of world.enemies||[])drawTank(ctx,enemy,enemy.dir,"#d9514b",now,true);
+  for(const p of activePlayers)if(p.lives>0&&p.x>=0&&p.x<520)drawTank(ctx,p,p.dir,colorBySeat(p.seat),now,false);
+  for(const b of world.bullets||[]){ctx.fillStyle=b.enemy?"#ff6b5f":"#fff0a6";ctx.fillRect(b.x-3,b.y-4,6,8);ctx.strokeStyle="#6a2c22";ctx.strokeRect(b.x-3,b.y-4,6,8);}
+  // 樹叢畫在坦克和砲彈上方，保留經典地形遮蔽感。
+  for(let row=0;row<13;row++)for(let col=0;col<13;col++)if(world.mapTiles?.[row]?.[col]===3)drawBush(ctx,col*40,row*40);
+  ctx.restore();
+  ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.font="bold 12px monospace";ctx.fillStyle="#e5e6c9";
+  ctx.fillText(`STAGE ${world.level}　・　擊破 ${world.destroyed||0} / 20`,w/2,Math.min(h-5,top+boardSize+25));
+}
+
+function drawTile(c,x,y,type) {
+  if(type===0){c.fillStyle=((Math.floor(x/40)+Math.floor(y/40))%2)?"#647154":"#69785b";c.fillRect(x,y,40,40);c.fillStyle="#7d8969";c.fillRect(x+3,y+3,2,2);return;}
+  if(type===1){c.fillStyle="#a64e33";c.fillRect(x,y,40,40);c.fillStyle="#d48652";c.fillRect(x+2,y+3,16,6);c.fillRect(x+21,y+3,16,6);c.fillRect(x+10,y+17,18,6);c.fillRect(x+2,y+31,15,6);c.fillRect(x+22,y+31,15,6);c.fillStyle="#66362c";c.fillRect(x,y+12,40,3);c.fillRect(x,y+27,40,3);c.fillRect(x+18,y,3,13);c.fillRect(x+7,y+15,3,12);c.fillRect(x+31,y+30,3,10);return;}
+  if(type===2){c.fillStyle="#737d7a";c.fillRect(x,y,40,40);c.fillStyle="#b8c1b8";c.fillRect(x+3,y+3,34,4);c.fillRect(x+3,y+3,4,34);c.fillStyle="#59625f";c.fillRect(x+7,y+9,29,26);return;}
+  if(type===3){c.fillStyle="#335939";c.fillRect(x,y,40,40);drawBush(c,x,y);return;}
+  if(type===4){c.fillStyle="#326681";c.fillRect(x,y,40,40);c.strokeStyle="#65acc4";c.lineWidth=3;c.beginPath();c.moveTo(x+2,y+10);c.quadraticCurveTo(x+10,y+4,x+20,y+10);c.quadraticCurveTo(x+30,y+16,x+38,y+10);c.moveTo(x+2,y+28);c.quadraticCurveTo(x+10,y+22,x+20,y+28);c.quadraticCurveTo(x+30,y+34,x+38,y+28);c.stroke();return;}
+  if(type===5){c.fillStyle="#89935c";c.fillRect(x,y,40,40);c.strokeStyle="#c3d989";c.lineWidth=2;c.beginPath();c.moveTo(x+20,y+6);c.lineTo(x+20,y+34);c.moveTo(x+6,y+20);c.lineTo(x+34,y+20);c.stroke();}
+}
+function drawBush(c,x,y){c.fillStyle="#386c42";for(const [dx,dy,r] of [[8,10,8],[21,8,9],[32,12,8],[12,25,9],[27,25,10],[20,34,7]]){c.beginPath();c.arc(x+dx,y+dy,r,0,Math.PI*2);c.fill();}c.fillStyle="#75a14b";c.fillRect(x+9,y+9,3,3);c.fillRect(x+25,y+21,4,3);}
+function drawBase(c,x,y){c.fillStyle="#ded9ad";c.fillRect(x-17,y-15,34,30);c.fillStyle="#b5543d";c.fillRect(x-17,y-15,34,6);c.fillStyle="#526e50";c.fillRect(x-12,y-7,24,20);c.fillStyle="#ecda81";c.beginPath();c.moveTo(x,y-6);c.lineTo(x+9,y+7);c.lineTo(x,y+4);c.lineTo(x-9,y+7);c.closePath();c.fill();c.fillRect(x-2,y+4,4,8);}
+function drawTank(c,tank,dir,color,now,enemy) {
+  if(!enemy&&tank.lives<=0)return;
+  if(!enemy&&(tank.invulnerableUntil||0)>now&&Math.floor(now/100)%2)return;
+  c.save();c.translate(tank.x,tank.y);c.rotate(dir*Math.PI/2);
+  c.fillStyle="#20251e";c.fillRect(-14,-15,5,30);c.fillRect(9,-15,5,30);
+  c.fillStyle=color;c.fillRect(-10,-14,20,28);c.fillStyle=enemy?"#ffc1a4":"#e8f7dc";c.fillRect(-6,-9,12,11);c.fillStyle="#222820";c.fillRect(-3,-17,6,16);c.fillStyle="#f6d56b";c.fillRect(-2,-13,4,4);
+  if(enemy&&tank.hp>1){c.strokeStyle="#ffdf75";c.lineWidth=2;c.strokeRect(-15,-16,30,32);}
+  if(!enemy&&(tank.shieldUntil||0)>now){c.strokeStyle="#8fe7ff";c.lineWidth=3;c.beginPath();c.arc(0,0,22+Math.sin(now/90)*2,0,Math.PI*2);c.stroke();}
+  c.restore();
+}
+
+function showEnd(status) {
+  gameRunning=false;
+  $("endTitle").textContent=status==="finished"?"🎉 五關全破！":"任務結束";
+  const lines=Object.values(world?.players||{}).sort((a,b)=>a.seat-b.seat).map(p=>`${safeText(p.name,10)}：擊破 ${p.kills} 台・剩餘生命 ${p.lives}`).join("<br>");
+  $("endText").innerHTML=`${status==="finished"?"全隊成功通過五個戰場！":"全隊生命已耗盡。"}<br>${lines}`;
+  $("endModal").style.display="grid";
+}
+
+function updateControls() { writeInput(); }
+function setDirectionFromPoint(e) {
+  const r=$("joystick").getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  let dx=e.clientX-cx,dy=e.clientY-cy;const length=Math.hypot(dx,dy);if(length>55){dx=dx/length*55;dy=dy/length*55;}
+  $("joyStick").style.transform=`translate(${dx}px,${dy}px)`;
+  if(Math.hypot(dx,dy)<12)controls.dir="";else controls.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+  updateControls();
+}
+let joyPointer=null;
+$("joystick").addEventListener("pointerdown",e=>{e.preventDefault();joyPointer=e.pointerId;$("joystick").setPointerCapture(e.pointerId);setDirectionFromPoint(e);});
+$("joystick").addEventListener("pointermove",e=>{if(e.pointerId===joyPointer)setDirectionFromPoint(e);});
+function endJoy(e){if(e.pointerId!==joyPointer)return;joyPointer=null;controls.dir="";$("joyStick").style.transform="translate(0,0)";updateControls();}
+$("joystick").addEventListener("pointerup",endJoy);$("joystick").addEventListener("pointercancel",endJoy);
+function holdButton(button,key){button.addEventListener("pointerdown",e=>{e.preventDefault();button.setPointerCapture(e.pointerId);controls[key]=true;button.classList.add("active");writeInput(true);});const end=e=>{e.preventDefault();controls[key]=false;button.classList.remove("active");writeInput(true);};button.addEventListener("pointerup",end);button.addEventListener("pointercancel",end);button.addEventListener("lostpointercapture",()=>{controls[key]=false;button.classList.remove("active");writeInput(true);});}
+holdButton($("btnA"),"fire");holdButton($("btnB"),"b");
+window.addEventListener("keydown",e=>{const map={ArrowUp:"up",KeyW:"up",ArrowRight:"right",KeyD:"right",ArrowDown:"down",KeyS:"down",ArrowLeft:"left",KeyA:"left"};if(map[e.code]){controls.dir=map[e.code];writeInput();e.preventDefault();}if(e.code==="Space"){controls.fire=true;writeInput(true);e.preventDefault();}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=true;writeInput(true);e.preventDefault();}});
+window.addEventListener("keyup",e=>{if(["ArrowUp","KeyW","ArrowRight","KeyD","ArrowDown","KeyS","ArrowLeft","KeyA"].includes(e.code)){controls.dir="";writeInput(true);}if(e.code==="Space"){controls.fire=false;writeInput(true);}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=false;writeInput(true);}});
+window.addEventListener("blur",()=>{controls.dir="";controls.fire=false;controls.b=false;writeInput(true);});
+
+$("createBtn").addEventListener("click",createRoom);
+$("joinBtn").addEventListener("click",joinRoom);
+$("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom();});
+$("readyBtn").addEventListener("click",async()=>{
+  const mine=seats.find(s=>s.uid===uid);if(!mine)return;
+  try{await updateDoc(seatRef(roomId,mine.id),{name:safeText($("playerName").value,10),topic:$("mathType").value,ready:!mine.ready});say(mine.ready?"已取消準備。":"已準備，等待隊友…");}
+  catch(err){say(`更新失敗：${err.message}`,true);}
+});
+$("startBtn").addEventListener("click",startMatch);
+$("answerBtn").addEventListener("click",submitAnswer);
+$("answerInput").addEventListener("keydown",e=>{if(e.key==="Enter")submitAnswer();});
+$("homeBtn").addEventListener("click",()=>location.href="index.html");
+$("exitBtn").addEventListener("click",leaveRoom);
+$("returnBtn").addEventListener("click",()=>{$("endModal").style.display="none";detachRoomListeners();$("game").style.display="none";$("lobby").style.display="grid";$("roomPanel").style.display="none";$("createBtn").disabled=$("joinBtn").disabled=false;roomId="";mySeat=-1;isHost=false;world=null;});
+
+async function leaveRoom() {
+  try{if(roomId&&uid&&mySeat>=0)await deleteDoc(seatRef(roomId,mySeat));}catch(err){console.warn("seat release",err);}
+  detachRoomListeners();$("game").style.display="none";$("lobby").style.display="grid";$("roomPanel").style.display="none";$("createBtn").disabled=$("joinBtn").disabled=false;roomId="";mySeat=-1;isHost=false;world=null;controls.dir="";controls.fire=false;controls.b=false;
+}
+
+window.addEventListener("beforeunload",()=>{if(roomId&&uid&&mySeat>=0)deleteDoc(seatRef(roomId,mySeat)).catch(()=>{});});
+window.addEventListener("resize",()=>{if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=requestAnimationFrame(drawLoop);}});
+connectFirebase();
+</script>
+</body>
+</html>
