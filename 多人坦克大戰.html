@@ -218,7 +218,8 @@ function makeWorld(level, previous=null) {
     const pos=spawnFor(Number(s.id));
     players[s.uid]=old?{...old,x:pos.x,y:pos.y,dir:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,shieldUntil:0,shieldReadyAt:0,respawnAt:0,lastFireAt:0,lastBAt:0}:{uid:s.uid,seat:Number(s.id),name:s.name||"玩家",topic:s.topic||"add20",x:pos.x,y:pos.y,dir:0,lives:3,kills:0,score:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,shieldUntil:0,shieldReadyAt:0,respawnAt:0,lastFireAt:0,lastBAt:0};
   });
-  return {status:"playing",level,map:level-1,mapTiles:M[level-1].map(row=>[...row]),players,enemies:[],bullets:[],remainingToSpawn:20,destroyed:0,spawnAt:Date.now()+300,enemySeq:0,startedAt:Date.now(),updatedAt:Date.now()};
+  // Firestore 不接受巢狀陣列；攤平成一維後仍可用列欄座標讀取地圖。
+  return {status:"playing",level,map:level-1,mapTiles:M[level-1].flatMap(row=>[...row]),players,enemies:[],bullets:[],remainingToSpawn:20,destroyed:0,spawnAt:Date.now()+300,enemySeq:0,startedAt:Date.now(),updatedAt:Date.now()};
 }
 function spawnFor(seat) { const col=[2,5,7,10][seat]??6; return {x:(col+.5)*40,y:11.4*40}; }
 function createEnemy(w) {
@@ -321,7 +322,7 @@ function hostTick() {
 const DIRS=[{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
 function dirIndex(value){return ({up:0,right:1,down:2,left:3})[value]??-1;}
 function makeBullet(tank,dir,owner,enemy) {const v=DIRS[dir],speed=enemy?195:245;return{id:`b${Date.now()}-${Math.random().toString(36).slice(2,7)}`,x:tank.x+v.x*15,y:tank.y+v.y*15,dir,owner,enemy,speed,ttl:2.8};}
-function tileAt(w,x,y){const col=Math.floor(x/40),row=Math.floor(y/40);if(row<0||row>=13||col<0||col>=13)return 2;return w.mapTiles?.[row]?.[col]??0;}
+function tileAt(w,x,y){const col=Math.floor(x/40),row=Math.floor(y/40);if(row<0||row>=13||col<0||col>=13)return 2;return w.mapTiles?.[row*13+col]??0;}
 function blocks(w,x,y){const r=11;for(const [px,py] of [[x-r,y-r],[x+r,y-r],[x-r,y+r],[x+r,y+r]]){const t=tileAt(w,px,py);if(t===1||t===2||t===4)return true;}if(Math.abs(x-260)<21&&Math.abs(y-500)<21)return true;return false;}
 function canMoveTank(w,x,y,id,isEnemy){if(blocks(w,x,y))return false;
   if(isEnemy){for(const p of Object.values(w.players||{}))if(p.lives>0&&p.uid!==id&&Math.hypot(x-p.x,y-p.y)<27)return false;for(const e of w.enemies||[])if(e.id!==id&&Math.hypot(x-e.x,y-e.y)<27)return false;}
@@ -335,7 +336,7 @@ function updateBullets(w,dt,now) {
   for(const b of w.bullets||[]) {
     const v=DIRS[b.dir];b.x+=v.x*b.speed*dt;b.y+=v.y*b.speed*dt;b.ttl-=dt;
     const tile=tileAt(w,b.x,b.y);
-    if(tile===1){if(w.mapTiles?.[Math.floor(b.y/40)])w.mapTiles[Math.floor(b.y/40)][Math.floor(b.x/40)]=0;continue;}
+    if(tile===1){const row=Math.floor(b.y/40),col=Math.floor(b.x/40),index=row*13+col;if(w.mapTiles?.[index]!==undefined)w.mapTiles[index]=0;continue;}
     if(tile===2||tile===4||b.ttl<=0){continue;}
     let hit=false;
     if(b.enemy){for(const p of Object.values(w.players||{})){if(p.lives<=0||Math.hypot(p.x-b.x,p.y-b.y)>17)continue;if((p.shieldUntil||0)>now||(p.invulnerableUntil||0)>now){hit=true;break;}p.lives--;p.respawnAt=p.lives>0?now+1300:0;p.x=-80;p.y=-80;p.pausedForQuiz=false;hit=true;showToast(`${p.name} 坦克受擊${p.lives>0?"，即將重生":"，失去最後一條命"}`);break;}}
@@ -420,14 +421,14 @@ function drawBattlefield(w,h,now) {
   ctx.strokeStyle="#8d9969";ctx.lineWidth=3;ctx.strokeRect(left-7,top-7,boardSize+14,boardSize+14);
   ctx.fillStyle="#1d291e";ctx.fillRect(left,top,boardSize,boardSize);
   ctx.save();ctx.translate(left,top);ctx.scale(tile/40,tile/40);
-  for(let row=0;row<13;row++)for(let col=0;col<13;col++)drawTile(ctx,col*40,row*40,world.mapTiles?.[row]?.[col]||0);
+  for(let row=0;row<13;row++)for(let col=0;col<13;col++)drawTile(ctx,col*40,row*40,world.mapTiles?.[row*13+col]||0);
   drawBase(ctx,260,500);
   const activePlayers=Object.values(world.players||{});
   for(const enemy of world.enemies||[])drawTank(ctx,enemy,enemy.dir,"#d9514b",now,true);
   for(const p of activePlayers)if(p.lives>0&&p.x>=0&&p.x<520)drawTank(ctx,p,p.dir,colorBySeat(p.seat),now,false);
   for(const b of world.bullets||[]){ctx.fillStyle=b.enemy?"#ff6b5f":"#fff0a6";ctx.fillRect(b.x-3,b.y-4,6,8);ctx.strokeStyle="#6a2c22";ctx.strokeRect(b.x-3,b.y-4,6,8);}
   // 樹叢畫在坦克和砲彈上方，保留經典地形遮蔽感。
-  for(let row=0;row<13;row++)for(let col=0;col<13;col++)if(world.mapTiles?.[row]?.[col]===3)drawBush(ctx,col*40,row*40);
+  for(let row=0;row<13;row++)for(let col=0;col<13;col++)if(world.mapTiles?.[row*13+col]===3)drawBush(ctx,col*40,row*40);
   ctx.restore();
   ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.font="bold 12px monospace";ctx.fillStyle="#e5e6c9";
   ctx.fillText(`STAGE ${world.level}　・　擊破 ${world.destroyed||0} / 20`,w/2,Math.min(h-5,top+boardSize+25));
