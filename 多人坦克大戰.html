@@ -41,7 +41,7 @@
       <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div>
       <div id="seatList" class="seat-list"></div>
       <div class="actions" style="justify-content:center"><button id="readyBtn" class="pixel-btn">我準備好了</button><button id="startBtn" class="pixel-btn primary" disabled>開始闖關</button></div>
-      <div class="small-note">每台平板選擇自己的數學題型並按「準備好了」。房主等所有已加入玩家準備完成後即可開始；未滿四人也可開戰。</div>
+      <div class="small-note">一個人遊玩時房主可直接開始；多人遊玩時，每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始。</div>
     </div>
     <div class="small-note">本遊戲已設定 Firebase 匿名登入與專用 Firestore 規則；玩家不需要註冊個人帳號即可使用。若換用其他 Firebase 專案，請重新啟用匿名登入並部署規則。</div>
   </div>
@@ -88,6 +88,7 @@ let gameRunning = false, lastFrame = 0, lastHostPublish = 0, enemyId = 0;
 const writeTimes = new Map(), processingAnswers = new Set(), controls = {dir:"",fire:false,b:false};
 const INPUT_SYNC_MS = 180, WORLD_SYNC_MS = 200;
 const colorBySeat = seat => COLORS[Number(seat) % COLORS.length];
+const canStartMatch = () => seats.length === 1 || (seats.length > 1 && seats.every(s => s.ready));
 const roomRef = code => doc(db,"tankRooms",code);
 const seatRef = (code,seat) => doc(db,"tankRooms",code,"seats",String(seat));
 const worldRef = code => doc(db,"tankRooms",code,"state","world");
@@ -189,8 +190,8 @@ function enterRoom() {
     renderSeats();
     if(seats.some(s=>s.uid===uid)) mySeat=Number(seats.find(s=>s.uid===uid).id);
     if(isHost){
-      const occupied=seats.length>0, ready=occupied&&seats.every(s=>s.ready);
-      $("startBtn").disabled=!ready||roomData?.status!=="lobby";
+      const occupied=seats.length>0;
+      $("startBtn").disabled=!occupied||!canStartMatch()||roomData?.status!=="lobby";
     }
   },err=>say(`玩家列表讀取失敗：${err.message}`,true));
   if(isHost){
@@ -207,7 +208,7 @@ function renderSeats() {
     box.append(div);
   }
   const mine=seats.find(s=>s.uid===uid); if(mine){$("readyBtn").textContent=mine.ready?"取消準備":"我準備好了";$("mathType").value=mine.topic||$("mathType").value;$("playerName").value=mine.name||$("playerName").value;}
-  if(isHost) $("startBtn").disabled=seats.length===0||!seats.every(s=>s.ready)||roomData?.status!=="lobby";
+  if(isHost) $("startBtn").disabled=!canStartMatch()||roomData?.status!=="lobby";
 }
 
 function makeWorld(level, previous=null) {
@@ -230,7 +231,7 @@ function createEnemy(w) {
 }
 
 async function startMatch() {
-  if(!isHost||!seats.length||!seats.every(s=>s.ready)) return;
+  if(!isHost||!canStartMatch()) return;
   $("startBtn").disabled=true; say("整備完成！準備進入第一關…");
   try {
     const initial=makeWorld(1); world=initial;
