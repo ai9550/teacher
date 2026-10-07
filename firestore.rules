@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 既有課堂工具集合（沿用目前 Firebase Console 規則）
+    match /wordcloud_words/{document} {
+      allow read, write: if true;
+    }
+    match /snake_players/{document} {
+      allow read, write: if true;
+    }
+    match /snake_food/{document} {
+      allow read, write: if true;
+    }
+    match /fps_players/{document} {
+      allow read, write: if true;
+    }
+    match /fps_zombies/{document} {
+      allow read, write: if true;
+    }
+
+    // 多人坦克大戰：匿名登入玩家才能存取自己的房間資料
+    match /tankRooms/{roomId} {
+      function signedIn() { return request.auth != null; }
+      function roomPath() { return /databases/$(database)/documents/tankRooms/$(roomId); }
+      function isHost() {
+        return signedIn() && exists(roomPath()) && get(roomPath()).data.hostUid == request.auth.uid;
+      }
+      function isMember() {
+        return signedIn() && (
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0).data.uid == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1).data.uid == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2).data.uid == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3).data.uid == request.auth.uid)
+        );
+      }
+      function afterRoomIsLobby() {
+        return getAfter(roomPath()).data.status == 'lobby';
+      }
+
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.status == 'lobby';
+      allow update: if isHost()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'level', 'hostBeat']);
+      allow delete: if false;
+
+      match /seats/{seatId} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && seatId in ['0', '1', '2', '3']
+          && request.resource.data.uid == request.auth.uid
+          && afterRoomIsLobby()
+          && (seatId != '0' || getAfter(roomPath()).data.hostUid == request.auth.uid)
+          && (seatId == '0' || get(roomPath()).data.status == 'lobby');
+        allow update: if signedIn()
+          && resource.data.uid == request.auth.uid
+          && request.resource.data.uid == request.auth.uid
+          && get(roomPath()).data.status == 'lobby';
+        allow delete: if signedIn()
+          && (resource.data.uid == request.auth.uid || isHost());
+      }
+
+      match /state/{stateId} {
+        allow read: if isMember();
+        allow create, update: if isHost() && stateId == 'world';
+        allow delete: if false;
+      }
+
+      match /inputs/{playerUid} {
+        allow read: if signedIn() && (request.auth.uid == playerUid || isHost());
+        allow create, update: if isMember() && request.auth.uid == playerUid
+          && request.resource.data.uid == request.auth.uid;
+        allow delete: if isMember() && request.auth.uid == playerUid;
+      }
+
+      match /questions/{playerUid} {
+        allow read: if isMember() && (request.auth.uid == playerUid || isHost());
+        allow create, update, delete: if isHost();
+      }
+
+      match /privateAnswers/{playerUid} {
+        allow read, write: if isHost();
+      }
+
+      match /answers/{playerUid} {
+        allow read: if isMember() && (request.auth.uid == playerUid || isHost());
+        allow create, update: if isMember() && request.auth.uid == playerUid
+          && request.resource.data.keys().hasOnly(['id', 'answer', 'submittedAt']);
+        allow delete: if isMember() && (request.auth.uid == playerUid || isHost());
+      }
+    }
+
+    // 其他集合預設禁止存取
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
