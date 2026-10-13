@@ -30,7 +30,9 @@ service cloud.firestore {
           (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0).data.uid == request.auth.uid) ||
           (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1).data.uid == request.auth.uid) ||
           (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3).data.uid == request.auth.uid)
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3).data.uid == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/4) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/4).data.uid == request.auth.uid) ||
+          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/5) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/5).data.uid == request.auth.uid)
         );
       }
       function afterRoomIsLobby() {
@@ -48,7 +50,7 @@ service cloud.firestore {
       match /seats/{seatId} {
         allow read: if signedIn();
         allow create: if signedIn()
-          && seatId in ['0', '1', '2', '3']
+          && seatId in ['0', '1', '2', '3', '4', '5']
           && request.resource.data.uid == request.auth.uid
           && afterRoomIsLobby()
           && (seatId != '0' || getAfter(roomPath()).data.hostUid == request.auth.uid)

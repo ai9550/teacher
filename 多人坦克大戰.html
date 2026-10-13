@@ -28,7 +28,7 @@
 <section id="lobby">
   <div class="lobby-card">
     <div class="brand"><span class="brand-icon">🛡️</span><h1>坦克大戰</h1><span class="brand-icon">💥</span></div>
-    <div class="subtitle">四人合作・數學闖關・五大戰場</div>
+    <div class="subtitle">六人合作・數學闖關・五大戰場</div>
     <div class="instructions"><b>玩法：</b>每關擊退 20 台敵軍，共 5 關。每位玩家每擊毀 5 台敵坦克，就要完成一道自己選的數學題；答對繼續，答錯扣 1 條命。每人 3 條命，隊伍全員失去生命時遊戲結束。<br><b>平板：</b>左下搖桿移動，右下 A 射擊、B 開啟護盾。支援橫向畫面。</div>
     <div class="form-grid">
       <div class="field"><label for="playerName">玩家暱稱</label><input id="playerName" maxlength="10" autocomplete="nickname" placeholder="輸入你的名字"></div>
@@ -41,7 +41,7 @@
       <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div>
       <div id="seatList" class="seat-list"></div>
       <div class="actions" style="justify-content:center"><button id="readyBtn" class="pixel-btn">我準備好了</button><button id="startBtn" class="pixel-btn primary" disabled>開始闖關</button></div>
-      <div class="small-note">一個人遊玩時房主可直接開始；多人遊玩時，每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始。</div>
+      <div class="small-note">最多 6 人一起遊玩。每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始；一人遊玩可直接開始。</div>
     </div>
     <div class="small-note">本遊戲已設定 Firebase 匿名登入與專用 Firestore 規則；玩家不需要註冊個人帳號即可使用。若換用其他 Firebase 專案，請重新啟用匿名登入並部署規則。</div>
   </div>
@@ -52,7 +52,7 @@
   <canvas id="arena" aria-label="坦克戰場"></canvas>
   <div class="rotate-hint">平板建議橫向遊玩</div>
   <div class="touch-controls"><div id="joystick" class="joystick" aria-label="移動搖桿"><div id="joyStick" class="joy-stick"></div></div><div class="action-buttons"><button id="btnB" class="action-btn b" aria-label="B 特殊護盾">B<span class="action-label">護盾</span></button><button id="btnA" class="action-btn a" aria-label="A 射擊">A<span class="action-label">射擊</span></button></div></div>
-  <div class="hint">鍵盤：方向鍵 / WASD 移動　Space 射擊　Shift 護盾</div>
+  <div class="hint">鍵盤：方向鍵移動　Space 射擊　Shift 護盾</div>
   <div id="gameMessage" class="game-message"></div>
 </main>
 
@@ -169,9 +169,9 @@ async function joinRoom() {
     await runTransaction(db,async tx=>{
       const room=await tx.get(r); if(!room.exists()) throw new Error("找不到這個房間碼。");
       if(room.data().status!=="lobby") throw new Error("遊戲已經開始，不能加入。");
-      const refs=[0,1,2,3].map(i=>seatRef(code,i)); const snaps=[]; for(const ref of refs) snaps.push(await tx.get(ref));
+      const refs=[0,1,2,3,4,5].map(i=>seatRef(code,i)); const snaps=[]; for(const ref of refs) snaps.push(await tx.get(ref));
       for(let i=0;i<snaps.length;i++) if(snaps[i].exists()&&snaps[i].data().uid===uid){assigned=i;return;}
-      assigned=snaps.findIndex(s=>!s.exists()); if(assigned<0) throw new Error("房間已滿，最多 4 位玩家。");
+      assigned=snaps.findIndex(s=>!s.exists()); if(assigned<0) throw new Error("房間已滿，最多 6 位玩家。");
       tx.set(refs[assigned],{uid,name,topic,ready:false,seat:assigned,joinedAt:serverTimestamp()});
     });
     roomId=code;mySeat=assigned;isHost=false;enterRoom();say("已加入房間，選好題型後請按準備。");
@@ -201,7 +201,7 @@ function enterRoom() {
 
 function renderSeats() {
   const box=$("seatList"); box.innerHTML="";
-  for(let i=0;i<4;i++) {
+  for(let i=0;i<6;i++) {
     const p=seats.find(s=>Number(s.id)===i); const div=document.createElement("div");div.className=`seat ${p?.ready?"ready":""} ${p?"":"empty"}`;
     if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${i===0?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";}
     else div.innerHTML=`<span class="seat-color" style="background:#3a4737"></span><span>坦克 ${i+1}・等待加入</span>`;
@@ -221,7 +221,7 @@ function makeWorld(level, previous=null) {
   // Firestore 不接受巢狀陣列；攤平成一維後仍可用列欄座標讀取地圖。
   return {status:"playing",level,map:level-1,mapTiles:M[level-1].flatMap(row=>[...row]),players,enemies:[],bullets:[],remainingToSpawn:20,destroyed:0,spawnAt:Date.now()+300,enemySeq:0,startedAt:Date.now(),updatedAt:Date.now()};
 }
-function spawnFor(seat) { const col=[2,5,7,10][seat]??6; return {x:(col+.5)*40,y:11.4*40}; }
+function spawnFor(seat) { const col=[1,3,5,7,9,11][seat]??6; return {x:(col+.5)*40,y:11.4*40}; }
 function createEnemy(w) {
   if(w.remainingToSpawn<=0||w.enemies.length>=5) return;
   const cols=[1,6,11], col=cols[w.enemySeq%3], x=(col+.5)*40, y=20;
@@ -478,8 +478,9 @@ function endJoy(e){if(e.pointerId!==joyPointer)return;joyPointer=null;controls.d
 $("joystick").addEventListener("pointerup",endJoy);$("joystick").addEventListener("pointercancel",endJoy);
 function holdButton(button,key){button.addEventListener("pointerdown",e=>{e.preventDefault();button.setPointerCapture(e.pointerId);controls[key]=true;button.classList.add("active");writeInput(true);});const end=e=>{e.preventDefault();controls[key]=false;button.classList.remove("active");writeInput(true);};button.addEventListener("pointerup",end);button.addEventListener("pointercancel",end);button.addEventListener("lostpointercapture",()=>{controls[key]=false;button.classList.remove("active");writeInput(true);});}
 holdButton($("btnA"),"fire");holdButton($("btnB"),"b");
-window.addEventListener("keydown",e=>{const map={ArrowUp:"up",KeyW:"up",ArrowRight:"right",KeyD:"right",ArrowDown:"down",KeyS:"down",ArrowLeft:"left",KeyA:"left"};if(map[e.code]){controls.dir=map[e.code];writeInput();e.preventDefault();}if(e.code==="Space"){controls.fire=true;writeInput(true);e.preventDefault();}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=true;writeInput(true);e.preventDefault();}});
-window.addEventListener("keyup",e=>{if(["ArrowUp","KeyW","ArrowRight","KeyD","ArrowDown","KeyS","ArrowLeft","KeyA"].includes(e.code)){controls.dir="";writeInput(true);}if(e.code==="Space"){controls.fire=false;writeInput(true);}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=false;writeInput(true);}});
+function isTextInputTarget(target) { return target instanceof HTMLElement && (target.isContentEditable || ["INPUT","TEXTAREA","SELECT"].includes(target.tagName)); }
+window.addEventListener("keydown",e=>{if(isTextInputTarget(e.target))return;const map={ArrowUp:"up",ArrowRight:"right",ArrowDown:"down",ArrowLeft:"left"};if(map[e.code]&&gameRunning){controls.dir=map[e.code];writeInput();e.preventDefault();}if(e.code==="Space"&&gameRunning){controls.fire=true;writeInput(true);e.preventDefault();}if((e.code==="ShiftLeft"||e.code==="ShiftRight")&&gameRunning){controls.b=true;writeInput(true);e.preventDefault();}});
+window.addEventListener("keyup",e=>{if(isTextInputTarget(e.target))return;if(["ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(e.code)){controls.dir="";writeInput(true);}if(e.code==="Space"){controls.fire=false;writeInput(true);}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=false;writeInput(true);}});
 window.addEventListener("blur",()=>{controls.dir="";controls.fire=false;controls.b=false;writeInput(true);});
 
 $("createBtn").addEventListener("click",createRoom);
