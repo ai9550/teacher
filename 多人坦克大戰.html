@@ -84,7 +84,7 @@ let uid = null, roomId = "", isHost = false, mySeat = -1, myQuestion = null, has
 let roomData = null, seats = [], world = null, inputByUid = {};
 let offRoom = null, offSeats = null, offWorld = null, offInputs = null, offAnswers = null, offQuestion = null;
 let hostTimer = 0, publishTimer = 0, heartbeatTimer = 0, renderFrame = 0, unsubscribed = false;
-let gameRunning = false, lastFrame = 0, lastHostPublish = 0, enemyId = 0;
+let gameRunning = false, lastFrame = 0, lastHostPublish = 0, enemyId = 0, lastWorldReceivedAt = 0, lastLocalDirectionAt = 0;
 const writeTimes = new Map(), processingAnswers = new Set(), controls = {dir:"",fire:false,b:false};
 const INPUT_SYNC_MS = 180, WORLD_SYNC_MS = 200;
 const colorBySeat = seat => COLORS[Number(seat) % COLORS.length];
@@ -264,7 +264,7 @@ function startGameView() {
   $("game").style.display="block"; $("lobby").style.display="none";
   offWorld=onSnapshot(worldRef(roomId),snap=>{
     if(!snap.exists()) return;
-    world=snap.data(); gameRunning=["playing","intermission"].includes(world.status);
+    world=snap.data();lastWorldReceivedAt=Date.now(); gameRunning=["playing","intermission"].includes(world.status);
     if(world.status==="playing"||world.status==="intermission") {$("endModal").style.display="none";}
     if(world.status==="finished"||world.status==="gameover") showEnd(world.status);
     updateHud();
@@ -437,6 +437,7 @@ function showToast(message) { const box=$("gameMessage");box.textContent=message
 const canvas=$("arena"),ctx=canvas.getContext("2d");
 function drawLoop(now) {
   renderFrame=0;
+  now=Date.now();
   const w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(window.devicePixelRatio||1,2);
   if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.fillStyle="#131a14";ctx.fillRect(0,0,w,h);
@@ -455,7 +456,16 @@ function drawBattlefield(w,h,now) {
   drawBase(ctx,260,500);
   const activePlayers=Object.values(world.players||{});
   for(const enemy of world.enemies||[])drawTank(ctx,enemy,enemy.dir,"#d9514b",now,true);
-  for(const p of activePlayers)if(p.lives>0&&p.x>=0&&p.x<520)drawTank(ctx,p,p.dir,colorBySeat(p.seat),now,false);
+  for(const p of activePlayers)if(p.lives>0&&p.x>=0&&p.x<520){
+    let displayTank=p;
+    if(p.uid===uid&&controls.dir&&world.status==="playing"){
+      const elapsed=Math.min(.22,Math.max(0,(now-Math.max(lastWorldReceivedAt,lastLocalDirectionAt))/1000)),steps=Math.max(1,Math.ceil(elapsed/.01)),step=elapsed/steps,dir=dirIndex(controls.dir),v=DIRS[dir];
+      let x=p.x,y=p.y;
+      for(let i=0;i<steps;i++){const nx=x+v.x*102*step,ny=y+v.y*102*step;if(!canMoveTank(world,nx,ny,p.uid,false))break;x=nx;y=ny;}
+      displayTank={...p,x,y,dir};
+    }
+    drawTank(ctx,displayTank,displayTank.dir,colorBySeat(p.seat),now,false);
+  }
   for(const b of world.bullets||[]){ctx.fillStyle=b.enemy?"#ff6b5f":"#fff0a6";ctx.fillRect(b.x-3,b.y-4,6,8);ctx.strokeStyle="#6a2c22";ctx.strokeRect(b.x-3,b.y-4,6,8);}
   // 樹叢畫在坦克和砲彈上方，保留經典地形遮蔽感。
   for(let row=0;row<13;row++)for(let col=0;col<13;col++)if(world.mapTiles?.[row*13+col]===3)drawBush(ctx,col*40,row*40);
@@ -478,10 +488,26 @@ function drawTank(c,tank,dir,color,now,enemy) {
   if(!enemy&&tank.lives<=0)return;
   if(!enemy&&(tank.invulnerableUntil||0)>now&&Math.floor(now/100)%2)return;
   c.save();c.translate(tank.x,tank.y);c.rotate(dir*Math.PI/2);
-  c.fillStyle="#20251e";c.fillRect(-14,-15,5,30);c.fillRect(9,-15,5,30);
-  c.fillStyle=color;c.fillRect(-10,-14,20,28);c.fillStyle=enemy?"#ffc1a4":"#e8f7dc";c.fillRect(-6,-9,12,11);c.fillStyle="#222820";c.fillRect(-3,-17,6,16);c.fillStyle="#f6d56b";c.fillRect(-2,-13,4,4);
-  if(enemy&&tank.hp>1){c.strokeStyle="#ffdf75";c.lineWidth=2;c.strokeRect(-15,-16,30,32);}
-  if(!enemy&&(tank.shieldUntil||0)>now){c.strokeStyle="#8fe7ff";c.lineWidth=3;c.beginPath();c.arc(0,0,22+Math.sin(now/90)*2,0,Math.PI*2);c.stroke();}
+  // 履帶加上分段防滑塊，讓俯視輪廓更像真正的坦克。
+  for(const x of [-13,13]){
+    c.fillStyle="#171c18";c.fillRect(x-4,-18,8,36);
+    c.fillStyle="#485047";c.fillRect(x-2.5,-16.5,5,33);
+    c.fillStyle="#b0ae87";for(let y=-13;y<=13;y+=6)c.fillRect(x-3,y,6,2);
+    c.fillStyle="#292f27";for(let y=-13;y<=13;y+=6)c.fillRect(x-1,y,2,2);
+  }
+  // 車身以斜角前甲板、側裙與高光分層，砲管朝車頭方向伸出。
+  c.fillStyle="#20291f";c.beginPath();c.moveTo(-10,-14);c.lineTo(-7,-18);c.lineTo(7,-18);c.lineTo(10,-14);c.lineTo(10,14);c.lineTo(6,18);c.lineTo(-6,18);c.lineTo(-10,14);c.closePath();c.fill();
+  const hull=c.createLinearGradient(0,-16,0,17);hull.addColorStop(0,enemy?"#f27a63":color);hull.addColorStop(.48,color);hull.addColorStop(1,enemy?"#9f332f":"#28708a");
+  c.fillStyle=hull;c.beginPath();c.moveTo(-8,-14);c.lineTo(-5,-16);c.lineTo(5,-16);c.lineTo(8,-14);c.lineTo(8,13);c.lineTo(5,16);c.lineTo(-5,16);c.lineTo(-8,13);c.closePath();c.fill();
+  c.strokeStyle="#e4edcf88";c.lineWidth=1;c.beginPath();c.moveTo(-6,-13);c.lineTo(6,-13);c.stroke();
+  c.fillStyle="#172019";c.fillRect(-2.5,-22,5,16);c.fillStyle=enemy?"#ffd6b8":"#d7edbd";c.fillRect(-1.5,-21,3,12);
+  c.fillStyle="#172019";c.beginPath();c.arc(0,-4,8.5,0,Math.PI*2);c.fill();
+  c.fillStyle=enemy?"#ffb28b":"#b2d48c";c.beginPath();c.arc(0,-4,6.5,0,Math.PI*2);c.fill();
+  c.strokeStyle="#f7f0ca";c.lineWidth=1;c.beginPath();c.arc(0,-4,4.3,0,Math.PI*2);c.stroke();
+  c.fillStyle=enemy?"#60352c":"#3a5140";c.fillRect(-1.5,-7,3,6);
+  c.fillStyle=enemy?"#ffcf58":"#f6e5a1";c.fillRect(-1,-21,2,3);
+  if(enemy&&tank.hp>1){c.strokeStyle="#ffdf75";c.lineWidth=2;c.strokeRect(-17,-19,34,38);}
+  if(!enemy&&(tank.shieldUntil||0)>now){c.strokeStyle="#8fe7ff";c.lineWidth=3;c.beginPath();c.arc(0,0,23+Math.sin(now/90)*2,0,Math.PI*2);c.stroke();}
   c.restore();
 }
 
@@ -493,13 +519,13 @@ function showEnd(status) {
   $("endModal").style.display="grid";
 }
 
-function updateControls() { writeInput(); }
+function updateControls() { writeInput(true); }
 function setDirectionFromPoint(e) {
   const r=$("joystick").getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
   let dx=e.clientX-cx,dy=e.clientY-cy;const length=Math.hypot(dx,dy);if(length>55){dx=dx/length*55;dy=dy/length*55;}
   $("joyStick").style.transform=`translate(${dx}px,${dy}px)`;
-  if(Math.hypot(dx,dy)<12)controls.dir="";else controls.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
-  updateControls();
+  const nextDir=Math.hypot(dx,dy)<12?"":Math.abs(dx)>Math.abs(dy)?(dx>0?"right":"left"):(dy>0?"down":"up");
+  if(nextDir!==controls.dir){controls.dir=nextDir;lastLocalDirectionAt=Date.now();updateControls();}
 }
 let joyPointer=null;
 $("joystick").addEventListener("pointerdown",e=>{e.preventDefault();joyPointer=e.pointerId;$("joystick").setPointerCapture(e.pointerId);setDirectionFromPoint(e);});
@@ -509,7 +535,7 @@ $("joystick").addEventListener("pointerup",endJoy);$("joystick").addEventListene
 function holdButton(button,key){button.addEventListener("pointerdown",e=>{e.preventDefault();button.setPointerCapture(e.pointerId);controls[key]=true;button.classList.add("active");writeInput(true);});const end=e=>{e.preventDefault();controls[key]=false;button.classList.remove("active");writeInput(true);};button.addEventListener("pointerup",end);button.addEventListener("pointercancel",end);button.addEventListener("lostpointercapture",()=>{controls[key]=false;button.classList.remove("active");writeInput(true);});}
 holdButton($("btnA"),"fire");holdButton($("btnB"),"b");
 function isTextInputTarget(target) { return target instanceof HTMLElement && (target.isContentEditable || ["INPUT","TEXTAREA","SELECT"].includes(target.tagName)); }
-window.addEventListener("keydown",e=>{if(isTextInputTarget(e.target))return;const map={ArrowUp:"up",ArrowRight:"right",ArrowDown:"down",ArrowLeft:"left"};if(map[e.code]&&gameRunning){controls.dir=map[e.code];writeInput();e.preventDefault();}if(e.code==="Space"&&gameRunning){controls.fire=true;writeInput(true);e.preventDefault();}if((e.code==="ShiftLeft"||e.code==="ShiftRight")&&gameRunning){controls.b=true;writeInput(true);e.preventDefault();}});
+window.addEventListener("keydown",e=>{if(isTextInputTarget(e.target))return;const map={ArrowUp:"up",ArrowRight:"right",ArrowDown:"down",ArrowLeft:"left"};if(map[e.code]&&gameRunning){if(controls.dir!==map[e.code]){controls.dir=map[e.code];lastLocalDirectionAt=Date.now();writeInput(true);}e.preventDefault();}if(e.code==="Space"&&gameRunning){controls.fire=true;writeInput(true);e.preventDefault();}if((e.code==="ShiftLeft"||e.code==="ShiftRight")&&gameRunning){controls.b=true;writeInput(true);e.preventDefault();}});
 window.addEventListener("keyup",e=>{if(isTextInputTarget(e.target))return;if(["ArrowUp","ArrowRight","ArrowDown","ArrowLeft"].includes(e.code)){controls.dir="";writeInput(true);}if(e.code==="Space"){controls.fire=false;writeInput(true);}if(e.code==="ShiftLeft"||e.code==="ShiftRight"){controls.b=false;writeInput(true);}});
 window.addEventListener("blur",()=>{controls.dir="";controls.fire=false;controls.b=false;writeInput(true);});
 
