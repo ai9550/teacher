@@ -14,7 +14,7 @@
 .instructions{border:1px solid #566547;background:#121b14;border-radius:10px;padding:12px 15px;line-height:1.65;color:#d9e0c5;font-size:14px;margin:12px 0 18px}.instructions b{color:var(--gold)}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:13px;color:#d5dfbd;font-weight:bold}.field input,.field select{width:100%;min-height:46px;border:2px solid #566547;border-radius:8px;background:#0e160f;color:#fff4cf;padding:9px 12px;outline:none}.field input:focus,.field select:focus{border-color:var(--gold)}
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}.pixel-btn{border:2px solid #d0d795;border-radius:8px;background:#586b3d;color:#fff7d7;padding:12px 17px;min-height:48px;font-weight:900;cursor:pointer;box-shadow:0 4px 0 #27331d;transition:transform .08s,filter .12s}.pixel-btn:hover{filter:brightness(1.12)}.pixel-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #27331d}.pixel-btn.primary{background:#a27623;border-color:#f5dc83}.pixel-btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
-#status{min-height:24px;margin:12px 0 0;color:#e3e9cf;font-size:14px}.room-panel{display:none;margin-top:18px;padding:14px;border:2px dashed #839065;border-radius:12px;background:#111a12}.room-code{font-size:clamp(28px,7vw,44px);font-weight:1000;color:var(--gold);letter-spacing:8px;text-align:center;margin:3px 0 10px}.seat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.seat{border:1px solid #556447;border-radius:8px;background:#1c281c;padding:9px;min-height:58px;display:flex;align-items:center;gap:8px}.seat-color{width:22px;height:22px;border-radius:5px;border:2px solid #ffffffa0;flex:none}.seat-name{font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seat-info{font-size:12px;color:#c0cbb2}.seat.ready .seat-name:after{content:"　✓準備";color:var(--green);font-size:12px}.seat.empty{color:#8f9b84;border-style:dashed}.small-note{font-size:12px;color:#aebaa3;line-height:1.55;margin-top:10px}
+#status{min-height:24px;margin:12px 0 0;color:#e3e9cf;font-size:14px}.room-panel{display:none;margin-top:18px;padding:14px;border:2px dashed #839065;border-radius:12px;background:#111a12}.room-code{font-size:clamp(28px,7vw,44px);font-weight:1000;color:var(--gold);letter-spacing:8px;text-align:center;margin:3px 0 10px}.seat-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.seat{border:1px solid #556447;border-radius:8px;background:#1c281c;padding:9px;min-height:58px;display:flex;align-items:center;gap:8px}.seat-color{width:22px;height:22px;border-radius:5px;border:2px solid #ffffffa0;flex:none}.seat-name{font-weight:bold;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seat-info{font-size:12px;color:#c0cbb2}.seat.ready .seat-name:after{content:"　✓準備";color:var(--green);font-size:12px}.seat.empty{color:#8f9b84;border-style:dashed}.seat-kick{margin-left:auto;border:1px solid #ff7167;border-radius:6px;padding:6px 8px;background:#512a25;color:#ffe6d9;font-size:12px;font-weight:bold;cursor:pointer;flex:none}.seat-kick:hover{background:#74372f}.small-note{font-size:12px;color:#aebaa3;line-height:1.55;margin-top:10px}
 #game{display:none;position:fixed;inset:0;background:#101711;overflow:hidden}#arena{position:absolute;inset:56px 0 0;width:100%;height:calc(100% - 56px);touch-action:none;image-rendering:pixelated}
 .topbar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 12px;background:#172018;border-bottom:2px solid #546043;z-index:2}.top-brand{font-weight:1000;color:var(--gold);white-space:nowrap}.top-stats{display:flex;gap:clamp(7px,2vw,18px);align-items:center;overflow:hidden}.pill{background:#293628;border:1px solid #5a694b;border-radius:999px;padding:6px 10px;font-size:13px;white-space:nowrap}.player-mini{display:flex;gap:5px;align-items:center}.tiny-dot{width:12px;height:12px;border-radius:3px;display:inline-block}.top-action{border:1px solid #74815e;border-radius:7px;padding:6px 9px;background:#34442e;color:#fff4d0;font-weight:bold;white-space:nowrap}
 .touch-controls{position:absolute;inset:56px 0 0;pointer-events:none;z-index:3}.joystick{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:142px;height:142px;border:3px solid #edf1c866;border-radius:50%;background:#21321dbb;box-shadow:inset 0 0 0 17px #ffffff0a,0 4px 14px #0009;pointer-events:auto;touch-action:none}.joy-stick{position:absolute;left:42px;top:42px;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2edaf,#8ba462 72%,#465839);border:2px solid #fff8;box-shadow:0 4px 9px #0008;pointer-events:none}.action-buttons{position:absolute;right:max(20px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;gap:15px;pointer-events:auto}.action-btn{width:clamp(68px,12vw,92px);height:clamp(68px,12vw,92px);border-radius:50%;border:4px solid #fff9;color:#fff;font-size:25px;font-weight:1000;text-shadow:0 2px 3px #000;box-shadow:0 5px 0 #1118,0 6px 14px #0008;touch-action:none}.action-btn.a{background:radial-gradient(circle at 33% 25%,#ff9b68,#bb3933 75%)}.action-btn.b{background:radial-gradient(circle at 33% 25%,#9fcaff,#315eab 75%);margin-bottom:36px}.action-btn:active,.action-btn.active{transform:translateY(3px);filter:brightness(1.25);box-shadow:0 2px 0 #1118}.action-label{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:12px;text-shadow:0 2px 3px #000}
@@ -33,7 +33,7 @@
     <div class="form-grid">
       <div class="field"><label for="playerName">玩家暱稱</label><input id="playerName" maxlength="10" autocomplete="nickname" placeholder="輸入你的名字"></div>
       <div class="field"><label for="mathType">我的數學題型</label><select id="mathType"><option value="add20">加法（20 以內）</option><option value="addsub100">加減法（100 以內）</option><option value="mul">九九乘法</option><option value="div">整除除法</option><option value="mixed">四則混合</option></select></div>
-      <div class="field full"><label for="roomCode">房間碼（加入遊戲時輸入）</label><input id="roomCode" maxlength="6" inputmode="text" autocomplete="off" placeholder="例如：A7K2Q9" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:900"></div>
+      <div class="field full"><label for="roomCode">房間碼（加入遊戲時輸入）</label><input id="roomCode" maxlength="4" minlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="例如：ABCD" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:900"></div>
     </div>
     <div class="actions"><button id="createBtn" class="pixel-btn primary">建立新房間</button><button id="joinBtn" class="pixel-btn">加入房間</button><button id="homeBtn" class="pixel-btn">回教學首頁</button></div>
     <div id="status" role="status">正在連線至 Firebase…</div>
@@ -41,7 +41,7 @@
       <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div>
       <div id="seatList" class="seat-list"></div>
       <div class="actions" style="justify-content:center"><button id="readyBtn" class="pixel-btn">我準備好了</button><button id="startBtn" class="pixel-btn primary" disabled>開始闖關</button></div>
-      <div class="small-note">最多 6 人一起遊玩。每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始；一人遊玩可直接開始。</div>
+      <div class="small-note">最多 6 人一起遊玩。每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始；開始前房主可移除成員，一人遊玩可直接開始。</div>
     </div>
     <div class="small-note">本遊戲已設定 Firebase 匿名登入與專用 Firestore 規則；玩家不需要註冊個人帳號即可使用。若換用其他 Firebase 專案，請重新啟用匿名登入並部署規則。</div>
   </div>
@@ -80,7 +80,7 @@ const db = getFirestore(app);
 const $ = id => document.getElementById(id);
 const COLORS = ["#57d3ff", "#ffcf58", "#ff7474", "#a8ed70"];
 const MATH_NAMES = {add20:"加法（20 以內）",addsub100:"加減法（100 以內）",mul:"九九乘法",div:"整除除法",mixed:"四則混合"};
-let uid = null, roomId = "", isHost = false, mySeat = -1, myQuestion = null;
+let uid = null, roomId = "", isHost = false, mySeat = -1, myQuestion = null, hasSeenMySeat = false;
 let roomData = null, seats = [], world = null, inputByUid = {};
 let offRoom = null, offSeats = null, offWorld = null, offInputs = null, offAnswers = null, offQuestion = null;
 let hostTimer = 0, publishTimer = 0, heartbeatTimer = 0, renderFrame = 0, unsubscribed = false;
@@ -107,7 +107,7 @@ const M = [
 
 function say(message, error = false) { $("status").textContent = message; $("status").style.color = error ? "#ff9b89" : "#e3e9cf"; }
 function safeText(value, max=12) { return String(value || "").trim().replace(/[<>]/g,"").slice(0,max) || "玩家"; }
-function makeRoomCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; return Array.from({length:6},()=>alphabet[Math.floor(Math.random()*alphabet.length)]).join(""); }
+function makeRoomCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ"; return Array.from({length:4},()=>alphabet[Math.floor(Math.random()*alphabet.length)]).join(""); }
 function randomInt(min,max) { return min + Math.floor(Math.random() * (max-min+1)); }
 function makeQuestion(type) {
   let a,b,op,answer;
@@ -161,7 +161,7 @@ async function createRoom() {
 async function joinRoom() {
   if(!uid) return;
   const code=$("roomCode").value.trim().toUpperCase();
-  if(!/^[A-HJ-NP-Z2-9]{6}$/.test(code)){say("請輸入 6 碼房間碼。",true);return;}
+  if(!/^[A-HJ-NP-Z]{4}$/.test(code)){say("請輸入 4 個大寫英文字母的房間碼。",true);return;}
   const name=safeText($("playerName").value,10), topic=$("mathType").value;
   localStorage.setItem("tankBattleName",name); $("joinBtn").disabled=true; say("正在加入房間…");
   try {
@@ -179,7 +179,7 @@ async function joinRoom() {
 }
 
 function enterRoom() {
-  unsubscribed=false; $("createBtn").disabled=$("joinBtn").disabled=true; $("roomPanel").style.display="block";$("roomCodeDisplay").textContent=roomId;$("roomPill").textContent=`房間 ${roomId}`;
+  unsubscribed=false;hasSeenMySeat=false; $("createBtn").disabled=$("joinBtn").disabled=true; $("roomPanel").style.display="block";$("roomCodeDisplay").textContent=roomId;$("roomPill").textContent=`房間 ${roomId}`;
   offRoom=onSnapshot(roomRef(roomId),snap=>{
     if(!snap.exists()){say("房間已關閉。",true);return;}
     roomData=snap.data();
@@ -187,8 +187,10 @@ function enterRoom() {
   },err=>say(`房間讀取失敗：${err.message}`,true));
   offSeats=onSnapshot(collection(db,"tankRooms",roomId,"seats"),snap=>{
     seats=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>Number(a.id)-Number(b.id));
+    const mine=seats.find(s=>s.uid===uid);
+    if(mine){hasSeenMySeat=true;mySeat=Number(mine.id);}
+    else if(hasSeenMySeat){say("房主已將你移出房間。",true);leaveRoom();return;}
     renderSeats();
-    if(seats.some(s=>s.uid===uid)) mySeat=Number(seats.find(s=>s.uid===uid).id);
     if(isHost){
       const occupied=seats.length>0;
       $("startBtn").disabled=!occupied||!canStartMatch()||roomData?.status!=="lobby";
@@ -203,12 +205,27 @@ function renderSeats() {
   const box=$("seatList"); box.innerHTML="";
   for(let i=0;i<6;i++) {
     const p=seats.find(s=>Number(s.id)===i); const div=document.createElement("div");div.className=`seat ${p?.ready?"ready":""} ${p?"":"empty"}`;
-    if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${i===0?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";}
+    if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${i===0?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";if(isHost&&i!==0&&roomData?.status==="lobby"){const kick=document.createElement("button");kick.className="seat-kick";kick.type="button";kick.textContent="移除";kick.setAttribute("aria-label",`移除玩家 ${p.name||"玩家"}`);kick.addEventListener("click",()=>kickMember(String(i),p.uid));div.append(kick);}}
     else div.innerHTML=`<span class="seat-color" style="background:#3a4737"></span><span>坦克 ${i+1}・等待加入</span>`;
     box.append(div);
   }
   const mine=seats.find(s=>s.uid===uid); if(mine){$("readyBtn").textContent=mine.ready?"取消準備":"我準備好了";$("mathType").value=mine.topic||$("mathType").value;$("playerName").value=mine.name||$("playerName").value;}
   if(isHost) $("startBtn").disabled=!canStartMatch()||roomData?.status!=="lobby";
+}
+
+async function kickMember(seatId,expectedUid) {
+  if(!isHost||seatId==="0"||roomData?.status!=="lobby")return;
+  try {
+    await runTransaction(db,async tx=>{
+      const r=roomRef(roomId),target=seatRef(roomId,seatId);
+      const [roomSnap,seatSnap]=await Promise.all([tx.get(r),tx.get(target)]);
+      if(!roomSnap.exists()||roomSnap.data().hostUid!==uid)throw new Error("只有房主可以移除成員。");
+      if(roomSnap.data().status!=="lobby")throw new Error("遊戲開始後不能移除成員。");
+      if(!seatSnap.exists()||seatSnap.data().uid!==expectedUid)throw new Error("玩家名單已更新，請重新確認。");
+      tx.delete(target);
+    });
+    say("已將該玩家移出房間。");
+  } catch(err) {console.error(err);say(`移除失敗：${err.message}`,true);}
 }
 
 function makeWorld(level, previous=null) {
@@ -332,9 +349,22 @@ function canMoveTank(w,x,y,id,isEnemy){if(blocks(w,x,y))return false;
 function nearestLivingPlayer(w,from){return Object.values(w.players||{}).filter(p=>p.lives>0).sort((a,b)=>Math.hypot(a.x-from.x,a.y-from.y)-Math.hypot(b.x-from.x,b.y-from.y))[0];}
 
 function updateBullets(w,dt,now) {
-  const survivors=[];
-  for(const b of w.bullets||[]) {
+  const bullets=(w.bullets||[]),starts=new Map(),cancelled=new Set();
+  for(const b of bullets) {
+    starts.set(b.id,{x:b.x,y:b.y});
     const v=DIRS[b.dir];b.x+=v.x*b.speed*dt;b.y+=v.y*b.speed*dt;b.ttl-=dt;
+  }
+  for(let i=0;i<bullets.length;i++)for(let j=i+1;j<bullets.length;j++) {
+    const a=bullets[i],b=bullets[j],a0=starts.get(a.id),b0=starts.get(b.id);
+    if(!a0||!b0)continue;
+    const rx=a0.x-b0.x,ry=a0.y-b0.y,dx=(a.x-a0.x)-(b.x-b0.x),dy=(a.y-a0.y)-(b.y-b0.y),length=dx*dx+dy*dy;
+    const t=length?Math.max(0,Math.min(1,-(rx*dx+ry*dy)/length)):0;
+    const nearestX=rx+dx*t,nearestY=ry+dy*t;
+    if(nearestX*nearestX+nearestY*nearestY<=100){cancelled.add(a.id);cancelled.add(b.id);}
+  }
+  const survivors=[];
+  for(const b of bullets) {
+    if(cancelled.has(b.id))continue;
     const tile=tileAt(w,b.x,b.y);
     if(tile===1){const row=Math.floor(b.y/40),col=Math.floor(b.x/40),index=row*13+col;if(w.mapTiles?.[index]!==undefined)w.mapTiles[index]=0;continue;}
     if(tile===2||tile===4||b.ttl<=0){continue;}
