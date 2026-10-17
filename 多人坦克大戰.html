@@ -96,6 +96,7 @@ let hostTimer = 0, publishTimer = 0, heartbeatTimer = 0, renderFrame = 0, unsubs
 let gameRunning = false, lastFrame = 0, lastHostPublish = 0, enemyId = 0, lastWorldReceivedAt = 0, lastLocalDirectionAt = 0;
 const writeTimes = new Map(), processingAnswers = new Set(), controls = {dir:"",fire:false};
 let pendingInputWrite=null,inputWriteActive=false;
+let previousRenderPositions=new Map(),renderTransitionStartedAt=0,localTankRender=null;
 const INPUT_SYNC_MS = 70, WORLD_SYNC_MS = 200;
 const colorBySeat = seat => COLORS[Number(seat) % COLORS.length];
 const canStartMatch = () => seats.length === 1 || (seats.length > 1 && seats.every(s => s.ready));
@@ -298,12 +299,42 @@ async function startMatch() {
   } catch(err) {console.error(err);say(`開始失敗：${err.message}`,true);$("startBtn").disabled=false;}
 }
 
+function captureTankPositions(snapshot) {
+  const positions=new Map();
+  for(const [id,tank] of Object.entries(snapshot?.players||{}))positions.set(`p:${id}`,{x:tank.x,y:tank.y});
+  for(const tank of snapshot?.enemies||[])positions.set(`e:${tank.id}`,{x:tank.x,y:tank.y});
+  return positions;
+}
+
+function interpolateRemoteTank(tank,key,now) {
+  const from=previousRenderPositions.get(key);
+  if(!from||!Number.isFinite(from.x)||!Number.isFinite(from.y)||Math.hypot(tank.x-from.x,tank.y-from.y)>120)return tank;
+  const linear=Math.max(0,Math.min(1,(now-renderTransitionStartedAt)/WORLD_SYNC_MS));
+  return {...tank,x:from.x+(tank.x-from.x)*linear,y:from.y+(tank.y-from.y)*linear};
+}
+
+function smoothLocalTank(tank,x,y,dir,now) {
+  if(!localTankRender||localTankRender.uid!==tank.uid||localTankRender.lives!==tank.lives||Math.hypot(localTankRender.x-x,localTankRender.y-y)>120){
+    localTankRender={uid:tank.uid,lives:tank.lives,x,y,at:now};
+  } else {
+    const dt=Math.max(0,Math.min(.05,(now-localTankRender.at)/1000)),blend=1-Math.exp(-24*dt);
+    localTankRender.x+=(x-localTankRender.x)*blend;localTankRender.y+=(y-localTankRender.y)*blend;localTankRender.at=now;
+  }
+  return {...tank,x:localTankRender.x,y:localTankRender.y,dir};
+}
+
 function startGameView() {
   if(offWorld) return;
   $("game").style.display="block"; $("lobby").style.display="none";
   offWorld=onSnapshot(worldRef(roomId),snap=>{
     if(!snap.exists()) return;
-    world=snap.data();lastWorldReceivedAt=Date.now();syncWorldSounds(world);gameRunning=["playing","intermission"].includes(world.status);
+    const incoming=snap.data();syncWorldSounds(incoming);lastWorldReceivedAt=Date.now();
+    if(!isHost||!world){
+      if(world){previousRenderPositions=captureTankPositions(world);renderTransitionStartedAt=Date.now();}
+      else {previousRenderPositions=new Map();renderTransitionStartedAt=0;}
+      world=incoming;
+    }
+    gameRunning=["playing","intermission"].includes(world.status);
     if(world.status==="playing"||world.status==="intermission") {$("endModal").style.display="none";}
     if(world.status==="finished"||world.status==="gameover") showEnd(world.status);
     updateHud();
@@ -487,8 +518,10 @@ async function processAnswer(playerUid,answerData) {
     const correct=String(answerData.answer).trim()===String(aSnap.data().answer);
     if(!correct)p.lives=Math.max(0,p.lives-1);
     else if(qSnap.data().rewardType==="treasure")spawnTreasure(world,qSnap.data().rewardX,qSnap.data().rewardY,Date.now());
+    if(p.lives>0)p.invulnerableUntil=Math.max(p.invulnerableUntil||0,Date.now()+3000);
     p.pausedForQuiz=false;
-    await setDoc(questionRef(roomId,playerUid),{...qSnap.data(),result:correct?"答對了！繼續作戰！":"答錯了，失去一條生命。"});
+    const protectionNotice=p.lives>0?"獲得 3 秒保護。":"";
+    await setDoc(questionRef(roomId,playerUid),{...qSnap.data(),result:correct?`答對了！${protectionNotice}繼續作戰！`:`答錯了，失去一條生命。${protectionNotice}`});
     await deleteDoc(answerRef(roomId,playerUid)).catch(()=>{});
     await deleteDoc(privateAnswerRef(roomId,playerUid)).catch(()=>{});
     if(Object.values(world.players).every(item=>item.lives<=0)){world.status="gameover";await updateDoc(roomRef(roomId),{status:"gameover",hostBeat:serverTimestamp()});}
@@ -548,14 +581,19 @@ function drawBattlefield(w,h,now) {
   for(let row=0;row<13;row++)for(let col=0;col<13;col++)drawTile(ctx,col*40,row*40,world.mapTiles?.[row*13+col]||0,now);
   drawBase(ctx,260,500);
   const activePlayers=Object.values(world.players||{});
-  for(const enemy of world.enemies||[])drawTank(ctx,enemy,enemy.dir,enemy.special?"#b65bd4":"#d9514b",now,true);
+  for(const enemy of world.enemies||[]){const display=interpolateRemoteTank(enemy,`e:${enemy.id}`,now);drawTank(ctx,display,display.dir,enemy.special?"#b65bd4":"#d9514b",now,true);}
   for(const p of activePlayers)if(p.lives>0&&!p.pausedForQuiz&&p.x>=0&&p.x<520){
-    let displayTank=p;
-    if(p.uid===uid&&controls.dir&&world.status==="playing"){
-      const elapsed=Math.min(.22,Math.max(0,(now-Math.max(lastWorldReceivedAt,lastLocalDirectionAt))/1000)),steps=Math.max(1,Math.ceil(elapsed/.01)),step=elapsed/steps,requestedDir=dirIndex(controls.dir),dir=iceMovementDirection(world,p,requestedDir,now),v=DIRS[dir<0?p.dir:dir],speed=tileAt(world,p.x,p.y)===5?132:102;
-      let x=p.x,y=p.y;
-      for(let i=0;i<steps;i++){const nx=x+v.x*speed*step,ny=y+v.y*speed*step;if(!canMoveTank(world,nx,ny,p.uid,false))break;x=nx;y=ny;}
-      displayTank={...p,x,y,dir:dir<0?p.dir:dir};
+    let displayTank;
+    if(p.uid===uid){
+      let x=p.x,y=p.y,dir=p.dir;
+      if(controls.dir&&world.status==="playing"&&!isHost){
+        const elapsed=Math.min(.22,Math.max(0,(now-Math.max(lastWorldReceivedAt,lastLocalDirectionAt))/1000)),steps=Math.max(1,Math.ceil(elapsed/.01)),step=elapsed/steps,requestedDir=dirIndex(controls.dir),moveDir=iceMovementDirection(world,p,requestedDir,now),v=DIRS[moveDir<0?p.dir:moveDir],speed=tileAt(world,p.x,p.y)===5?132:102;
+        for(let i=0;i<steps;i++){const nx=x+v.x*speed*step,ny=y+v.y*speed*step;if(!canMoveTank(world,nx,ny,p.uid,false))break;x=nx;y=ny;}
+        if(moveDir>=0)dir=moveDir;
+      }
+      displayTank=smoothLocalTank(p,x,y,dir,now);
+    } else {
+      displayTank=interpolateRemoteTank(p,`p:${p.uid}`,now);
     }
     drawTank(ctx,displayTank,displayTank.dir,colorBySeat(p.seat),now,false);
   }
