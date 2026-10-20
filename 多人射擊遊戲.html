@@ -117,6 +117,12 @@
     background: rgba(8,10,20,0.5); border-radius: 10px; padding: 4px 14px;
     border: 1px solid rgba(255,216,74,0.3);
   }
+  #muteBtn {
+    position: absolute; top: 102px; left: 20px; pointer-events: auto;
+    width: 44px; height: 44px; border-radius: 50%; font-size: 20px; cursor: pointer;
+    background: rgba(8,10,20,0.55); border: 1px solid rgba(120,200,255,0.3); color: #fff;
+    touch-action: manipulation;
+  }
   #minimapWrap {
     position: fixed; top: 20px; right: 20px; z-index: 6;
     background: rgba(8, 10, 20, 0.65); border: 1px solid rgba(120,200,255,0.3);
@@ -283,6 +289,7 @@
     <div class="controls">
       🤝 <strong style="color:#cef">合作模式：</strong>跟同學連線組隊，一起在草原上抵擋殭屍（子彈不會傷害隊友）<br>
       📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、右下角<span class="key">搖桿</span>轉視角、<span class="key">🔫按鈕</span>射擊<br>
+      ⌨️ <strong style="color:#cef">電腦操作：</strong><span class="key">↑</span><span class="key">↓</span>前進後退、<span class="key">←</span><span class="key">→</span>轉向、<span class="key">A</span><span class="key">D</span>平移、<span class="key">空白鍵</span>射擊（按住連發）、<span class="key">M</span>靜音；答題可直接打數字<br>
       🔋 <strong style="color:#ffd84a">彈匣：</strong>走過去直接補 5 發子彈，不用解題<br>
       ❤️ <strong style="color:#ff7caa">血量：</strong>撿白色醫療包會出數學題，答對回復 1 滴血；血量歸零淘汰，可重新加入<br>
       🧟 <strong style="color:#7ed957">殭屍：</strong>全班打的是同一批殭屍！被咬扣 1 滴血，射 3 發可擊倒<br>
@@ -295,11 +302,12 @@
 <div id="hud">
   <div class="hp-row" id="hpRow"></div>
   <div class="ammo-box">🔵 <span id="ammoCount">0</span></div>
+  <button id="muteBtn" title="音效開關（M）">🔊</button>
   <div id="statusList">存活 <span id="aliveCount">1</span> 人</div>
   <div class="crosshair"></div>
   <div id="hitFlash"></div>
   <div id="hitMarker">🎯 命中！</div>
-  <div class="look-hint">左搖桿移動・右搖桿轉視角</div>
+  <div class="look-hint" id="lookHint">左搖桿移動・右搖桿轉視角</div>
 </div>
 
 <div class="joystick-base" id="joyBase" style="display:none;">
@@ -374,13 +382,47 @@ const HEALTH_RESPAWN_MS = 20000;
 
 // ============== Three.js 基本設置 ==============
 const canvas = document.getElementById('gameCanvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // 平板 GPU 負擔上限
+const IS_TOUCH = window.matchMedia('(pointer: coarse)').matches || ('ontouchstart' in window);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_TOUCH ? 1.5 : 2)); // 平板 GPU 負擔上限
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x9ecdf0); // 晴朗天空
-scene.fog = new THREE.Fog(0xb8d9f2, 30, 90);
+const HORIZON_COLOR = 0xd4e6f3;
+scene.background = new THREE.Color(HORIZON_COLOR);
+scene.fog = new THREE.Fog(HORIZON_COLOR, 28, 95);
+
+// 漸層天空球 + 太陽光暈（取代單色背景）
+const SUN_DIR = new THREE.Vector3(18, 30, 12).normalize();
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(150, 32, 16),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: {
+      topColor: { value: new THREE.Color(0x2f7fd0) },
+      horizonColor: { value: new THREE.Color(HORIZON_COLOR) },
+      sunDir: { value: SUN_DIR }
+    },
+    vertexShader: `varying vec3 vDir;
+      void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 topColor; uniform vec3 horizonColor; uniform vec3 sunDir; varying vec3 vDir;
+      void main() {
+        vec3 d = normalize(vDir);
+        vec3 col = mix(horizonColor, topColor, pow(max(d.y, 0.0), 0.55));
+        float s = max(dot(d, sunDir), 0.0);
+        col += vec3(1.0, 0.94, 0.78) * (pow(s, 700.0) * 2.0 + pow(s, 14.0) * 0.22);
+        gl_FragColor = vec4(col, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  })
+);
+sky.renderOrder = -1;
+scene.add(sky);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 200);
 
@@ -391,11 +433,152 @@ window.addEventListener('resize', () => {
 });
 
 // 戶外白天：明亮天光 + 太陽直射光
-const hemi = new THREE.HemisphereLight(0xdfeeff, 0x8a8272, 1.1);
+const hemi = new THREE.HemisphereLight(0xd6eaff, 0x6e6248, 1.0);
 scene.add(hemi);
-const dirLight = new THREE.DirectionalLight(0xfff4dd, 1.25);
-dirLight.position.set(18, 30, 12);
+const dirLight = new THREE.DirectionalLight(0xfff0d4, 2.3);
+dirLight.position.copy(SUN_DIR).multiplyScalar(45);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(IS_TOUCH ? 1024 : 2048, IS_TOUCH ? 1024 : 2048);
+Object.assign(dirLight.shadow.camera, { left: -32, right: 32, top: 32, bottom: -32, near: 5, far: 100 });
+dirLight.shadow.bias = -0.0004;
+dirLight.shadow.normalBias = 0.03;
 scene.add(dirLight);
+// 讓物件同時投射與接收陰影（地面、草叢等純裝飾物不呼叫）
+function shade(obj) {
+  obj.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  return obj;
+}
+
+// ============== 音效（Web Audio 即時合成，不需要任何音檔） ==============
+// 瀏覽器規定音效必須由使用者操作啟動，所以在按「開始戰鬥」與每次觸控時呼叫 init()
+const SFX = (() => {
+  let ctx = null, master = null, noiseBuf = null, muted = false;
+  const VOLUME = 0.55;
+  function init() {
+    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : VOLUME;
+    master.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const ready = () => ctx && ctx.state === 'running' && !muted;
+  function out(pan) {
+    if (pan === undefined || !ctx.createStereoPanner) return master;
+    const p = ctx.createStereoPanner();
+    p.pan.value = Math.max(-1, Math.min(1, pan));
+    p.connect(master);
+    return p;
+  }
+  // 單音：頻率可從 f0 滑到 f1
+  function tone({ type = 'sine', f0, f1 = f0, dur, vol = 0.3, delay = 0, pan, filter }) {
+    const t = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(f0, t);
+    if (f1 !== f0) osc.frequency.exponentialRampToValueAtTime(Math.max(f1, 1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.012, dur / 4));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let node = osc;
+    if (filter) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass'; f.frequency.value = filter;
+      osc.connect(f); node = f;
+    }
+    node.connect(g); g.connect(out(pan));
+    osc.start(t); osc.stop(t + dur + 0.05);
+  }
+  // 雜訊：用濾波器塑形成槍聲、腳步、煙霧聲
+  function noise({ dur, vol = 0.2, freq = 1000, type = 'lowpass', q = 1, delay = 0, pan }) {
+    const t = ctx.currentTime + delay;
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(out(pan));
+    src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
+  }
+  return {
+    init,
+    isMuted: () => muted,
+    toggle() {
+      muted = !muted;
+      if (master) master.gain.value = muted ? 0 : VOLUME;
+      return muted;
+    },
+    shoot() {
+      if (!ready()) return;
+      tone({ type: 'square', f0: 1100, f1: 160, dur: 0.13, vol: 0.16, filter: 3200 });
+      noise({ dur: 0.07, vol: 0.18, freq: 2600, type: 'bandpass', q: 0.8 });
+    },
+    empty() {
+      if (!ready()) return;
+      tone({ type: 'square', f0: 240, dur: 0.04, vol: 0.1 });
+      tone({ type: 'square', f0: 180, dur: 0.04, vol: 0.1, delay: 0.07 });
+    },
+    hit() {
+      if (!ready()) return;
+      tone({ type: 'triangle', f0: 1300, f1: 1700, dur: 0.07, vol: 0.22 });
+    },
+    zombieDown(pan) {
+      if (!ready()) return;
+      tone({ type: 'sawtooth', f0: 260, f1: 55, dur: 0.6, vol: 0.2, filter: 900, pan });
+      noise({ dur: 0.45, vol: 0.12, freq: 500, pan, delay: 0.05 });
+    },
+    groan(vol, pan) {
+      if (!ready()) return;
+      const base = 85 + Math.random() * 35;
+      tone({ type: 'sawtooth', f0: base * 1.25, f1: base, dur: 0.9, vol: 0.13 * vol, filter: 520, pan });
+      tone({ type: 'sawtooth', f0: base * 0.9, f1: base * 0.7, dur: 1.0, vol: 0.08 * vol, filter: 400, pan, delay: 0.12 });
+    },
+    hurt() {
+      if (!ready()) return;
+      tone({ type: 'sawtooth', f0: 220, f1: 80, dur: 0.28, vol: 0.28, filter: 1200 });
+      noise({ dur: 0.18, vol: 0.2, freq: 450 });
+    },
+    pickup() {
+      if (!ready()) return;
+      tone({ type: 'square', f0: 660, dur: 0.07, vol: 0.12, filter: 2500 });
+      tone({ type: 'square', f0: 990, dur: 0.1, vol: 0.12, filter: 2500, delay: 0.07 });
+    },
+    question() {
+      if (!ready()) return;
+      tone({ type: 'sine', f0: 880, dur: 0.12, vol: 0.18 });
+      tone({ type: 'sine', f0: 1175, dur: 0.18, vol: 0.18, delay: 0.1 });
+    },
+    correct() {
+      if (!ready()) return;
+      [523, 659, 784, 1047].forEach((f, i) => tone({ type: 'triangle', f0: f, dur: 0.16, vol: 0.2, delay: i * 0.08 }));
+    },
+    wrong() {
+      if (!ready()) return;
+      tone({ type: 'square', f0: 210, f1: 140, dur: 0.3, vol: 0.14, filter: 1200 });
+    },
+    click() {
+      if (!ready()) return;
+      tone({ type: 'sine', f0: 700, dur: 0.035, vol: 0.12 });
+    },
+    step() {
+      if (!ready()) return;
+      noise({ dur: 0.06, vol: 0.06, freq: 320 });
+    },
+    eliminated() {
+      if (!ready()) return;
+      [440, 349, 262, 196].forEach((f, i) => tone({ type: 'triangle', f0: f, dur: 0.32, vol: 0.2, delay: i * 0.2 }));
+    }
+  };
+})();
+// 平板瀏覽器可能把音效環境暫停，任何觸控/點擊都順手喚醒
+['pointerdown', 'touchend', 'keydown'].forEach(ev => window.addEventListener(ev, () => SFX.init(), true));
 
 // ============== 程式產生的寫實材質貼圖（不用外部圖檔） ==============
 function makeNoiseTexture(base, speckles, repeat, extra) {
@@ -414,6 +597,8 @@ function makeNoiseTexture(base, speckles, repeat, extra) {
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.repeat.set(repeat, repeat);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return tex;
 }
 
@@ -448,6 +633,7 @@ const WALL_H = 4.5;
 const floorMat = new THREE.MeshStandardMaterial({ map: grassTex, roughness: 0.95 });
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(HALF*2, HALF*2), floorMat);
 floor.rotation.x = -Math.PI/2;
+floor.receiveShadow = true;
 scene.add(floor);
 
 // 兩塊泥土據點區（仿地圖上的目標點色塊）
@@ -456,6 +642,7 @@ const zoneMat = new THREE.MeshStandardMaterial({ map: dirtTex, roughness: 0.92 }
   const zone = new THREE.Mesh(new THREE.PlaneGeometry(w, d), zoneMat);
   zone.rotation.x = -Math.PI/2;
   zone.position.set(x, 0.02, z);
+  zone.receiveShadow = true;
   scene.add(zone);
 });
 
@@ -469,7 +656,7 @@ function addBoxCollider(cx, cz, w, d, h, color, isWall) {
   const mat = isWall ? wallMat : crateMat;
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(cx, h/2, cz);
-  scene.add(mesh);
+  scene.add(shade(mesh));
   solidMeshes.push(mesh);
   colliders.push({ minX: cx - w/2, maxX: cx + w/2, minZ: cz - d/2, maxZ: cz + d/2 });
 }
@@ -518,7 +705,7 @@ function addTree(x, z, scale) {
   lower.position.set(x, 3.0*s, z);
   const upper = new THREE.Mesh(new THREE.ConeGeometry(1.05*s, 1.9*s, 8), leafMat2);
   upper.position.set(x, 4.3*s, z);
-  scene.add(trunk, lower, upper);
+  scene.add(shade(trunk), shade(lower), shade(upper));
   solidMeshes.push(trunk, lower);
   colliders.push({ minX: x-0.4*s, maxX: x+0.4*s, minZ: z-0.4*s, maxZ: z+0.4*s });
 }
@@ -530,21 +717,52 @@ const rockMat = new THREE.MeshStandardMaterial({ color: 0x8d8d90, roughness: 0.9
   const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), rockMat);
   rock.position.set(x, s*0.55, z);
   rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
-  scene.add(rock);
+  scene.add(shade(rock));
   solidMeshes.push(rock);
   colliders.push({ minX: x-s*0.8, maxX: x+s*0.8, minZ: z-s*0.8, maxZ: z+s*0.8 });
 });
 
-// 天上的雲（半透明白色板，緩慢漂移）
-const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false });
+// 天上的雲（多顆球體組成的蓬鬆雲朵，緩慢漂移）
+const cloudMat = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x9aa7b5, emissiveIntensity: 0.35, fog: false });
+const cloudPuff = new THREE.IcosahedronGeometry(1, 1);
 const clouds = [];
-for (let i = 0; i < 7; i++) {
-  const cw = rand(7, 14);
-  const cloud = new THREE.Mesh(new THREE.PlaneGeometry(cw, cw * 0.45), cloudMat);
-  cloud.position.set(rand(-40, 40), rand(26, 38), rand(-40, 40));
-  cloud.rotation.x = -Math.PI / 2;
+for (let i = 0; i < 8; i++) {
+  const cloud = new THREE.Group();
+  const puffs = 4 + Math.floor(Math.random() * 3);
+  for (let p = 0; p < puffs; p++) {
+    const puff = new THREE.Mesh(cloudPuff, cloudMat);
+    const s = rand(2.2, 3.8);
+    puff.scale.set(s, s * 0.7, s);
+    puff.position.set((p - puffs / 2) * 2.4 + rand(-0.6, 0.6), rand(-0.4, 0.8), rand(-1.2, 1.2));
+    cloud.add(puff);
+  }
+  cloud.position.set(rand(-60, 60), rand(34, 46), rand(-60, 60));
   scene.add(cloud);
-  clouds.push({ mesh: cloud, speed: rand(0.3, 0.8) });
+  clouds.push({ mesh: cloud, speed: rand(0.4, 1.0) });
+}
+
+// 草叢（InstancedMesh：數百根草只用一次繪製，平板也跑得動）
+{
+  const GRASS_COUNT = IS_TOUCH ? 700 : 1400;
+  const bladeGeo = new THREE.ConeGeometry(0.07, 0.42, 3);
+  bladeGeo.translate(0, 0.21, 0);
+  const grass = new THREE.InstancedMesh(bladeGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }), GRASS_COUNT);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), c = new THREE.Color();
+  let placed = 0;
+  for (let tries = 0; placed < GRASS_COUNT && tries < GRASS_COUNT * 4; tries++) {
+    const x = rand(-HALF + 1, HALF - 1), z = rand(-HALF + 1, HALF - 1);
+    if (collidesAt(x, z, 0.3)) continue;
+    e.set(rand(-0.25, 0.25), rand(0, Math.PI), rand(-0.25, 0.25));
+    q.setFromEuler(e);
+    const s = rand(0.7, 1.4);
+    m.compose(new THREE.Vector3(x, 0, z), q, new THREE.Vector3(s, s * rand(0.8, 1.3), s));
+    grass.setMatrixAt(placed, m);
+    grass.setColorAt(placed, c.setHSL(rand(0.22, 0.3), rand(0.45, 0.6), rand(0.28, 0.4)));
+    placed++;
+  }
+  grass.count = placed;
+  grass.receiveShadow = true;
+  scene.add(grass);
 }
 
 function collidesAt(x, z, radius) {
@@ -570,7 +788,7 @@ for (let i = 0; i < 6; i++) {
   const spot = randomFreeSpot(1.2);
   const mesh = new THREE.Mesh(ammoCrateGeo, ammoCrateMat.clone());
   mesh.position.set(spot.x, 0.9, spot.z);
-  scene.add(mesh);
+  scene.add(shade(mesh));
   ammoCrates.push({ mesh, x: spot.x, z: spot.z, available: true, cooldownUntil: 0 });
 }
 
@@ -591,7 +809,7 @@ for (let i = 0; i < HEALTH_PACK_COUNT; i++) {
   const spot = randomFreeSpot(1.2);
   const mesh = makeHealthPackMesh();
   mesh.position.set(spot.x, 0.55, spot.z);
-  scene.add(mesh);
+  scene.add(shade(mesh));
   healthPacks.push({ mesh, x: spot.x, z: spot.z, available: true, cooldownUntil: 0 });
 }
 
@@ -625,6 +843,7 @@ function genQuestion(type) {
 }
 function showQuestion(crate) {
   paused = true;
+  SFX.question();
   activeCrate = crate;
   currentQuestion = genQuestion(pickRandomType());
   document.getElementById('mathQuestion').textContent = currentQuestion.text + ' = ?';
@@ -643,6 +862,7 @@ window.submitAnswer = function submitAnswer() {
   if (isNaN(v)) { fb.textContent = '✏ 請輸入數字'; fb.className = 'math-feedback wrong'; return; }
   if (v === currentQuestion.answer) {
     fb.textContent = '✓ 答對了！+1 ❤️';
+    SFX.correct();
     fb.className = 'math-feedback correct';
     if (player.alive && player.hp < MAX_HP) {
       player.hp++;
@@ -658,6 +878,7 @@ window.submitAnswer = function submitAnswer() {
     setTimeout(() => { document.getElementById('mathModal').style.display = 'none'; paused = false; activeCrate = null; }, 900);
   } else {
     fb.textContent = '✗ 再試試看！';
+    SFX.wrong();
     fb.className = 'math-feedback wrong';
     inp.value = '';
     card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
@@ -666,10 +887,10 @@ window.submitAnswer = function submitAnswer() {
     setTimeout(() => { document.getElementById('mathModal').style.display = 'none'; paused = false; activeCrate = null; }, 600);
   }
 };
-document.getElementById('mathInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.submitAnswer(); });
 document.querySelectorAll('#numpad button').forEach(btn => {
   btn.addEventListener('pointerdown', e => {
     e.preventDefault();
+    SFX.click();
     const inp = document.getElementById('mathInput');
     if (btn.dataset.num !== undefined) {
       if (inp.value.length < 3) inp.value += btn.dataset.num;
@@ -785,10 +1006,39 @@ if (!window.PointerEvent) {
   shootBtn.addEventListener('touchstart', e => { e.preventDefault(); tryShoot(); }, { passive: false });
 }
 
-// 桌機測試用：WASD 移動
+// ============== 電腦鍵盤操作 ==============
+// ↑↓ / W S：前進後退　←→：左右轉向　A D：左右平移　空白鍵 / F：射擊（按住連發）　M：靜音
 const keys = {};
-window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
-window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+const GAME_KEYS = new Set(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd', 'f']);
+const KEYBOARD_TURN_RATE = 2.0; // 弧度/秒
+window.addEventListener('keydown', e => {
+  if (e.target && e.target.id === 'nameInput') return; // 輸入名字時不攔截
+  const k = e.key.toLowerCase();
+
+  // 數學題開著：可以直接用鍵盤打數字作答
+  if (document.getElementById('mathModal').style.display === 'flex') {
+    const inp = document.getElementById('mathInput');
+    if (/^[0-9]$/.test(e.key)) { if (inp.value.length < 3) inp.value += e.key; SFX.click(); }
+    else if (k === 'backspace') { inp.value = inp.value.slice(0, -1); SFX.click(); }
+    else if (k === 'enter') window.submitAnswer();
+    e.preventDefault();
+    return;
+  }
+  if (k === 'm' && !e.repeat) { toggleMute(); return; }
+  if (running && GAME_KEYS.has(k)) e.preventDefault(); // 擋掉方向鍵/空白鍵捲動頁面
+  keys[k] = true;
+  // 快速點一下空白鍵可能在兩幀之間就放開，所以按下當下立刻開一槍（按住的連發由主迴圈處理）
+  if ((k === ' ' || k === 'f') && !e.repeat) tryShoot();
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; }); // 切換視窗時避免按鍵卡住
+
+document.getElementById('muteBtn').addEventListener('click', e => { e.stopPropagation(); e.currentTarget.blur(); toggleMute(); });
+if (!IS_TOUCH) document.getElementById('lookHint').textContent = '↑↓ 前進後退・←→ 轉向・空白鍵射擊・M 靜音';
+function toggleMute() {
+  const muted = SFX.toggle();
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+}
 
 // ============== 玩家 ==============
 const player = {
@@ -808,6 +1058,7 @@ const ZOMBIE_COUNT = 4;
 const ZOMBIE_SPEED = 1.6;       // 比玩家慢很多，容易跑掉
 const ZOMBIE_HP = 3;            // 三發子彈可擊倒
 const ZOMBIE_BITE_DIST = 1.35;
+const ZOMBIE_STOP_DIST = 1.0;   // 停在玩家面前的距離（小於咬人距離）
 const ZOMBIE_BITE_COOLDOWN_MS = 1300;
 const ZOMBIE_DETECT_DIST = 13;
 const ZOMBIE_RESPAWN_MS = 7000;
@@ -829,6 +1080,7 @@ function makeZombieMesh() {
   const eyeL = new THREE.Mesh(eyeGeo, zombieEyeMat); eyeL.position.set(-0.12, 1.66, -0.27);
   const eyeR = new THREE.Mesh(eyeGeo, zombieEyeMat); eyeR.position.set(0.12, 1.66, -0.27);
   group.add(body, head, armL, armR, eyeL, eyeR);
+  shade(group);
   return { group, body, head, bodyMat };
 }
 
@@ -894,6 +1146,8 @@ onSnapshot(zombieDocRef, snap => {
     z.hp = s.hp;
     if (host) {
       if (z.alive && z.hp <= 0) {
+        zombiePuff(z.x, z.z);
+        SFX.zombieDown(panFor(z.x, z.z));
         z.alive = false; z.group.visible = false;
         z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
       }
@@ -901,6 +1155,7 @@ onSnapshot(zombieDocRef, snap => {
       const wasAlive = z.alive;
       z.alive = s.alive && s.hp > 0;
       z.group.visible = z.alive;
+      if (wasAlive && !z.alive && running) { zombiePuff(z.x, z.z); SFX.zombieDown(panFor(z.x, z.z)); }
       z.target.x = s.x; z.target.z = s.z;
       if (!wasAlive && z.alive) { z.x = s.x; z.z = s.z; } // 重生直接跳到新位置，不要滑過去
     }
@@ -968,7 +1223,8 @@ function updateZombies(dt) {
       if (z.wanderTimer <= 0) { z.wanderAngle = Math.random() * Math.PI * 2; z.wanderTimer = 2 + Math.random() * 3; }
       dir = z.wanderAngle;
     }
-    const step = ZOMBIE_SPEED * dt;
+    // 貼到目標面前就停下來咬（原本會走進玩家身體裡，近距離子彈從殭屍體內射出而打不中）
+    const step = (nearest && nearestDist < ZOMBIE_STOP_DIST) ? 0 : ZOMBIE_SPEED * dt;
     const nx = z.x + Math.sin(dir) * step;
     const nz = z.z + Math.cos(dir) * step;
     let blocked = true;
@@ -1047,6 +1303,7 @@ function makeCharacterMesh(hue) {
   head.position.y = 1.62;
   const nameplate = makeNameplate();
   group.add(body, head, nameplate.sprite);
+  body.castShadow = head.castShadow = true;
   group.userData.isPlayer = true;
   body.userData.isPlayer = true;
   head.userData.isPlayer = true;
@@ -1122,15 +1379,81 @@ function syncToFirestore() {
 }
 window.addEventListener('beforeunload', () => { if (myDocRef) deleteDoc(myDocRef).catch(()=>{}); });
 
+// ============== 手持武器（第一人稱視角模型） ==============
+// 掛在相機底下跟著視角走；關閉深度測試畫在最上層，貼牆時才不會穿進牆裡
+scene.add(camera);
+const gun = new THREE.Group();
+{
+  const parts = [];
+  // 沒有環境反射貼圖，金屬度太高會整塊變黑，所以用低金屬度的槍灰色
+  const metal = new THREE.MeshStandardMaterial({ color: 0x6b7686, roughness: 0.5, metalness: 0.2 });
+  const grip = new THREE.MeshStandardMaterial({ color: 0x34383f, roughness: 0.85 });
+  const glow = new THREE.MeshBasicMaterial({ color: 0x5fe6ff });
+  const add = (geo, mat, x, y, z, rx = 0) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z); m.rotation.x = rx;
+    parts.push(m); gun.add(m);
+    return m;
+  };
+  add(new THREE.BoxGeometry(0.09, 0.1, 0.36), metal, 0, 0, 0);                         // 槍身
+  add(new THREE.CylinderGeometry(0.025, 0.03, 0.22, 10), metal, 0, 0.012, -0.27, Math.PI / 2); // 槍管
+  add(new THREE.BoxGeometry(0.07, 0.14, 0.08), grip, 0, -0.1, 0.09, 0.3);                // 握把
+  add(new THREE.BoxGeometry(0.012, 0.022, 0.22), glow, -0.047, 0.01, -0.02);           // 左側能量條
+  add(new THREE.BoxGeometry(0.012, 0.022, 0.22), glow, 0.047, 0.01, -0.02);            // 右側能量條
+  add(new THREE.BoxGeometry(0.03, 0.03, 0.03), glow, 0, 0.012, -0.385);                 // 槍口
+  parts.forEach((m, i) => { m.material = m.material.clone(); m.material.depthTest = false; m.renderOrder = 1000 + i; });
+}
+const GUN_REST = new THREE.Vector3(0.21, -0.21, -0.44);
+gun.position.copy(GUN_REST);
+gun.scale.setScalar(0.75);
+gun.visible = false;
+camera.add(gun);
+let gunKick = 0;
+function gunMuzzleWorld() {
+  return gun.localToWorld(new THREE.Vector3(0, 0.012, -0.4));
+}
+
+// 殭屍倒下的灰綠色煙霧（不血腥）
+const puffs = [];
+const puffGeo = new THREE.SphereGeometry(0.35, 8, 6);
+function zombiePuff(x, z) {
+  for (let i = 0; i < 7; i++) {
+    const mesh = new THREE.Mesh(puffGeo, new THREE.MeshBasicMaterial({ color: 0x9bb38a, transparent: true, opacity: 0.75, depthWrite: false }));
+    mesh.position.set(x + rand(-0.4, 0.4), rand(0.3, 1.5), z + rand(-0.4, 0.4));
+    scene.add(mesh);
+    puffs.push({ mesh, vy: rand(0.6, 1.3), born: performance.now() });
+  }
+}
+function updatePuffs(dt) {
+  const now = performance.now();
+  for (let i = puffs.length - 1; i >= 0; i--) {
+    const p = puffs[i];
+    const t = (now - p.born) / 900;
+    if (t >= 1) { scene.remove(p.mesh); p.mesh.material.dispose(); puffs.splice(i, 1); continue; }
+    p.mesh.position.y += p.vy * dt;
+    p.mesh.scale.setScalar(1 + t * 1.6);
+    p.mesh.material.opacity = 0.75 * (1 - t);
+  }
+}
+// 依據聲源相對於視角的方向算出左右聲道（-1 左 ~ 1 右）
+function panFor(x, z) {
+  const dx = x - player.x, dz = z - player.z;
+  const len = Math.hypot(dx, dz) || 1;
+  // 與移動用的 right 向量 (cos yaw, -sin yaw) 做內積
+  return (dx * Math.cos(yaw) - dz * Math.sin(yaw)) / len;
+}
+
 // ============== 射擊 / 命中判定 ==============
 const tracerMat = new THREE.LineBasicMaterial({ color: 0x9fe8ff });
 function tryShoot() {
   if (!running || !player.alive || paused) return;
   const now = performance.now();
   if (now - player.lastShotAt < SHOOT_COOLDOWN_MS) return;
-  if (player.ammo <= 0) { flashNoAmmo(); return; }
-  player.lastShotAt = now;
+  player.lastShotAt = now; // 沒子彈也套用冷卻，按住空白鍵時提示音才不會連發
+  if (player.ammo <= 0) { flashNoAmmo(); SFX.empty(); return; }
   player.ammo--;
+  SFX.shoot();
+  gunKick = 1;
 
   const dir = new THREE.Vector3();
   camera.getWorldDirection(dir);
@@ -1151,9 +1474,12 @@ function tryShoot() {
       z.hp--; // 本地先扣，畫面即時反應
       z.hitFlashUntil = performance.now() + 160;
       showHitMarker();
+      SFX.hit();
       updateDoc(zombieDocRef, { ['z' + zi + '.hp']: increment(-1) }).catch(()=>{}); // 傷害同步給全班
       if (z.hp <= 0) {
         player.kills++; // 擊倒殭屍數
+        SFX.zombieDown(panFor(z.x, z.z));
+        zombiePuff(z.x, z.z);
         z.alive = false;
         z.group.visible = false;
         if (isHost()) z.respawnAt = performance.now() + ZOMBIE_RESPAWN_MS;
@@ -1162,7 +1488,8 @@ function tryShoot() {
       spawnSpark(hit.point);
     }
   }
-  const gunOrigin = camera.localToWorld(new THREE.Vector3(0.28, -0.22, -0.35));
+  camera.updateMatrixWorld(true);
+  const gunOrigin = gunMuzzleWorld();
   drawTracer(gunOrigin, endPoint);
   spawnProjectile(gunOrigin, endPoint);
   spawnMuzzleFlash(gunOrigin);
@@ -1213,6 +1540,7 @@ function flashNoAmmo() {
   setTimeout(() => el.style.color = '', 200);
 }
 function flashHit() {
+  SFX.hurt();
   const el = document.getElementById('hitFlash');
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 200);
@@ -1224,16 +1552,24 @@ function showHitMarker() {
 }
 
 // ============== HUD ==============
+// 只在數值改變時才更新 DOM（原本每幀重建，平板上很吃效能）
+let hudHp = -1, hudAmmo = -1;
 function renderHpHud() {
-  const row = document.getElementById('hpRow');
-  row.innerHTML = '';
-  for (let i = 0; i < MAX_HP; i++) {
-    const span = document.createElement('span');
-    span.className = 'hp-heart' + (i < player.hp ? '' : ' lost');
-    span.textContent = '❤️';
-    row.appendChild(span);
+  if (player.hp !== hudHp) {
+    hudHp = player.hp;
+    const row = document.getElementById('hpRow');
+    row.innerHTML = '';
+    for (let i = 0; i < MAX_HP; i++) {
+      const span = document.createElement('span');
+      span.className = 'hp-heart' + (i < player.hp ? '' : ' lost');
+      span.textContent = '❤️';
+      row.appendChild(span);
+    }
   }
-  document.getElementById('ammoCount').textContent = player.ammo;
+  if (player.ammo !== hudAmmo) {
+    hudAmmo = player.ammo;
+    document.getElementById('ammoCount').textContent = player.ammo;
+  }
 }
 
 const minimapCanvas = document.getElementById('minimap');
@@ -1283,13 +1619,15 @@ function renderMinimap() {
   }
 }
 
+let hudAlive = -1;
 function renderStatus() {
   const alive = 1 + [...remotePlayers.values()].filter(r => r.alive).length;
-  document.getElementById('aliveCount').textContent = alive;
+  if (alive !== hudAlive) { hudAlive = alive; document.getElementById('aliveCount').textContent = alive; }
 }
 
 // ============== 主迴圈 ==============
 const clock = new THREE.Clock();
+let bobPhase = 0, bobAmt = 0, lastStep = 0;
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
@@ -1304,12 +1642,16 @@ function animate() {
       pitch = Math.max(-1.3, Math.min(1.3, pitch));
     }
 
-    // 鍵盤（桌機測試）
+    // 鍵盤：←→ 轉向（鍵盤沒有上下看的鍵，轉向時順便讓仰角慢慢回正）
+    const turn = (keys['arrowleft'] ? 1 : 0) - (keys['arrowright'] ? 1 : 0);
+    if (turn) { yaw += turn * KEYBOARD_TURN_RATE * dt; pitch *= Math.pow(0.05, dt); }
     let mx = joyDX, my = joyDY;
-    if (keys['w']) my -= 1;
-    if (keys['s']) my += 1;
+    if (keys['w'] || keys['arrowup']) my -= 1;
+    if (keys['s'] || keys['arrowdown']) my += 1;
     if (keys['a']) mx -= 1;
     if (keys['d']) mx += 1;
+    if (keys[' '] || keys['f']) tryShoot(); // 按住連發，冷卻時間由 tryShoot 控制
+    const oldX = player.x, oldZ = player.z;
     const mag = Math.hypot(mx, my);
     if (mag > 0.08) {
       const nx = mx/Math.max(mag,1), ny = my/Math.max(mag,1);
@@ -1325,7 +1667,26 @@ function animate() {
       if (!collidesAt(player.x, tryZ, PLAYER_RADIUS)) player.z = tryZ;
     }
 
-    camera.position.set(player.x, EYE_HEIGHT, player.z);
+    // 不能穿進殭屍身體（太近時子彈從殭屍體內射出會打不中），輕輕推開
+    for (const z of zombies) {
+      if (!z.alive) continue;
+      const dx = player.x - z.x, dz = player.z - z.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 0.8 && d > 0.001) {
+        const px = z.x + dx / d * 0.8, pz = z.z + dz / d * 0.8;
+        if (!collidesAt(px, player.z, PLAYER_RADIUS)) player.x = px;
+        if (!collidesAt(player.x, pz, PLAYER_RADIUS)) player.z = pz;
+      }
+    }
+
+    // 走路晃動 + 腳步聲（每走約 0.75 公尺一步）
+    const moved = Math.hypot(player.x - oldX, player.z - oldZ);
+    bobPhase += moved / 0.75 * Math.PI;
+    bobAmt += ((moved > 0.001 ? 1 : 0) - bobAmt) * Math.min(1, dt * 8);
+    const stepIdx = Math.floor(bobPhase / Math.PI);
+    if (stepIdx !== lastStep) { lastStep = stepIdx; SFX.step(); }
+
+    camera.position.set(player.x, EYE_HEIGHT + (Math.abs(Math.sin(bobPhase)) - 0.5) * 0.06 * bobAmt, player.z);
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
@@ -1344,6 +1705,7 @@ function animate() {
             crate.mesh.visible = false;
             crate.cooldownUntil = now + AMMO_RESPAWN_MS;
             player.ammo += 5;
+            SFX.pickup();
           }
         }
       }
@@ -1362,6 +1724,30 @@ function animate() {
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
     camera.rotation.x = pitch;
+  }
+
+  // 武器後座力與走路擺動
+  gunKick = Math.max(0, gunKick - dt * 7);
+  gun.position.set(
+    GUN_REST.x + Math.sin(bobPhase) * 0.012 * bobAmt,
+    GUN_REST.y + Math.abs(Math.cos(bobPhase)) * 0.008 * bobAmt - gunKick * 0.015,
+    GUN_REST.z + gunKick * 0.07
+  );
+  gun.rotation.x = gunKick * 0.2;
+
+  // 附近殭屍的低吼聲（越近越大聲，並依方向分左右聲道）
+  if (player.alive) {
+    const nowG = performance.now();
+    for (const z of zombies) {
+      if (!z.alive) continue;
+      const d = Math.hypot(z.x - player.x, z.z - player.z);
+      if (d > 16) continue;
+      if (!z.nextGroanAt) z.nextGroanAt = nowG + Math.random() * 2500;
+      if (nowG > z.nextGroanAt) {
+        SFX.groan(1 - d / 16, panFor(z.x, z.z));
+        z.nextGroanAt = nowG + 2600 + Math.random() * 3400;
+      }
+    }
   }
 
   // 彈匣與醫療包旋轉動畫
@@ -1386,10 +1772,11 @@ function animate() {
   // 雲朵緩慢漂移
   for (const c of clouds) {
     c.mesh.position.x += c.speed * dt;
-    if (c.mesh.position.x > 46) c.mesh.position.x = -46;
+    if (c.mesh.position.x > 70) c.mesh.position.x = -70;
   }
 
   updateProjectiles();
+  updatePuffs(dt);
   renderHpHud();
   renderMinimap();
   renderStatus();
@@ -1400,6 +1787,9 @@ animate();
 
 // ============== 開始 / 淘汰 / 重生 ==============
 window.startGame = async function startGame() {
+  SFX.init();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  gun.visible = true;
   const nameInput = document.getElementById('nameInput');
   const name = (nameInput.value || '').trim() || '玩家';
   player.name = name;
@@ -1438,13 +1828,18 @@ function spawnPlayerAt() {
 
 function eliminatePlayer() {
   player.alive = false;
+  gun.visible = false;
+  SFX.eliminated();
   stopNetworkSync();
   if (myDocRef) updateDoc(myDocRef, { alive: false, updated_at: serverTimestamp() }).catch(()=>{});
   document.getElementById('eliminated').style.display = 'flex';
 }
 
 window.respawnPlayer = async function respawnPlayer() {
+  SFX.init();
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   document.getElementById('eliminated').style.display = 'none';
+  gun.visible = true;
   spawnPlayerAt();
   player.hp = MAX_HP;
   player.ammo = 0;
