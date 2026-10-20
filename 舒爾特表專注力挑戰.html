@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10283b">
+  <title>舒爾特表專注力挑戰</title>
+  <style>
+    :root { font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; color: #153044; background: #10283b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #ffb84d; outline-offset: 3px; }
+    .app { min-height: 100dvh; background: radial-gradient(circle at 14% 12%, #245778 0, transparent 30%), radial-gradient(circle at 90% 90%, #176775 0, transparent 32%), #10283b; }
+    .setup { min-height: 100dvh; display: grid; place-items: center; padding: 22px; }
+    .setup-card { width: min(930px, 100%); background: #f8f7ef; border-radius: 28px; box-shadow: 0 22px 70px #06182488; overflow: hidden; }
+    .hero { background: linear-gradient(115deg, #f9ca62, #ff9f68); padding: 28px 38px 24px; }
+    .eyebrow { margin: 0 0 8px; font-size: .9rem; font-weight: 800; letter-spacing: .12em; color: #563620; }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.2; }
+    .hero p:last-child { margin: 10px 0 0; line-height: 1.6; }
+    .settings { padding: 26px 38px 34px; }
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 21px 24px; }
+    .setting-title { display: block; font-size: 1rem; font-weight: 900; margin-bottom: 9px; }
+    .setting-help { display: block; margin-top: 7px; font-size: .84rem; color: #526373; line-height: 1.45; }
+    .choice-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .choice { min-height: 48px; padding: 9px 18px; color: #28445a; background: white; border: 2px solid #cadae0; border-radius: 12px; font-weight: 800; }
+    .choice[aria-pressed="true"] { color: white; border-color: #087d82; background: #087d82; box-shadow: 0 3px 0 #07575c; }
+    input[type="number"], select { width: 100%; min-height: 50px; padding: 8px 14px; background: white; border: 2px solid #cadae0; border-radius: 12px; color: #153044; font-weight: 800; }
+    .rules { margin: 24px 0; padding: 15px 18px; background: #e9f3f2; border-left: 5px solid #087d82; border-radius: 12px; line-height: 1.6; }
+    .start { display: block; width: 100%; min-height: 58px; background: #ef704c; color: #fff; border: 0; border-radius: 15px; font-weight: 900; font-size: 1.25rem; box-shadow: 0 5px 0 #b94c34; }
+    .start:active { transform: translateY(3px); box-shadow: 0 2px 0 #b94c34; }
+    .game { height: 100dvh; min-height: 470px; display: flex; flex-direction: column; padding: max(10px, env(safe-area-inset-top)) 12px max(10px, env(safe-area-inset-bottom)); gap: 10px; }
+    .game-top { color: white; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 54px; }
+    .game-title { font-size: clamp(1rem, 2vw, 1.4rem); font-weight: 900; white-space: nowrap; }
+    .timer { padding: 5px 17px; border-radius: 99px; background: #fff; color: #153044; font-size: clamp(1.25rem, 3.5vw, 2rem); font-variant-numeric: tabular-nums; font-weight: 950; min-width: 100px; text-align: center; }
+    .timer.urgent { color: #c53337; animation: pulse .7s infinite alternate; }
+    @keyframes pulse { to { transform: scale(1.07); } }
+    .quit { padding: 9px 12px; color: white; background: #ffffff24; border: 1px solid #ffffff80; border-radius: 10px; font-weight: 800; white-space: nowrap; }
+    .boards { flex: 1; display: grid; grid-template-columns: repeat(var(--players), minmax(0,1fr)); gap: 12px; min-height: 0; }
+    .player { min-width: 0; min-height: 0; padding: 12px; border-radius: 20px; background: #f8f7ef; display: flex; flex-direction: column; gap: 9px; box-shadow: inset 0 0 0 4px var(--player-color); }
+    .player-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 42px; }
+    .player-name { font-size: clamp(1.05rem, 2.4vw, 1.55rem); font-weight: 950; color: var(--player-color); }
+    .next { padding: 5px 12px; border-radius: 10px; background: #e5edec; font-size: clamp(.95rem, 2vw, 1.25rem); font-weight: 850; white-space: nowrap; }
+    .next strong { color: #d04f36; font-size: 1.3em; font-variant-numeric: tabular-nums; }
+    .board { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols), minmax(0,1fr)); grid-template-rows: repeat(var(--rows), minmax(0,1fr)); gap: clamp(3px, .65vw, 8px); padding: 5px; border-radius: 12px; background: #dce8e7; touch-action: manipulation; overflow: hidden; }
+    .board.irregular { display: flex; align-items: center; justify-content: center; }
+    .shape-stage { position: relative; flex: none; }
+    .shape-stage.circle { border-radius: 50%; background: #c8e8de; box-shadow: inset 0 0 0 4px #90c8b7; }
+    .shape-stage svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .number { min-width: 0; min-height: 0; display: grid; place-items: center; padding: 0; color: #163c4b; background: white; border: 2px solid #bdd0d0; border-radius: 50%; box-shadow: 0 3px 0 #b3c9c9; font-size: var(--number-size); font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+    .number:active { transform: scale(.94); }
+    .number.found { background: #b9e3cd; color: #326f54; border-color: #a2d6ba; box-shadow: none; opacity: .42; }
+    .number.wrong { animation: wrong .36s ease-in-out; }
+    @keyframes wrong { 50% { background: #ffd4ce; border-color: #e34d47; transform: scale(.94); } }
+    .regular .number { width: var(--regular-cell); height: var(--regular-cell); place-self: center; }
+    .irregular .number { position: absolute; width: var(--shape-cell); height: var(--shape-cell); left: var(--x); top: var(--y); translate: -50% -50%; z-index: 1; }
+    .board.dynamic { position: relative; display: block; }
+    .dynamic .number { position: absolute; width: var(--moving-cell); height: var(--moving-cell); left: 0; top: 0; translate: -50% -50%; transition: left 3.2s ease-in-out, top 3.2s ease-in-out; }
+    .dynamic .number.found { transition: none; }
+    .progress { height: 12px; background: #dce8e7; border-radius: 20px; overflow: hidden; }
+    .progress > span { display: block; height: 100%; width: 0%; background: var(--player-color); transition: width .2s; }
+    .score { text-align: right; font-size: .85rem; font-weight: 800; }
+    .result-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: #071d2fca; }
+    .result-card { width: min(550px,100%); padding: 34px 28px; border-radius: 25px; background: #fff9ec; text-align: center; box-shadow: 0 24px 80px #0008; }
+    .result-icon { font-size: 4rem; line-height: 1.1; }
+    .result-card h2 { margin: 10px 0; font-size: clamp(1.8rem, 5vw, 2.6rem); }
+    .result-card p { line-height: 1.6; font-size: 1.1rem; }
+    .result-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .result-actions button { flex: 1; min-height: 50px; border-radius: 12px; font-weight: 900; border: 2px solid #087d82; color: #087d82; background: white; }
+    .result-actions button:first-child { background: #087d82; color: white; }
+    [hidden] { display: none !important; }
+    @media (max-width: 650px) { .settings-grid { grid-template-columns: 1fr; } .settings { padding: 22px; } .hero { padding: 25px 22px; } .game { padding-inline: 7px; gap: 6px; } .boards { gap: 6px; } .player { padding: 6px; border-radius: 13px; gap: 5px; } .player-head { flex-wrap: wrap; gap: 2px; } .next { padding: 2px 5px; } .number { border-width: 1px; } }
+    @media (orientation: portrait) { .boards.two { grid-template-columns: 1fr; grid-template-rows: repeat(2, minmax(0,1fr)); } .boards.two .player-head { min-height: 30px; } .boards.two .player { gap: 4px; } .boards.two .score { display: none; } }
+    @media (max-height: 600px) { .game { gap: 5px; } .game-top { min-height: 42px; } .player { padding: 6px; gap: 4px; } .player-head { min-height: 28px; } .score { display: none; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } .dynamic .number { transition-duration: 3.2s !important; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="setup" class="setup" aria-labelledby="page-title">
+      <div class="setup-card">
+        <div class="hero">
+          <p class="eyebrow">LOOK · FIND · TAP</p>
+          <h1 id="page-title">🔎 舒爾特表專注力挑戰</h1>
+          <p>睜大眼睛，從 1 開始依序點出每個數字！</p>
+        </div>
+        <div class="settings">
+          <div class="settings-grid">
+            <div>
+              <label class="setting-title" for="numberLimit">數字範圍</label>
+              <input id="numberLimit" type="number" min="1" max="50" step="1" value="25" inputmode="numeric">
+              <span class="setting-help">從 1 排到你選的數字，最多 50。</span>
+            </div>
+            <div>
+              <span class="setting-title" id="playersLabel">遊戲人數</span>
+              <div id="playersChoices" class="choice-row" role="group" aria-labelledby="playersLabel">
+                <button type="button" class="choice" data-value="1" aria-pressed="true">1 人練習</button>
+                <button type="button" class="choice" data-value="2" aria-pressed="false">2 人對戰</button>
+              </div>
+              <span class="setting-help">雙人共用平板，各點自己的表格。</span>
+            </div>
+            <div>
+              <span class="setting-title" id="layoutLabel">舒爾特表排列</span>
+              <div id="layoutChoices" class="choice-row" role="group" aria-labelledby="layoutLabel">
+                <button type="button" class="choice" data-value="regular" aria-pressed="true">整齊排列</button>
+                <button type="button" class="choice" data-value="irregular" aria-pressed="false">不規則排列</button>
+                <button type="button" class="choice" data-value="dynamic" aria-pressed="false">動態移動</button>
+              </div>
+              <span class="setting-help">三種模式的數字都會隨機打亂。動態模式的數字會緩慢移動。</span>
+              <div id="shapeSetting" hidden>
+                <span class="setting-title" id="shapeLabel" style="margin-top:14px">輪廓形狀</span>
+                <div id="shapeChoices" class="choice-row" role="group" aria-labelledby="shapeLabel">
+                  <button type="button" class="choice" data-value="circle" aria-pressed="true">圓形</button>
+                  <button type="button" class="choice" data-value="apple" aria-pressed="false">蘋果</button>
+                  <button type="button" class="choice" data-value="heart" aria-pressed="false">愛心</button>
+                  <button type="button" class="choice" data-value="flower" aria-pressed="false">花朵</button>
+                  <button type="button" class="choice" data-value="cloud" aria-pressed="false">雲朵</button>
+                  <button type="button" class="choice" data-value="house" aria-pressed="false">房子</button>
+                  <button type="button" class="choice" data-value="fish" aria-pressed="false">魚</button>
+                  <button type="button" class="choice" data-value="cup" aria-pressed="false">杯子</button>
+                  <button type="button" class="choice" data-value="balloon" aria-pressed="false">氣球</button>
+                  <button type="button" class="choice" data-value="book" aria-pressed="false">書本</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="setting-title" for="duration">遊戲時間</label>
+              <input id="duration" type="number" min="30" max="180" step="1" value="60" inputmode="numeric">
+              <span class="setting-help">請輸入 30～180 秒。時間到就結算；先找完全部數字可提前完成。</span>
+            </div>
+          </div>
+          <p class="rules">💡 點錯不扣分，下一個要找的數字會顯示在表格上方。雙人時間到時，找得較多者獲勝；同分則平手。</p>
+          <button id="startButton" class="start" type="button">開始挑戰 ▶</button>
+        </div>
+      </div>
+    </section>
+    <section id="game" class="game" aria-label="遊戲進行中" hidden>
+      <div class="game-top"><span class="game-title">🔎 專注力挑戰</span><span id="timer" class="timer" role="timer" aria-label="剩餘時間">01:00</span><button id="quitButton" type="button" class="quit">回設定</button></div>
+      <div id="boards" class="boards"></div>
+    </section>
+    <div id="result" class="result-backdrop" hidden>
+      <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+        <div id="resultIcon" class="result-icon" aria-hidden="true"></div>
+        <h2 id="resultTitle"></h2>
+        <p id="resultText"></p>
+        <div class="result-actions"><button id="againButton" type="button">再玩一次</button><button id="settingsButton" type="button">調整設定</button></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const $ = id => document.getElementById(id);
+      const state = { players: 1, layout: 'regular', shape: 'circle', limit: 25, duration: 60, running: false, timerId: null, scores: [], observers: [], movementTimers: [] };
+      const SHAPE_ART = {
+        apple: '<path fill="#f6d29e" stroke="#df9c64" stroke-width="2" d="M50 17 C31 1 7 13 5 39 C3 66 22 96 40 96 C46 96 47 92 50 92 C53 92 54 96 60 96 C78 96 97 66 95 39 C93 13 69 1 50 17 Z"/><path fill="#8ebd75" d="M49 16 C53 5 62 3 70 6 C64 15 58 19 49 16 Z"/>',
+        heart: '<path fill="#f8b9be" stroke="#d97884" stroke-width="2" d="M50 91 C39 81 8 60 8 38 C8 13 35 10 50 28 C65 10 92 13 92 38 C92 60 61 81 50 91 Z"/>',
+        flower: '<g fill="#f7d4dd" stroke="#dca4b6" stroke-width="1.5"><circle cx="50" cy="22" r="20"/><circle cx="74" cy="36" r="20"/><circle cx="74" cy="64" r="20"/><circle cx="50" cy="78" r="20"/><circle cx="26" cy="64" r="20"/><circle cx="26" cy="36" r="20"/></g><circle cx="50" cy="50" r="26" fill="#f9db89"/>',
+        cloud: '<path fill="#d6eafa" stroke="#9bbfd9" stroke-width="2" d="M20 78 C7 78 4 67 8 56 C11 48 17 45 25 46 C25 25 40 15 54 21 C63 25 67 32 68 39 C81 32 93 42 92 54 C100 60 96 78 81 78 Z"/>',
+        house: '<path fill="#f6d7aa" stroke="#d29d6b" stroke-width="2" d="M13 42 L50 8 L87 42 L87 91 L13 91 Z"/><path fill="#e89c86" stroke="#c87f6e" stroke-width="2" d="M6 45 L50 5 L94 45 L87 47 L50 15 L13 47 Z"/>',
+        fish: '<path fill="#b9e2e4" stroke="#7cbac0" stroke-width="2" d="M76 25 C92 24 96 14 96 14 L94 50 L96 86 C96 86 90 76 76 75 C61 91 24 87 9 50 C24 13 61 9 76 25 Z"/><circle cx="25" cy="40" r="3" fill="#315669"/>',
+        cup: '<path fill="none" stroke="#a9d5c7" stroke-width="9" d="M77 32 C102 27 100 65 77 64"/><path fill="#cce7db" stroke="#94c6b5" stroke-width="2" d="M17 18 L82 18 L76 84 Q75 91 68 91 L31 91 Q24 91 23 84 Z"/>',
+        balloon: '<path fill="#f6c7c9" stroke="#d88b91" stroke-width="2" d="M50 8 C25 8 11 25 11 48 C11 68 28 78 46 81 L50 88 L54 81 C72 78 89 68 89 48 C89 25 75 8 50 8 Z"/><path fill="none" stroke="#bc888a" stroke-width="2" d="M50 88 C42 93 59 94 52 99"/>',
+        book: '<path fill="#d9def7" stroke="#a7afd5" stroke-width="2" d="M50 22 C35 16 19 16 8 20 L8 81 C24 77 39 78 50 85 C61 78 76 77 92 81 L92 20 C81 16 65 16 50 22 Z"/><path fill="none" stroke="#a7afd5" stroke-width="2" d="M50 22 L50 85"/>'
+      };
+      const choiceGroups = [['playersChoices', 'players'], ['layoutChoices', 'layout'], ['shapeChoices', 'shape']];
+      for (const [groupId, key] of choiceGroups) {
+        $(groupId).addEventListener('click', event => {
+          const button = event.target.closest('button[data-value]');
+          if (!button) return;
+          state[key] = key === 'players' ? Number(button.dataset.value) : button.dataset.value;
+          for (const option of $(groupId).querySelectorAll('button')) option.setAttribute('aria-pressed', String(option === button));
+          $('shapeSetting').hidden = state.layout !== 'irregular';
+        });
+      }
+      const shuffle = values => {
+        for (let i = values.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [values[i], values[j]] = [values[j], values[i]];
+        }
+        return values;
+      };
+      const formatTime = seconds => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      function shapePositions(count, shape) {
+        let divisions = 2;
+        let positions;
+        do {
+          divisions++;
+          positions = [];
+          for (let row = 0; row < divisions; row++) {
+            for (let col = 0; col < divisions; col++) {
+              const x = (col + .5) / divisions * 2 - 1;
+              const y = (row + .5) / divisions * 2 - 1;
+              let inside;
+              switch (shape) {
+                case 'apple': inside = x * x / .76 ** 2 + (y - .07) ** 2 / .72 ** 2 <= 1; break;
+                case 'heart': inside = y < -.1
+                  ? ((x + .34) ** 2 / .49 ** 2 + (y + .3) ** 2 / .48 ** 2 <= 1 || (x - .34) ** 2 / .49 ** 2 + (y + .3) ** 2 / .48 ** 2 <= 1)
+                  : Math.abs(x) <= .72 * (1 - y / .95); break;
+                case 'flower': {
+                  const angle = Math.atan2(y, x);
+                  inside = Math.hypot(x, y) <= .68 + .11 * Math.cos(6 * angle);
+                  break;
+                }
+                case 'cloud': inside = Math.abs(x) <= .76 && y >= -.43 && y <= .53 || x * x / .66 ** 2 + (y + .25) ** 2 / .65 ** 2 <= 1; break;
+                case 'house': inside = Math.abs(x) <= .69 && y >= -.13 && y <= .79 || y < -.13 && y >= -.7 && Math.abs(x) <= (y + .7) * 1.08; break;
+                case 'fish': inside = x * x / .77 ** 2 + y * y / .68 ** 2 <= 1; break;
+                case 'cup': inside = Math.abs(x) <= .58 && y >= -.56 && y <= .76; break;
+                case 'balloon': inside = x * x / .72 ** 2 + (y + .1) ** 2 / .72 ** 2 <= 1; break;
+                case 'book': inside = Math.abs(x) <= .75 && y >= -.55 && y <= .58; break;
+                default: inside = x * x + y * y <= .78 ** 2;
+              }
+              if (inside) positions.push({ x: (x + 1) * 50, y: (y + 1) * 50 });
+            }
+          }
+        } while (positions.length < count);
+        return { positions: shuffle(positions).slice(0, count), divisions };
+      }
+      function fitShape(board, stage, cells, layout) {
+        const size = Math.min(board.clientWidth - 12, board.clientHeight - 12);
+        if (size <= 0) return;
+        stage.style.width = `${size}px`;
+        stage.style.height = `${size}px`;
+        stage.style.setProperty('--shape-cell', `${Math.max(18, Math.floor(size / layout.divisions * .86))}px`);
+        stage.style.setProperty('--number-size', `${Math.max(13, Math.floor(size / layout.divisions * .48))}px`);
+        cells.forEach((cell, index) => {
+          cell.style.setProperty('--x', `${layout.positions[index].x}%`);
+          cell.style.setProperty('--y', `${layout.positions[index].y}%`);
+        });
+      }
+      function fitGrid(board, cells, cols, rows, slots) {
+        const moving = Boolean(slots);
+        const width = board.clientWidth - 10;
+        const height = board.clientHeight - 10;
+        if (width <= 0 || height <= 0) return;
+        const diameter = Math.max(16, Math.floor(Math.min(width / cols, height / rows) * (moving ? .76 : .84)));
+        board.style.setProperty(moving ? '--moving-cell' : '--regular-cell', `${diameter}px`);
+        board.style.setProperty('--number-size', `${Math.max(12, Math.floor(diameter * .49))}px`);
+        if (moving) cells.forEach((cell, index) => placeMovingCell(cell, slots[index], cols, rows));
+      }
+      function placeMovingCell(cell, slot, cols, rows) {
+        cell.style.left = `${(slot % cols + .5) / cols * 100}%`;
+        cell.style.top = `${(Math.floor(slot / cols) + .5) / rows * 100}%`;
+      }
+      function makeBoard(playerIndex) {
+        const panel = document.createElement('section');
+        panel.className = 'player';
+        panel.style.setProperty('--player-color', playerIndex === 0 ? '#087d82' : '#cf6352');
+        const heading = document.createElement('div');
+        heading.className = 'player-head';
+        const name = document.createElement('span');
+        name.className = 'player-name';
+        name.textContent = state.players === 1 ? '個人挑戰' : `選手 ${playerIndex + 1}`;
+        const next = document.createElement('span');
+        next.className = 'next';
+        next.append('請找 ');
+        const target = document.createElement('strong');
+        target.textContent = '1';
+        next.append(target);
+        heading.append(name, next);
+        const board = document.createElement('div');
+        board.className = `board ${state.layout}`;
+        board.setAttribute('aria-label', `${name.textContent}數字表`);
+        const cols = Math.max(state.layout === 'dynamic' ? 3 : 1, Math.ceil(Math.sqrt(state.limit)));
+        const rows = Math.max(state.layout === 'dynamic' ? 3 : 1, Math.ceil(state.limit / cols));
+        board.style.setProperty('--cols', cols);
+        board.style.setProperty('--rows', rows);
+        const numberSize = Math.max(14, Math.min(state.players === 2 ? 36 : 54, Math.floor(390 / cols)));
+        board.style.setProperty('--number-size', `${numberSize}px`);
+        const stage = state.layout === 'irregular' ? document.createElement('div') : null;
+        if (stage) {
+          stage.className = `shape-stage ${state.shape}`;
+          if (state.shape !== 'circle') stage.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${SHAPE_ART[state.shape]}</svg>`;
+          board.appendChild(stage);
+        }
+        const cells = [];
+        shuffle(Array.from({ length: state.limit }, (_, i) => i + 1)).forEach(number => {
+          const cell = document.createElement('button');
+          cell.className = 'number';
+          cell.type = 'button';
+          cell.textContent = number;
+          cell.setAttribute('aria-label', `${name.textContent}，${number}`);
+          cell.dataset.number = number;
+          (stage || board).appendChild(cell);
+          cells.push(cell);
+        });
+        board.addEventListener('click', event => {
+          const cell = event.target.closest('.number');
+          if (!cell || !state.running) return;
+          if (Number(cell.dataset.number) !== state.scores[playerIndex] + 1) {
+            cell.classList.remove('wrong');
+            void cell.offsetWidth;
+            cell.classList.add('wrong');
+            return;
+          }
+          state.scores[playerIndex]++;
+          cell.disabled = true;
+          cell.classList.add('found');
+          target.textContent = state.scores[playerIndex] === state.limit ? '完成！' : state.scores[playerIndex] + 1;
+          progress.style.width = `${state.scores[playerIndex] / state.limit * 100}%`;
+          score.textContent = `${state.scores[playerIndex]} / ${state.limit}`;
+          if (state.scores[playerIndex] === state.limit) {
+            endGame();
+          }
+        });
+        const progressTrack = document.createElement('div');
+        progressTrack.className = 'progress';
+        const progress = document.createElement('span');
+        progressTrack.appendChild(progress);
+        const score = document.createElement('div');
+        score.className = 'score';
+        score.textContent = `0 / ${state.limit}`;
+        panel.append(heading, board, progressTrack, score);
+        const shapeLayout = stage ? shapePositions(cells.length, state.shape) : null;
+        const slots = state.layout === 'dynamic'
+          ? shuffle(Array.from({ length: cols * rows }, (_, index) => index)).slice(0, cells.length)
+          : null;
+        const observer = new ResizeObserver(() => {
+          if (stage) fitShape(board, stage, cells, shapeLayout);
+          else fitGrid(board, cells, cols, rows, slots);
+        });
+        observer.observe(board);
+        state.observers.push(observer);
+        if (slots) {
+          let turn = 0;
+          const moveNumbers = () => {
+            if (!state.running) return;
+            const totalSlots = cols * rows;
+            const offset = (Math.floor(totalSlots / 2) + turn++) % totalSlots || 1;
+            cells.forEach((cell, index) => {
+              slots[index] = (slots[index] + offset) % totalSlots;
+              placeMovingCell(cell, slots[index], cols, rows);
+            });
+          };
+          state.movementTimers.push(setTimeout(moveNumbers, 1200));
+          state.movementTimers.push(setInterval(moveNumbers, 5000));
+        }
+        return panel;
+      }
+      function startGame() {
+        const input = $('numberLimit');
+        const number = Number(input.value);
+        if (!Number.isInteger(number) || number < 1 || number > 50) {
+          input.setCustomValidity('請輸入 1 到 50 的整數');
+          input.reportValidity();
+          return;
+        }
+        input.setCustomValidity('');
+        const durationInput = $('duration');
+        const duration = Number(durationInput.value);
+        if (!Number.isInteger(duration) || duration < 30 || duration > 180) {
+          durationInput.setCustomValidity('請輸入 30 到 180 秒的整數');
+          durationInput.reportValidity();
+          return;
+        }
+        durationInput.setCustomValidity('');
+        clearInterval(state.timerId);
+        state.movementTimers.forEach(clearInterval);
+        state.movementTimers = [];
+        state.observers.forEach(observer => observer.disconnect());
+        state.observers = [];
+        state.limit = number;
+        state.duration = duration;
+        state.scores = Array(state.players).fill(0);
+        state.deadline = Date.now() + state.duration * 1000;
+        state.running = true;
+        $('boards').replaceChildren(...Array.from({ length: state.players }, (_, i) => makeBoard(i)));
+        $('boards').classList.toggle('two', state.players === 2);
+        $('boards').style.setProperty('--players', state.players);
+        $('timer').textContent = formatTime(state.duration);
+        $('timer').classList.remove('urgent');
+        $('result').hidden = true;
+        $('setup').hidden = true;
+        $('game').hidden = false;
+        state.timerId = setInterval(tick, 100);
+      }
+      function tick() {
+        if (!state.running) return;
+        const remaining = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
+        $('timer').textContent = formatTime(remaining);
+        $('timer').classList.toggle('urgent', remaining <= 10);
+        if (remaining === 0) endGame();
+      }
+      function endGame() {
+        if (!state.running) return;
+        state.running = false;
+        clearInterval(state.timerId);
+        state.movementTimers.forEach(clearInterval);
+        state.movementTimers = [];
+        const complete = state.scores.some(score => score === state.limit);
+        if (state.players === 1) {
+          $('resultIcon').textContent = complete ? '🎉' : '⏰';
+          $('resultTitle').textContent = complete ? '恭喜完成挑戰！' : '時間到！';
+          $('resultText').textContent = complete ? `你依序找到了全部 ${state.limit} 個數字！` : `你找到了 ${state.scores[0]} / ${state.limit} 個數字，再試一次吧！`;
+        } else {
+          const [first, second] = state.scores;
+          const winner = first === second ? null : first > second ? 1 : 2;
+          $('resultIcon').textContent = winner ? '🏆' : '🤝';
+          $('resultTitle').textContent = winner ? `恭喜選手 ${winner} 獲勝！` : '平手！一起給自己掌聲';
+          $('resultText').textContent = `選手 1：${first} / ${state.limit}　｜　選手 2：${second} / ${state.limit}`;
+        }
+        $('result').hidden = false;
+        $('againButton').focus();
+      }
+      function showSetup() {
+        clearInterval(state.timerId);
+        state.movementTimers.forEach(clearInterval);
+        state.movementTimers = [];
+        state.observers.forEach(observer => observer.disconnect());
+        state.observers = [];
+        state.running = false;
+        $('result').hidden = true;
+        $('game').hidden = true;
+        $('setup').hidden = false;
+        $('startButton').focus();
+      }
+      $('numberLimit').addEventListener('input', event => event.target.setCustomValidity(''));
+      $('duration').addEventListener('input', event => event.target.setCustomValidity(''));
+      $('startButton').addEventListener('click', startGame);
+      $('againButton').addEventListener('click', startGame);
+      $('settingsButton').addEventListener('click', showSetup);
+      $('quitButton').addEventListener('click', showSetup);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+    })();
+  </script>
+</body>
+</html>

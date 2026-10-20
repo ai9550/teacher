@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 考卷題型標記系統</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js core and worker -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- 引入 pdf-lib 用於修改與匯出 PDF -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            overflow: hidden; 
+        }
+
+        body[data-mode="page1"] #view-page1 { display: flex; }
+        body[data-mode="page1"] #view-pdf-container { display: none; }
+        body[data-mode="page1"] #toolbar-page2 { display: none; }
+
+        body[data-mode="page2"] #view-page1 { display: none; }
+        body[data-mode="page2"] #view-pdf-container { display: block; }
+        body[data-mode="page2"] #toolbar-page2 { display: flex; }
+
+        #view-pdf-container {
+            height: calc(100vh - 64px); 
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #e5e7eb;
+        }
+
+        .pdf-page {
+            position: relative;
+            margin: 0 auto 30px auto;
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .pdf-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .textLayer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            opacity: 0; 
+            line-height: 1.0;
+        }
+        .textLayer > span {
+            color: transparent;
+            position: absolute;
+            white-space: pre;
+            transform-origin: 0% 0%;
+        }
+
+        .interaction-layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none; 
+            z-index: 10;
+        }
+
+        .question-box {
+            position: absolute;
+            pointer-events: auto;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            box-sizing: border-box;
+            border: 1px solid rgba(239, 68, 68, 0.6); 
+            background-color: rgba(239, 68, 68, 0.03); 
+            cursor: move; 
+            resize: both; 
+            overflow: hidden;
+        }
+
+        .question-box:hover {
+            background-color: rgba(239, 68, 68, 0.15);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .box-controls {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 20;
+        }
+        .question-box:hover .box-controls {
+            display: flex;
+        }
+        .btn-copy, .btn-delete {
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+        .btn-copy { background: #3b82f6; border-bottom-left-radius: 4px; }
+        .btn-copy:hover { background: #2563eb; }
+        .btn-delete { background: #ef4444; }
+        .btn-delete:hover { background: #dc2626; }
+
+        .question-box.selected {
+            border: 3px solid #2563eb; 
+            background-color: rgba(37, 99, 235, 0.1);
+            z-index: 15;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body data-mode="page1" class="text-gray-800">
+
+    <!-- ==================== PAGE 1 ==================== -->
+    <div id="view-page1" class="min-h-screen w-full flex-col items-center justify-center bg-white p-4 overflow-y-auto">
+        <div class="max-w-3xl w-full text-center py-4">
+            <div class="mb-5">
+                <h1 class="text-2xl md:text-3xl font-bold text-blue-700 mb-2">PDF 考卷題型標記系統</h1>
+                <p class="text-gray-500 text-sm md:text-base">請先選擇考卷排版樣式，再進行檔案上傳</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm text-left mb-4">
+                <h2 class="text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">1</span>
+                    選擇考卷樣式
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="exam-format" value="vertical-double" class="peer hidden">
+                        <div class="border-2 border-gray-200 rounded-lg p-2 md:p-3 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-100 transition text-center h-full flex flex-col justify-center">
+                            <div class="font-bold text-gray-700 text-sm md:text-base mb-0.5">直式雙欄</div>
+                            <div class="text-[10px] md:text-xs text-gray-500 hidden sm:block">(由左至右)</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="exam-format" value="horizontal-updown-double" class="peer hidden">
+                        <div class="border-2 border-gray-200 rounded-lg p-2 md:p-3 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-100 transition text-center h-full flex flex-col justify-center">
+                            <div class="font-bold text-gray-700 text-sm md:text-base mb-0.5">橫式上下雙欄</div>
+                            <div class="text-[10px] md:text-xs text-gray-500 hidden sm:block">(由右到左)</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="exam-format" value="horizontal-single" class="peer hidden">
+                        <div class="border-2 border-gray-200 rounded-lg p-2 md:p-3 peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-100 transition text-center h-full flex flex-col justify-center">
+                            <div class="font-bold text-gray-700 text-sm md:text-base mb-0.5">橫式單欄</div>
+                            <div class="text-[10px] md:text-xs text-gray-500 hidden sm:block">(由右到左)</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div id="step2-container" class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm text-left mb-6 opacity-50 pointer-events-none transition-opacity duration-300">
+                <h2 class="text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <span class="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">2</span>
+                    選擇載入方式
+                </h2>
+                <!-- 這裡強制改為 grid-cols-2 讓它永遠左右並排 -->
+                <div class="grid grid-cols-2 gap-2 md:gap-4">
+                    <div class="bg-white border border-gray-200 rounded-xl p-2 md:p-3 hover:shadow-md transition flex flex-col items-center justify-center min-h-[100px]">
+                        <label for="pdf-upload" class="cursor-pointer flex flex-col items-center justify-center gap-1 md:gap-2 w-full h-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <div class="text-center w-full">
+                                <span class="block text-xs md:text-sm font-bold text-gray-700 mb-0.5">本機上傳</span>
+                                <span id="file-name-display" class="block text-[10px] md:text-[11px] text-gray-500 truncate w-full px-1">選擇 PDF 檔案</span>
+                            </div>
+                            <input type="file" id="pdf-upload" accept="application/pdf" class="hidden" disabled>
+                        </label>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-xl p-2 md:p-3 hover:shadow-md transition flex flex-col items-center justify-center min-h-[100px]">
+                        <div class="w-full flex flex-col items-center justify-center gap-1 md:gap-2 h-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-8 md:w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                            <div class="text-center w-full flex flex-col items-center">
+                                <span class="block text-xs md:text-sm font-bold text-gray-700 mb-1">從線上題庫載入</span>
+                                <select id="github-pdf-select" class="w-full max-w-[100%] md:max-w-[200px] p-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 outline-none text-[10px] md:text-xs text-gray-700 cursor-pointer" disabled>
+                                    <option value="">載入題庫中...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="start-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg text-lg transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                開始標記
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== PAGE 2 (Toolbar) ==================== -->
+    <div id="toolbar-page2" class="min-h-[64px] bg-white shadow-md w-full flex-wrap items-center px-4 py-2 justify-between shrink-0 gap-2 relative z-50">
+        <div class="flex items-center gap-4">
+            <button id="back-to-p1-btn" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md font-medium transition whitespace-nowrap">
+                🔙 回到第一頁
+            </button>
+            <span class="font-bold text-lg text-blue-800 hidden lg:block">題型標記模式</span>
+            <span class="text-sm text-gray-500 hidden md:block">
+                可拖曳、縮放，新增或刪除紅框 <span class="text-red-500 font-bold">【框之間一定要保留間隙】</span>
+            </span>
+        </div>
+        
+        <div class="flex items-center gap-2 md:gap-4 flex-wrap justify-end">
+            <button id="delete-selected-btn" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-md shadow transition hidden whitespace-nowrap">
+                🗑️ 刪除選取
+            </button>
+            <button id="add-box-btn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-md shadow transition whitespace-nowrap">
+                ➕ 新增紅框
+            </button>
+            <button id="download-btn" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded-md shadow transition whitespace-nowrap">
+                📥 下載 PDF
+            </button>
+        </div>
+    </div>
+
+    <div id="view-pdf-container">
+        <div id="loading-indicator" class="hidden flex-col items-center justify-center h-full text-blue-600">
+            <svg class="animate-spin h-12 w-12 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-xl font-bold">正在解析考卷與自動標記題型...</p>
+        </div>
+        <div id="pdf-pages-wrapper" class="flex flex-col items-center"></div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        const CMAP_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/cmaps/';
+        const CMAP_PACKED = true;
+
+        let pdfSource = null; 
+        let pdfDocument = null;
+        let originalPdfBytes = null; 
+        let selectedBox = null; 
+
+        const body = document.body;
+        const formatRadios = document.querySelectorAll('input[name="exam-format"]');
+        const step2Container = document.getElementById('step2-container');
+        const fileInput = document.getElementById('pdf-upload');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const githubPdfSelect = document.getElementById('github-pdf-select');
+        const startBtn = document.getElementById('start-btn');
+        const pdfPagesWrapper = document.getElementById('pdf-pages-wrapper');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+        const downloadBtn = document.getElementById('download-btn'); 
+
+        async function loadGitHubPdfs() {
+            try {
+                const response = await fetch('https://api.github.com/repos/happy690331/teacher/contents/exam%20paper');
+                if (!response.ok) throw new Error('無法讀取題庫');
+                const data = await response.json();
+                
+                githubPdfSelect.innerHTML = '<option value="">-- 請選擇線上考卷 --</option>';
+                data.forEach(item => {
+                    if (item.name.endsWith('.pdf')) {
+                        const option = document.createElement('option');
+                        option.value = item.download_url; 
+                        option.textContent = item.name;
+                        githubPdfSelect.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('GitHub 題庫載入失敗:', error);
+                githubPdfSelect.innerHTML = '<option value="">載入失敗，請確認網路或 API 限制</option>';
+            }
+        }
+        
+        loadGitHubPdfs();
+
+        formatRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                step2Container.classList.remove('opacity-50', 'pointer-events-none');
+                fileInput.disabled = false;
+                githubPdfSelect.disabled = false;
+            });
+        });
+
+        document.getElementById('back-to-p1-btn').addEventListener('click', () => switchMode('page1'));
+        document.getElementById('add-box-btn').addEventListener('click', addNewBox);
+        downloadBtn.addEventListener('click', downloadMarkedPdf); 
+        
+        deleteSelectedBtn.addEventListener('click', () => {
+            if (selectedBox) {
+                selectedBox.remove();
+                selectedBox = null;
+                deleteSelectedBtn.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('view-pdf-container').addEventListener('mousedown', (e) => {
+            if (body.dataset.mode === 'page2') {
+                if (e.target === document.getElementById('view-pdf-container') || e.target.classList.contains('pdf-page') || e.target.classList.contains('interaction-layer')) {
+                    if (selectedBox) {
+                        selectedBox.classList.remove('selected');
+                        selectedBox = null;
+                        deleteSelectedBtn.classList.add('hidden');
+                    }
+                }
+            }
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                pdfSource = { type: 'local', file: file };
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.add('text-blue-600');
+                githubPdfSelect.value = "";
+                startBtn.disabled = false;
+            } else {
+                alert('請上傳有效的 PDF 檔案。');
+                startBtn.disabled = true;
+            }
+        });
+
+        githubPdfSelect.addEventListener('change', function(e) {
+            const url = e.target.value;
+            if (url) {
+                const fileName = e.target.options[e.target.selectedIndex].text;
+                pdfSource = { type: 'url', url: url, name: fileName };
+                fileInput.value = "";
+                fileNameDisplay.textContent = "選擇 PDF 檔案";
+                fileNameDisplay.classList.remove('text-blue-600');
+                startBtn.disabled = false;
+            } else {
+                if (!fileInput.files.length) {
+                    startBtn.disabled = true;
+                    pdfSource = null;
+                }
+            }
+        });
+
+        startBtn.addEventListener('click', async () => {
+            if (!pdfSource) return;
+            switchMode('page2');
+            pdfPagesWrapper.innerHTML = ''; 
+            loadingIndicator.classList.remove('hidden');
+            loadingIndicator.classList.add('flex');
+            
+            try {
+                let arrayBuffer;
+                
+                if (pdfSource.type === 'local') {
+                    arrayBuffer = await pdfSource.file.arrayBuffer();
+                } else if (pdfSource.type === 'url') {
+                    const loadText = loadingIndicator.querySelector('p');
+                    const originalText = loadText.textContent;
+                    loadText.textContent = `正在從線上題庫下載：${pdfSource.name}...`;
+                    
+                    const response = await fetch(pdfSource.url);
+                    if (!response.ok) throw new Error('線上考卷下載失敗');
+                    arrayBuffer = await response.arrayBuffer();
+                    
+                    loadText.textContent = originalText;
+                }
+
+                originalPdfBytes = arrayBuffer.slice(0);
+
+                pdfDocument = await pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: CMAP_URL,
+                    cMapPacked: CMAP_PACKED
+                }).promise;
+
+                for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+                    await renderPage(pageNum);
+                }
+            } catch (error) {
+                console.error("PDF 載入失敗:", error);
+                alert("解析 PDF 時發生錯誤: " + error.message);
+                switchMode('page1');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                loadingIndicator.classList.remove('flex');
+            }
+        });
+
+        function switchMode(mode) {
+            body.dataset.mode = mode;
+            if (selectedBox) {
+                selectedBox.classList.remove('selected');
+                selectedBox = null;
+                deleteSelectedBtn.classList.add('hidden');
+            }
+        }
+
+        async function renderPage(pageNum) {
+            const page = await pdfDocument.getPage(pageNum);
+            const scale = 1.5; 
+            const viewport = page.getViewport({ scale });
+
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'pdf-page';
+            // 添加自定義屬性記錄頁碼，供後續匯出使用
+            pageDiv.dataset.pageNum = pageNum;
+            pageDiv.style.width = viewport.width + 'px';
+            pageDiv.style.height = viewport.height + 'px';
+
+            const canvas = document.createElement('canvas');
+            canvas.className = 'pdf-canvas';
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            pageDiv.appendChild(canvas);
+            await page.render({ canvasContext: context, viewport }).promise;
+
+            const textLayerDiv = document.createElement('div');
+            textLayerDiv.className = 'textLayer';
+            pageDiv.appendChild(textLayerDiv);
+            const textContent = await page.getTextContent();
+            await pdfjsLib.renderTextLayer({
+                textContent, container: textLayerDiv, viewport, textDivs: []
+            }).promise;
+
+            const interactionLayer = document.createElement('div');
+            interactionLayer.className = 'interaction-layer';
+            pageDiv.appendChild(interactionLayer);
+
+            pdfPagesWrapper.appendChild(pageDiv);
+
+            autoDetectQuestions(textLayerDiv, interactionLayer, viewport.width, viewport.height, pageNum);
+        }
+
+        // ====== 修正辨識演算法：使用文字中心點、優化同行組合 ======
+        function autoDetectQuestions(textLayer, interactionLayer, pageWidth, pageHeight, pageNum) {
+            const spans = Array.from(textLayer.querySelectorAll('span'));
+            if (spans.length === 0) return;
+
+            const format = document.querySelector('input[name="exam-format"]:checked')?.value || 'vertical-double';
+            const midX = pageWidth / 2;
+            const midY = pageHeight / 2;
+            
+            let leftSpans = [], rightSpans = [];
+            let rightTopSpans = [], rightBottomSpans = [], leftTopSpans = [], leftBottomSpans = [];
+
+            spans.forEach(span => {
+                const top = span.offsetTop;
+                const left = span.offsetLeft;
+                const width = span.offsetWidth;
+                const height = span.offsetHeight;
+                const centerX = left + width / 2; 
+                const centerY = top + height / 2;
+
+                if (pageNum === 1) {
+                    // 放寬標題過濾，只濾除確實橫跨兩側或極端上方的標題
+                    if (top < pageHeight * 0.1 || (left < midX - 50 && left + width > midX + 50)) {
+                        return;
+                    }
+                }
+
+                if (format === 'horizontal-updown-double') {
+                    if (centerX < midX) {
+                        if (centerY < midY) leftTopSpans.push(span);
+                        else leftBottomSpans.push(span);
+                    } else {
+                        if (centerY < midY) rightTopSpans.push(span);
+                        else rightBottomSpans.push(span);
+                    }
+                } else {
+                    if (centerX < midX) {
+                        leftSpans.push(span);
+                    } else {
+                        rightSpans.push(span);
+                    }
+                }
+            });
+
+            if (format === 'vertical-double') {
+                processRegion(leftSpans, interactionLayer, { type: 'left', midX: midX });
+                processRegion(rightSpans, interactionLayer, { type: 'right', midX: midX });
+            } else if (format === 'horizontal-updown-double') {
+                // 順序：由右半部的上下半 -> 再到左半部的上下半
+                processRegion(rightTopSpans, interactionLayer, { type: 'right-top', midX: midX, midY: midY });
+                processRegion(rightBottomSpans, interactionLayer, { type: 'right-bottom', midX: midX, midY: midY });
+                processRegion(leftTopSpans, interactionLayer, { type: 'left-top', midX: midX, midY: midY });
+                processRegion(leftBottomSpans, interactionLayer, { type: 'left-bottom', midX: midX, midY: midY });
+            } else if (format === 'horizontal-single') {
+                processRegion(rightSpans, interactionLayer, { type: 'right', midX: midX });
+                processRegion(leftSpans, interactionLayer, { type: 'left', midX: midX });
+            }
+        }
+
+        function processRegion(regionSpans, interactionLayer, bounds) {
+            if(regionSpans.length === 0) return;
+
+            let lines = [];
+            regionSpans.forEach(span => {
+                const top = span.offsetTop;
+                const height = span.offsetHeight;
+                const left = span.offsetLeft;
+                const width = span.offsetWidth;
+                
+                // 改進：使用垂直重疊率判斷是否為同一行，更能容忍各種字體與上下標差異
+                let line = lines.find(l => {
+                    const overlapTop = Math.max(l.top, top);
+                    const overlapBottom = Math.min(l.bottom, top + height);
+                    return (overlapBottom - overlapTop) > (height * 0.3);
+                });
+
+                if (!line) {
+                    line = { top, bottom: top + height, left, right: left + width, spans: [] };
+                    lines.push(line);
+                } else {
+                    line.top = Math.min(line.top, top);
+                    line.bottom = Math.max(line.bottom, top + height);
+                }
+                line.spans.push({ left, width, span });
+            });
+
+            lines.sort((a, b) => a.top - b.top);
+            lines.forEach(line => {
+                line.spans.sort((a, b) => a.left - b.left);
+                line.text = line.spans.map(s => s.span.textContent).join('').trim();
+                line.left = line.spans[0].left;
+                line.right = line.spans[line.spans.length - 1].left + line.spans[line.spans.length - 1].width;
+            });
+
+            // 增強的正則表達式，支援「1、」等格式
+            const sectionRegex = /^\s*(?:[一二三四五六七八九十]+\s*[、．\.：:]|第\s*[一二三四五六七八九十]+\s*[大部分題])/;
+            const questionRegex = /^\s*(?:(?:[\(（\[□]\s*[\)）\]]?\s*)?[0-9０-９]+\s*[\.．、]|[\(（]\s*[一二三四五六七八九十]+\s*[\)）])/;
+            
+            let questions = [];
+            let currentQ = null;
+
+            lines.forEach(line => {
+                if (!line.text) return;
+                
+                if (sectionRegex.test(line.text) || questionRegex.test(line.text) || !currentQ) {
+                    if (currentQ) questions.push(currentQ);
+                    currentQ = { top: line.top, bottom: line.bottom, left: line.left, right: line.right };
+                } else {
+                    currentQ.top = Math.min(currentQ.top, line.top);
+                    currentQ.bottom = Math.max(currentQ.bottom, line.bottom);
+                    currentQ.left = Math.min(currentQ.left, line.left);
+                    currentQ.right = Math.max(currentQ.right, line.right);
+                }
+            });
+            if (currentQ) questions.push(currentQ);
+
+            const padding = 6;
+            const minGap = 5; // 上下框最小保持 5px 的間距
+
+            questions.forEach(q => {
+                // 控制左右欄邊界，確保左欄框與右欄框之間保持 10px 間距 (各退縮 5px，並扣除 padding)
+                if (bounds.type.includes('left')) {
+                    q.right = Math.min(q.right, bounds.midX - 5 - padding); 
+                } else if (bounds.type.includes('right')) {
+                    q.left = Math.max(q.left, bounds.midX + 5 + padding);   
+                }
+                
+                // 控制上下欄邊界，確保上下欄框之間保持間距 (各退縮 2.5px，並扣除 padding)
+                if (bounds.midY) {
+                    if (bounds.type.includes('top')) {
+                        q.bottom = Math.min(q.bottom, bounds.midY - 2.5 - padding);
+                    } else if (bounds.type.includes('bottom')) {
+                        q.top = Math.max(q.top, bounds.midY + 2.5 + padding);
+                    }
+                }
+            });
+
+            questions.sort((a, b) => a.top - b.top);
+            for (let i = 0; i < questions.length - 1; i++) {
+                let curr = questions[i];
+                let next = questions[i + 1];
+                
+                let actualCurrBottom = curr.bottom + padding;
+                let actualNextTop = next.top - padding;
+                
+                if (actualNextTop - actualCurrBottom < minGap) {
+                    let midY = (curr.bottom + next.top) / 2;
+                    curr.bottom = midY - padding - (minGap / 2);
+                    next.top = midY + padding + (minGap / 2);
+                }
+            }
+
+            questions.forEach(q => {
+                let boxHeight = q.bottom - q.top + padding * 2;
+                let boxWidth = q.right - q.left + padding * 2;
+                
+                if (boxHeight < 15 || boxWidth < 15) return; 
+                createBoxElement(interactionLayer, q.left - padding, q.top - padding, boxWidth, boxHeight);
+            });
+        }
+
+        function createBoxElement(layer, left, top, width, height) {
+            const box = document.createElement('div');
+            box.className = 'question-box';
+            box.style.left = left + 'px';
+            box.style.top = top + 'px';
+            box.style.width = width + 'px';
+            box.style.height = height + 'px';
+
+            const controls = document.createElement('div');
+            controls.className = 'box-controls';
+
+            const copyBtn = document.createElement('div');
+            copyBtn.className = 'btn-copy';
+            copyBtn.innerHTML = '📄';
+            copyBtn.title = "複製此框";
+            copyBtn.onclick = (e) => {
+                e.stopPropagation();
+                if(body.dataset.mode === 'page2') {
+                    // 取得當前紅框的精確位置與大小，並在右下方偏移 20px 產生新框
+                    const currentLeft = parseFloat(box.style.left) || 0;
+                    const currentTop = parseFloat(box.style.top) || 0;
+                    const currentWidth = box.offsetWidth;
+                    const currentHeight = box.offsetHeight;
+                    const newBox = createBoxElement(layer, currentLeft + 20, currentTop + 20, currentWidth, currentHeight);
+                    newBox.classList.add('manual-added');
+                }
+            };
+
+            const delBtn = document.createElement('div');
+            delBtn.className = 'btn-delete';
+            delBtn.innerHTML = '✖';
+            delBtn.title = "刪除此框";
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                if(body.dataset.mode === 'page2') {
+                    if (selectedBox === box) {
+                        selectedBox = null;
+                        deleteSelectedBtn.classList.add('hidden');
+                    }
+                    box.remove();
+                }
+            };
+
+            controls.appendChild(copyBtn);
+            controls.appendChild(delBtn);
+            box.appendChild(controls);
+
+            layer.appendChild(box);
+            setupBoxInteractions(box);
+            
+            return box;
+        }
+
+        function setupBoxInteractions(box) {
+            let isDragging = false;
+            let startX, startY, startLeft, startTop;
+
+            box.addEventListener('mousedown', (e) => {
+                if (body.dataset.mode !== 'page2') return;
+
+                if (selectedBox) selectedBox.classList.remove('selected');
+                selectedBox = box;
+                box.classList.add('selected');
+                deleteSelectedBtn.classList.remove('hidden');
+
+                const rect = box.getBoundingClientRect();
+                if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) return;
+
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = parseFloat(box.style.left) || 0;
+                startTop = parseFloat(box.style.top) || 0;
+                e.stopPropagation(); 
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                
+                box.style.left = (startLeft + dx) + 'px';
+                box.style.top = (startTop + dy) + 'px';
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            box.addEventListener('click', (e) => {
+                if (body.dataset.mode !== 'page2') return;
+                e.stopPropagation();
+            });
+        }
+
+        function addNewBox() {
+            const container = document.getElementById('view-pdf-container');
+            const scrollY = container.scrollTop;
+            const viewHeight = container.clientHeight;
+            const viewCenter = scrollY + (viewHeight / 2);
+
+            const pages = Array.from(document.querySelectorAll('.pdf-page'));
+            if (pages.length === 0) return;
+
+            let targetPage = pages[0];
+            let targetTop = 100;
+
+            for (let page of pages) {
+                const pageTop = page.offsetTop;
+                const pageBottom = pageTop + page.offsetHeight;
+                
+                if (viewCenter >= pageTop && viewCenter <= pageBottom) {
+                    targetPage = page;
+                    targetTop = viewCenter - pageTop - 50; 
+                    break;
+                }
+            }
+
+            const layer = targetPage.querySelector('.interaction-layer');
+            if (!layer) return;
+
+            const targetLeft = (targetPage.offsetWidth / 2) - 100;
+            const box = createBoxElement(layer, targetLeft, targetTop, 200, 100);
+            box.classList.add('manual-added'); 
+        }
+
+        // ====== 修正 PDF 下載：利用原生 Transform 矩陣抵銷旋轉 ======
+        async function downloadMarkedPdf() {
+            if (!originalPdfBytes) {
+                alert("找不到原始 PDF 檔案資料");
+                return;
+            }
+
+            const oldText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = "處理中...";
+            downloadBtn.disabled = true;
+
+            try {
+                const { PDFDocument, rgb } = PDFLib;
+                const pdfDoc = await PDFDocument.load(originalPdfBytes);
+                
+                const domPages = document.querySelectorAll('.pdf-page');
+                
+                for (let i = 0; i < domPages.length; i++) {
+                    const domPage = domPages[i];
+                    // 根據頁面綁定的實際頁碼 (1-based) 來處理
+                    const pageNum = parseInt(domPage.dataset.pageNum, 10);
+                    if (pageNum > pdfDoc.getPageCount()) continue;
+
+                    const pdfjsPage = await pdfDocument.getPage(pageNum);
+                    // 取得當時在畫面上渲染的精確矩陣
+                    const viewport = pdfjsPage.getViewport({ scale: 1.5 });
+                    
+                    const pdfLibPage = pdfDoc.getPage(pageNum - 1); // pdf-lib 是 0-based
+
+                    const boxes = domPage.querySelectorAll('.question-box');
+                    boxes.forEach(box => {
+                        const domLeft = parseFloat(box.style.left) || 0;
+                        const domTop = parseFloat(box.style.top) || 0;
+                        const domBoxW = box.offsetWidth;
+                        const domBoxH = box.offsetHeight;
+
+                        // 核心修復：直接用 PDF.js 提供的轉換矩陣 (convertToPdfPoint)
+                        // 它能完美將目前的視覺 DOM 座標反轉回 PDF 最原始的 user space 座標
+                        // 從而自動處理掉所有因紙張旋轉 (Landscape)、裁剪 (CropBox) 所造成的錯位
+                        const [pdfX1, pdfY1] = viewport.convertToPdfPoint(domLeft, domTop);
+                        const [pdfX2, pdfY2] = viewport.convertToPdfPoint(domLeft + domBoxW, domTop + domBoxH);
+
+                        const rectX = Math.min(pdfX1, pdfX2);
+                        const rectY = Math.min(pdfY1, pdfY2);
+                        const rectW = Math.abs(pdfX2 - pdfX1);
+                        const rectH = Math.abs(pdfY2 - pdfY1);
+
+                        pdfLibPage.drawRectangle({
+                            x: rectX,
+                            y: rectY,
+                            width: rectW,
+                            height: rectH,
+                            borderColor: rgb(0.93, 0.26, 0.26),
+                            borderWidth: 1, 
+                            color: rgb(0.93, 0.26, 0.26),
+                            borderOpacity: 0.6,
+                            opacity: 0.05 
+                        });
+                    });
+                }
+
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                let baseName = "考卷";
+                if (pdfSource && pdfSource.name) {
+                    baseName = pdfSource.name.replace(/\.[^/.]+$/, ""); 
+                } else if (pdfSource && pdfSource.file) {
+                    baseName = pdfSource.file.name.replace(/\.[^/.]+$/, "");
+                }
+                a.download = `${baseName}_已標記.pdf`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+            } catch (err) {
+                console.error("生成 PDF 失敗:", err);
+                alert("生成 PDF 發生錯誤！");
+            } finally {
+                downloadBtn.innerHTML = oldText;
+                downloadBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
