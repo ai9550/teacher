@@ -700,7 +700,10 @@ const PEOPLE = [];
 const SHIRTS = [0x9cc7ea, 0x9cc7ea, 0x9cc7ea, 0xf2b8c6, 0xffffff], PANTS = [0x26324d, 0x26324d, 0x26324d, 0xc9463a];
 const pick = a => a[Math.floor(Math.random() * a.length)];
 function person(x, z, y, rot, o = {}) {
-  PEOPLE.push({ x, z, y, rot, seated: !!o.seated, s: o.s || 1, shirt: o.shirt || pick(SHIRTS), pants: o.pants || pick(PANTS) });
+  const sc = o.s || 1, seated = !!o.seated;
+  // 動作類型：學生寫字舉手、老師走動、職員打字、小朋友搖晃、站著的人輕微擺動
+  const anim = o.anim || (seated ? (sc >= 1.2 ? 'type' : sc < 0.8 ? 'kid' : 'student') : (sc >= 1.2 ? 'gesture' : 'sway'));
+  PEOPLE.push({ x, z, y, rot, seated, s: sc, shirt: o.shirt || pick(SHIRTS), pants: o.pants || pick(PANTS), anim, ph: Math.random() * 6.28 });
 }
 const TEACHER = () => ({ s: 1.25, shirt: pick([0x2f6fd0, 0xd9d4c8, 0x6a7f58, 0xb0413e, 0xffffff]), pants: pick([0x222222, 0x3a3a48, 0x5a4a3a]) });
 
@@ -841,8 +844,9 @@ function walkBuilding(sp) {
       }
       case 'class': case 'calligraphy': { // 上課：黑板、講桌、老師、學生坐好
         board();
-        const td = R(0.75, 1.35, Lq * 0.08, Lq * 0.08 + 1.2); bb(td, y0, y0 + 0.8, 'wood'); col3(td, y0 - 0.2, y0 + 0.8);
-        stand(1.0, Lq * 0.6, BACK, TEACHER());
+        // 講桌放在黑板前正中間，不會擋住靠走廊的門
+        const td = R(0.75, 1.35, Lq * 0.5 - 0.6, Lq * 0.5 + 0.6); bb(td, y0, y0 + 0.8, 'wood'); col3(td, y0 - 0.2, y0 + 0.8);
+        stand(1.0, Lq * 0.78, BACK, { ...TEACHER(), anim: 'pace' });
         for (let p = 2.0; p + 0.55 <= Lp - 0.1; p += 1.05) for (let q = 0.55; q <= Lq - 0.45; q += 1.0) {
           box(p - 0.25, p + 0.2, q - 0.3, q + 0.3, 0, 0.7, 'desk'); chair(p + 0.42, q); box(p + 0.57, p + 0.62, q - 0.2, q + 0.2, 0.44, 0.82, 'chair');
           if (type === 'calligraphy') { box(p - 0.2, p + 0.15, q - 0.22, q + 0.22, 0.7, 0.71, 'paper'); box(p - 0.2, p - 0.12, q + 0.12, q + 0.2, 0.7, 0.74, 'ink'); }
@@ -1096,7 +1100,7 @@ function walkBuilding(sp) {
       case 'exhibit': { // 國際文教中心：展示櫃與各國服裝人台
         for (let p = 0.4; p + 1.2 <= Lp; p += 1.5) { box(p, p + 1.2, 0, 0.6, 0, 0.8, 'wood'); box(p, p + 1.2, 0, 0.6, 0.8, 1.6, 'case'); box(p + 0.3, p + 0.6, 0.15, 0.45, 0.8, 1.1, GOODS[Math.floor(p) % 4]); }
         box(1.0, Lp - 0.4, Lq - 1.1, Lq - 0.2, 0, 0.25, 'wood');
-        for (let p = 1.4; p <= Lp - 0.6; p += 0.9) stand(p, Lq - 0.65, QN, { s: 1.25, shirt: pick([0xc9463a, 0x2f6fd0, 0xeab84a, 0x3e9a5a, 0x8b5fbf]), pants: pick([0x222222, 0xc9463a, 0x2f6fd0]), dy: 0.25 });
+        for (let p = 1.4; p <= Lp - 0.6; p += 0.9) stand(p, Lq - 0.65, QN, { anim: 'none', s: 1.25, shirt: pick([0xc9463a, 0x2f6fd0, 0xeab84a, 0x3e9a5a, 0x8b5fbf]), pants: pick([0x222222, 0xc9463a, 0x2f6fd0]), dy: 0.25 });
         [[1.8, Lq / 2 - 0.2], [3.0, Lq / 2 + 0.3]].forEach(([p, q]) => stand(p, q, QP));
         stand(1.0, Lq / 2, QP, TEACHER());
         return;
@@ -1256,31 +1260,85 @@ bmat('para' + 0xcfccc4, () => mat(0xcfccc4)); bmat('trim' + 0x3f7f5a, () => mat(
 }
 
 flushBatches();
-// 教室裡的學生與老師（全部人物合成 4 個 InstancedMesh）
-{
+// 教室裡的學生與老師（全部人物合成 6 個 InstancedMesh：腳、身體、頭、頭髮、左右手）
+const peopleAnim = (() => {
   const n = PEOPLE.length, box1 = new THREE.BoxGeometry(1, 1, 1), sph = new THREE.SphereGeometry(1, 10, 8);
-  const legs = new THREE.InstancedMesh(box1, new THREE.MeshLambertMaterial(), n), torso = new THREE.InstancedMesh(box1, new THREE.MeshLambertMaterial(), n);
+  const shirtMat = new THREE.MeshLambertMaterial(), pantsMat = new THREE.MeshLambertMaterial();
+  const legs = new THREE.InstancedMesh(box1, pantsMat, n), torso = new THREE.InstancedMesh(box1, shirtMat, n);
+  const armL = new THREE.InstancedMesh(box1, shirtMat, n), armR = new THREE.InstancedMesh(box1, shirtMat, n);
   const head = new THREE.InstancedMesh(sph, mat(0xf0c8a0), n), hair = new THREE.InstancedMesh(sph, mat(0x1d1a18), n);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3(), col = new THREE.Color();
-  PEOPLE.forEach((p, i) => {
-    q.setFromEuler(e.set(0, p.rot, 0)); const s = p.s, fx = Math.sin(p.rot), fz = Math.cos(p.rot);
+  const parts = [legs, torso, armL, armR, head, hair];
+  const m4 = new THREE.Matrix4(), mA = new THREE.Matrix4(), mB = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3(), col = new THREE.Color();
+  const setBox = (mesh, i, x, y, z, rot, sx, sy, sz) => { q.setFromEuler(e.set(0, rot, 0)); mesh.setMatrixAt(i, m4.compose(v.set(x, y, z), q, sc.set(sx, sy, sz))); };
+  // 手臂：從肩膀往下長，angle 為往前抬起的角度（0 = 垂下，π = 舉高）
+  const setArm = (mesh, i, x, y, z, rot, angle, s) => {
+    mA.makeRotationY(rot); mB.makeRotationX(-angle); mA.multiply(mB);
+    mB.makeTranslation(0, -0.2 * s, 0); mA.multiply(mB); mB.makeScale(0.09 * s, 0.42 * s, 0.1 * s); mA.multiply(mB);
+    m4.makeTranslation(x, y, z).multiply(mA); mesh.setMatrixAt(i, m4);
+  };
+  function pose(i, t) {
+    const p = PEOPLE[i], s = p.s, ph = p.ph;
+    let x = p.x, z = p.z, rot = p.rot, bob = 0, aL = 0.1, aR = 0.1, look = 0, sway = 0;
+    const fx = Math.sin(p.rot), fz = Math.cos(p.rot), lx = Math.cos(p.rot), lz = -Math.sin(p.rot);
+    switch (p.anim) {
+      case 'student': // 低頭寫字、轉頭看旁邊，偶爾舉手
+        aL = 1.15; aR = 1.15 + Math.sin(t * 6 + ph) * 0.1; look = Math.sin(t * 0.45 + ph) * 0.5; bob = Math.sin(t * 1.7 + ph) * 0.008;
+        if (Math.sin(t * 0.21 + ph * 3) > 0.93) aR = 2.95;
+        break;
+      case 'kid': // 小朋友動來動去、揮手
+        bob = Math.abs(Math.sin(t * 3 + ph)) * 0.03; aL = 0.9 + Math.sin(t * 2.2 + ph) * 0.5; aR = 0.9 + Math.sin(t * 2.6 + ph + 1) * 0.6; look = Math.sin(t * 0.8 + ph) * 0.6;
+        break;
+      case 'type': // 打電腦、整理文件
+        aL = 1.2 + Math.sin(t * 9 + ph) * 0.06; aR = 1.2 + Math.sin(t * 9 + ph + 1.6) * 0.06; look = Math.sin(t * 0.3 + ph) * 0.3;
+        break;
+      case 'pace': { // 老師在講台前來回走動，偶爾指黑板
+        const k = Math.sin(t * 0.35 + ph), walk = Math.abs(Math.cos(t * 0.35 + ph)) > 0.2;
+        x += lx * k * 1.0; z += lz * k * 1.0; bob = walk ? Math.abs(Math.sin(t * 6)) * 0.03 : 0;
+        aL = walk ? Math.sin(t * 6) * 0.35 : 0.1; aR = walk ? -Math.sin(t * 6) * 0.35 : 0.1;
+        if (Math.sin(t * 0.5 + ph) > 0.7) { aR = 1.6; rot = p.rot + Math.PI * 0.85; }
+        look = Math.sin(t * 0.6 + ph) * 0.4;
+        break;
+      }
+      case 'gesture': // 站著說話、比手勢
+        aR = 0.5 + Math.max(0, Math.sin(t * 1.3 + ph)) * 0.9; aL = 0.2 + Math.max(0, Math.sin(t * 0.9 + ph + 2)) * 0.5; sway = Math.sin(t * 0.5 + ph) * 0.25; look = sway;
+        break;
+      case 'sway': // 站著看東西，輕輕晃動
+        sway = Math.sin(t * 0.7 + ph) * 0.3; aL = 0.25 + Math.sin(t * 1.1 + ph) * 0.15; aR = 0.5 + Math.sin(t * 1.4 + ph) * 0.3; bob = Math.abs(Math.sin(t * 1.4 + ph)) * 0.01;
+        break;
+    }
+    rot += sway;
+    const r = rot, gx = Math.sin(r), gz = Math.cos(r), hx = Math.cos(r), hz = -Math.sin(r);
     let ty;
     if (p.seated) {
       const seat = p.y + 0.42 * Math.min(1, s + 0.1);
-      m4.compose(v.set(p.x + fx * 0.14 * s, seat + 0.07 * s, p.z + fz * 0.14 * s), q, sc.set(0.26 * s, 0.14 * s, 0.42 * s)); legs.setMatrixAt(i, m4);
-      ty = seat + 0.28 * s;
+      setBox(legs, i, x + gx * 0.14 * s, seat + 0.07 * s + bob, z + gz * 0.14 * s, r, 0.26 * s, 0.14 * s, 0.42 * s);
+      ty = seat + 0.28 * s + bob;
     } else {
-      m4.compose(v.set(p.x, p.y + 0.31 * s, p.z), q, sc.set(0.26 * s, 0.62 * s, 0.16 * s)); legs.setMatrixAt(i, m4);
-      ty = p.y + 0.85 * s;
+      setBox(legs, i, x, p.y + 0.31 * s + bob, z, r, 0.26 * s, 0.62 * s, 0.16 * s);
+      ty = p.y + 0.85 * s + bob;
     }
-    m4.compose(v.set(p.x, ty, p.z), q, sc.set(0.36 * s, 0.46 * s, 0.2 * s)); torso.setMatrixAt(i, m4);
-    const hy = ty + 0.35 * s;
-    m4.compose(v.set(p.x, hy, p.z), q, sc.set(0.12 * s, 0.13 * s, 0.12 * s)); head.setMatrixAt(i, m4);
-    m4.compose(v.set(p.x - fx * 0.02 * s, hy + 0.035 * s, p.z - fz * 0.02 * s), q, sc.set(0.128 * s, 0.105 * s, 0.128 * s)); hair.setMatrixAt(i, m4);
-    torso.setColorAt(i, col.setHex(p.shirt)); legs.setColorAt(i, col.setHex(p.pants));
-  });
-  [legs, torso, head, hair].forEach(m => { m.castShadow = true; m.receiveShadow = true; scene.add(m); });
-}
+    setBox(torso, i, x, ty, z, r, 0.36 * s, 0.46 * s, 0.2 * s);
+    const sy = ty + 0.2 * s;
+    setArm(armL, i, x - hx * 0.23 * s, sy, z - hz * 0.23 * s, r, aL, s);
+    setArm(armR, i, x + hx * 0.23 * s, sy, z + hz * 0.23 * s, r, aR, s);
+    const hy = ty + 0.35 * s, lr = r + look;
+    setBox(head, i, x, hy, z, lr, 0.12 * s, 0.13 * s, 0.12 * s);
+    setBox(hair, i, x - Math.sin(lr) * 0.025 * s, hy + 0.035 * s, z - Math.cos(lr) * 0.025 * s, lr, 0.128 * s, 0.105 * s, 0.128 * s);
+  }
+  PEOPLE.forEach((p, i) => { pose(i, 0); torso.setColorAt(i, col.setHex(p.shirt)); armL.setColorAt(i, col); armR.setColorAt(i, col); legs.setColorAt(i, col.setHex(p.pants)); });
+  parts.forEach(m => { m.castShadow = true; m.receiveShadow = true; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
+  // 依位置分區，每次只更新玩家附近、同一層樓的人
+  const cell = new Map(), CS = 10, ck = (x, z) => Math.floor(x / CS) * 1000 + Math.floor(z / CS);
+  PEOPLE.forEach((p, i) => { const k = ck(p.x, p.z); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(i); });
+  return (t, px, pz, foot) => {
+    const cx = Math.floor(px / CS), cz = Math.floor(pz / CS); let any = false;
+    for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
+      const list = cell.get((cx + a) * 1000 + cz + b); if (!list) continue;
+      for (const i of list) { const p = PEOPLE[i]; if (p.anim === 'none' || Math.abs(p.y - foot) > 3 || Math.hypot(p.x - px, p.z - pz) > 22) continue; pose(i, t); any = true; }
+    }
+    if (any) parts.forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  };
+})();
 // 其他建築的門牌（教室編配圖上的標示）
 SIGNS.push({ kind: 'room', title: '校史室', sub: '3F', x: X(181), y: 2 * FH + 2.95, z: Z(1010) + 0.03, rotY: 0, w: 1.6, floor: 2 });
 SIGNS.push({ kind: 'room', title: '夜補校辦公室', sub: '2F', x: X(181), y: FH + 2.95, z: Z(1010) + 0.03, rotY: 0, w: 1.6, floor: 1 });
@@ -1492,31 +1550,49 @@ MAP.push({ r: [110, 200, 185, 280], c: '#c4c2bc', label: 'P' });
 
 // ---------- 樹木（避開建築與場地） ----------
 {
-  const avoid = [[340, 280, 790, 500], [440, 495, 690, 1225], [680, 495, 775, 1260], [770, 270, 1060, 1310], [180, 270, 360, 1265], [130, 940, 230, 1015], [110, 1040, 230, 1255], [100, 1430, 360, 1500], [640, 1445, 1010, 1500], [340, 1245, 760, 1460], [370, 740, 440, 1040], [340, 450, 440, 670], [340, 1050, 430, 1250], [150, 470, 230, 690], [550, 190, 790, 290], [340, 190, 570, 290], [100, 190, 190, 290], [895, 1175, 1040, 1270], [1015, 1265, 1090, 1500], [1045, 420, 1090, 580], [495, 1180, 600, 1235], [440, 1460, 620, 1500], [380, 1460, 440, 1500], [120, 800, 195, 930], [140, 1265, 360, 1430], [905, 730, 960, 790], [955, 870, 1025, 960], [780, 1300, 1015, 1450], [905, 375, 960, 425]];
+  // 固定的亂數種子：每次開遊戲樹都長在同樣的位置，已確認不會擋路
+  const rnd = (() => { let a = 20261029; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })();
+  const avoid = [[340, 350, 790, 500], [440, 495, 690, 1225], [680, 495, 775, 1260], [770, 270, 1060, 690], [228, 270, 360, 1265], [130, 940, 230, 1015], [110, 1040, 230, 1255], [100, 1430, 360, 1500], [640, 1445, 1010, 1500], [340, 1245, 760, 1460], [370, 740, 440, 1040], [340, 450, 440, 670], [340, 1050, 430, 1250], [150, 470, 230, 690], [550, 190, 790, 290], [340, 190, 570, 290], [100, 190, 190, 290], [895, 1175, 1040, 1270], [1015, 1265, 1090, 1500], [1045, 420, 1090, 580], [495, 1180, 600, 1235], [440, 1460, 620, 1500], [380, 1460, 440, 1500], [120, 800, 195, 930], [140, 1265, 360, 1430], [905, 730, 960, 790], [955, 870, 1025, 960], [780, 1300, 1015, 1450], [905, 375, 960, 425]];
   const blocked = (px, py) => avoid.some(([a, b, c, d]) => px > a && px < c && py > b && py < d);
+  // 候選位置：沿圍牆一圈，加上全校空地每 5 公尺一個點（稍微錯開）
   const pts = [];
-  for (let px = 120; px <= 1070; px += 34) { pts.push([px, 212]); pts.push([px, 1478]); }
-  for (let py = 220; py <= 1470; py += 34) { pts.push([120, py]); pts.push([1070, py]); }
-  for (let px = 925; px <= 1060; px += 40) for (let py = 700; py <= 1160; py += 45) pts.push([px + (Math.random() - .5) * 20, py + (Math.random() - .5) * 20]);
-  for (let py = 710; py <= 1000; py += 45) pts.push([140 + Math.random() * 20, py]);
-  for (let py = 400; py <= 470; py += 35) pts.push([150, py]);
-  const list = pts.filter(([px, py]) => !blocked(px, py));
-  list.push([455, 452]); // 忠孝樓前的老樟樹
+  for (let px = 120; px <= 1070; px += 30) { pts.push([px, 210]); pts.push([px, 1480]); }
+  for (let py = 220; py <= 1470; py += 30) { pts.push([118, py]); pts.push([1072, py]); }
+  for (let px = 128; px <= 1062; px += 34) for (let py = 218; py <= 1472; py += 34) pts.push([px + (rnd() - 0.5) * 20, py + (rnd() - 0.5) * 20]);
+  // 離建築、設施、走廊至少要有空間，樹冠大小依空間決定，不會插進教室或擋住走道
+  const isWall = c => (c.maxX - c.minX < 1.6 || c.maxZ - c.minZ < 1.6) && (c.minX <= X(108) || c.maxX >= X(1082) || c.minZ <= Z(198) || c.maxZ >= Z(1492));
+  const solids = cols.filter(c => !isWall(c));
+  const distTo = (r, x, z) => Math.hypot(Math.max(r.minX - x, 0, x - r.maxX), Math.max(r.minZ - z, 0, z - r.maxZ));
+  const marks = STATIONS.map(s => [X(s.px), Z(s.py)]);
+  const list = [];
+  pts.forEach(([px, py]) => {
+    if (blocked(px, py) || px < 112 || px > 1078 || py < 202 || py > 1488) return;
+    const x = X(px), z = Z(py);
+    let dc = 99; for (const c of solids) { const dd = distTo(c, x, z); if (dd < dc) dc = dd; }
+    let ds = 99; for (const s of surfaces) { const dd = distTo(s, x, z); if (dd < ds) ds = dd; }
+    const dm = Math.min(...marks.map(([a, b]) => Math.hypot(a - x, b - z)));
+    const dt = list.reduce((m, t) => Math.min(m, Math.hypot(t.x - x, t.z - z)), 99);
+    if (dc < 2.2 || dm < 3.2 || dt < 3.8) return;
+    const s = Math.min(3.9, Math.max(2.0, Math.min((dc + 0.6) / 1.35, (ds + 0.4) / 1.3)));
+    list.push({ px, py, x, z, s, h: 3.0 + rnd() * 2.2 });
+  });
+  list.push({ px: 455, py: 452, x: X(455), z: Z(452), s: 4.6, h: 5.5, big: true }); // 忠孝樓前的老樟樹
   const n = list.length;
-  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 1, 6), mat(0x6b4a2e), n);
-  const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshPhongMaterial({ flatShading: true, shininess: 0 }), n * 2);
+  const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 1, 7), mat(0x6b4a2e), n);
+  const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshPhongMaterial({ flatShading: true, shininess: 0 }), n * 3);
   trunk.castShadow = leaf.castShadow = true; leaf.receiveShadow = true;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), col = new THREE.Color();
-  list.forEach(([px, py], i) => {
-    const big = i === n - 1, h = big ? 5 : 2.6 + Math.random() * 1.8, s = big ? 4.2 : 1.8 + Math.random() * 1.1;
-    const x = X(px), z = Z(py);
-    m4.compose(new THREE.Vector3(x, h / 2, z), q, new THREE.Vector3(big ? 2 : 1, h, big ? 2 : 1)); trunk.setMatrixAt(i, m4);
+  list.forEach((t, i) => {
+    const { x, z, s, h } = t, w = t.big ? 2.2 : 1.2 + s * 0.15;
+    m4.compose(new THREE.Vector3(x, h / 2, z), q, new THREE.Vector3(w, h, w)); trunk.setMatrixAt(i, m4);
     // 樹冠寬而扁，像校園裡的老榕樹、樟樹
-    m4.compose(new THREE.Vector3(x, h + s * 0.45, z), q, new THREE.Vector3(s * 1.35, s * 0.62, s * 1.35)); leaf.setMatrixAt(i * 2, m4);
-    m4.compose(new THREE.Vector3(x + 0.5, h + s * 0.95, z - 0.4), q, new THREE.Vector3(s * 0.95, s * 0.5, s * 0.95)); leaf.setMatrixAt(i * 2 + 1, m4);
-    col.setHSL(0.28 + Math.random() * 0.05, 0.42, 0.24 + Math.random() * 0.08); leaf.setColorAt(i * 2, col); leaf.setColorAt(i * 2 + 1, col);
-    cols.push({ minX: x - 0.4, maxX: x + 0.4, minZ: z - 0.4, maxZ: z + 0.4 });
-    MAP.push({ tree: [px, py, big ? 22 : 9] });
+    m4.compose(new THREE.Vector3(x, h + s * 0.42, z), q, new THREE.Vector3(s * 1.35, s * 0.62, s * 1.35)); leaf.setMatrixAt(i * 3, m4);
+    m4.compose(new THREE.Vector3(x + s * 0.18, h + s * 0.92, z - s * 0.12), q, new THREE.Vector3(s * 0.95, s * 0.52, s * 0.95)); leaf.setMatrixAt(i * 3 + 1, m4);
+    m4.compose(new THREE.Vector3(x - s * 0.35, h + s * 0.55, z + s * 0.3), q, new THREE.Vector3(s * 0.8, s * 0.48, s * 0.8)); leaf.setMatrixAt(i * 3 + 2, m4);
+    col.setHSL(0.28 + rnd() * 0.05, 0.42, 0.22 + rnd() * 0.09);
+    for (let k = 0; k < 3; k++) leaf.setColorAt(i * 3 + k, col);
+    cols.push({ minX: x - 0.45, maxX: x + 0.45, minZ: z - 0.45, maxZ: z + 0.45 });
+    MAP.push({ tree: [t.px, t.py, s * 1.35 / S] });
   });
   scene.add(trunk, leaf);
 }
@@ -2105,7 +2181,7 @@ if (window.ResizeObserver) new ResizeObserver(fit).observe(view);
 fit();
 
 // ---------- 主迴圈 ----------
-const clock = new THREE.Clock(); let t = 0, mapTick = 0;
+const clock = new THREE.Clock(); let t = 0, mapTick = 0, peopleTick = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); t += dt;
   if (started && !modalOpen()) {
@@ -2143,6 +2219,7 @@ function frame() {
     if (d < zoneD) { zone = m; zoneD = d; }
   });
   updateWalkers(dt);
+  if ((peopleTick = (peopleTick + 1) % 2) === 0) peopleAnim(t, player.x, player.z, player.foot); // 每兩格畫面更新一次人物動作
   flags.forEach((f, i) => { const p = f.geometry.attributes.position; for (let j = 0; j < p.count; j++) { const x = p.getX(j) + 0.9; p.setZ(j, Math.sin(t * 4 + x * 3 + i) * 0.12 * x); } p.needsUpdate = true; });
 
   if (started) {
@@ -2189,7 +2266,7 @@ Promise.race([
   miniStatic = drawStatic(0.25); bigStatic = drawStatic(0.55);
 });
 requestAnimationFrame(frame);
-window.__dafeng = { player, X, Z, groundAt, blockedAt, SIGNS, surfaces, setTarget, STAIRS, FH, DC }; // 方便老師或除錯時傳送位置
+window.__dafeng = { player, X, Z, groundAt, blockedAt, SIGNS, surfaces, setTarget, STAIRS, FH, DC, cols, PEOPLE }; // 方便老師或除錯時傳送位置
 })();
 </script>
 </body>
