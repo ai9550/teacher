@@ -266,6 +266,40 @@
     40%, 80% { transform: translateX(14px); }
   }
   .math-card.shake { animation: shake 0.45s ease; }
+
+  /* ---------- 房間 / 大廳 / 結算 ---------- */
+  .room-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .room-row input, .room-row select { flex: 1; min-width: 0; font-size: 16px; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(120,200,255,0.4); border-radius: 12px; color: #fff; outline: none; font-family: 'Noto Sans TC', sans-serif; }
+  .room-row select option { background: #0a0a2a; }
+  #roomCodeInput { text-transform: uppercase; letter-spacing: 6px; text-align: center; font-family: 'Orbitron', sans-serif; }
+  .room-btn { flex: none; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-weight: 700; font-size: 16px; padding: 12px 22px; color: #050818; background: linear-gradient(135deg, #4cf 0%, #f4c 100%); border: none; border-radius: 12px; }
+  .room-btn.alt { background: rgba(255,255,255,0.08); color: #cef; border: 1px solid rgba(120,200,255,0.4); }
+  .room-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .host-check { display: flex; align-items: center; gap: 8px; color: #cef; font-size: 14px; text-align: left; margin-bottom: 12px; cursor: pointer; }
+  .host-check input { width: 20px; height: 20px; accent-color: #4cf; flex: none; }
+  #roomMsg { min-height: 22px; color: #ffd84a; font-size: 14px; }
+  .overlay { display: none; position: fixed; inset: 0; z-index: 25; align-items: center; justify-content: center; background: rgba(5,8,24,0.88); backdrop-filter: blur(8px); padding: 16px; }
+  .overlay-card { background: rgba(15,15,40,0.92); border: 1px solid rgba(120,200,255,0.4); border-radius: 22px; padding: 28px 32px; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; text-align: center; color: #dfe7f3; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .overlay-card h2 { font-size: 26px; color: #ffd84a; margin-bottom: 6px; }
+  .big-code { font-family: 'Orbitron', sans-serif; font-size: 44px; font-weight: 900; letter-spacing: 10px; color: #4cf; margin: 4px 0 6px; }
+  .lobby-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 16px; text-align: left; }
+  .lobby-slot { border: 1px solid rgba(120,200,255,0.3); border-radius: 10px; padding: 10px 12px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lobby-slot.empty { color: #667; border-style: dashed; }
+  .lobby-note { color: #99a; font-size: 14px; line-height: 1.6; margin: 6px 0; }
+  .lobby-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .score-table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 15px; }
+  .score-table th { color: #88aacc; font-weight: 700; font-size: 13px; padding: 6px 4px; border-bottom: 1px solid rgba(120,200,255,0.3); }
+  .score-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .score-table tr.me td { color: #ffea66; font-weight: 700; }
+  .score-table td.rank { font-family: 'Orbitron', sans-serif; font-weight: 900; }
+  #roundTimer { display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 6; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 22px; color: #fff; background: rgba(8,10,28,0.65); border: 1px solid rgba(120,200,255,0.35); border-radius: 999px; padding: 6px 20px; pointer-events: none; }
+  #roundTimer.urgent { color: #ff6b8a; border-color: #ff6b8a; }
+  .lobby-qr { display: block; width: 150px; height: 150px; margin: 6px auto 4px; background: #fff; border-radius: 10px; image-rendering: pixelated; }
+  #joinPanel { display: none; position: fixed; top: 16px; right: 16px; z-index: 7; width: 180px; padding: 10px; text-align: center; background: rgba(8,10,28,0.85); border: 1px solid rgba(255,216,74,0.7); border-radius: 14px; color: #fff1b9; pointer-events: none; }
+  #joinPanel .join-title { font-size: 13px; }
+  #joinPanel img { display: block; width: 160px; height: 160px; margin: 6px auto; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  #joinPanel .join-code { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 6px; color: #4cf; }
+  #spectatorBanner { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 6; background: rgba(8,10,28,0.7); border: 1px solid #ffd84a; color: #fff1b9; border-radius: 999px; padding: 8px 20px; font-size: 14px; pointer-events: none; }
 </style>
   <style>
     /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
@@ -307,9 +341,18 @@
       </div>
     </div>
 
-    <button class="start-btn" onclick="startGame()">開 始 遊 戲</button>
+    <label class="host-check"><input type="checkbox" id="hostPlays" checked>建立房間時，房主也一起玩（取消勾選＝房主只開房觀戰）</label>
+    <div class="room-row">
+      <select id="durationSel"><option value="180">每局 3 分鐘</option><option value="300" selected>每局 5 分鐘</option><option value="480">每局 8 分鐘</option><option value="600">每局 10 分鐘</option></select>
+      <button class="room-btn" id="createRoomBtn">建立房間</button>
+    </div>
+    <div class="room-row">
+      <input id="roomCodeInput" maxlength="4" placeholder="房間碼" autocomplete="off">
+      <button class="room-btn alt" id="joinRoomBtn">加入房間</button>
+    </div>
+    <div id="roomMsg"></div>
     <div class="controls">
-      🌐 <strong style="color:#cef">跟同班同學一起連線</strong>，在同一個世界裡比賽長度<br>
+      🌐 <strong style="color:#cef">建立或加入房間</strong>，最多 6 人在同一個世界裡比賽長度，開打後也能隨時加入；時間到依「最長長度」排名<br>
       🖱️ <strong style="color:#cef">電腦：</strong>移動<span class="key">滑鼠</span>控制方向，按住<span class="key">左鍵</span>或<span class="key">空白</span>衝刺<br>
       📱 <strong style="color:#cef">平板：</strong>左下角<span class="key">搖桿</span>控制方向，右下角<span class="key">⚡按鈕</span>衝刺<br>
       🧮 <strong style="color:#ffd84a">每吃 20 個食物會出題目</strong>，答對 +25 長度 +4 秒護盾
@@ -322,19 +365,51 @@
   <div class="hint-bar">⚡ 按住 <span class="key">左鍵</span> / <span class="key">空白</span> 衝刺</div>
 </div>
 
-<!-- 死亡畫面 -->
+<!-- 撞到後的重生提示（本局結束前都能繼續） -->
 <div id="gameover">
   <div class="gameover-card">
-    <h2>YOU DIED</h2>
-    <div class="label">G A M E   O V E R</div>
-    <div class="stats">
-      <div class="stat"><div class="num" id="finalLength">0</div><div class="lbl">長度</div></div>
-      <div class="stat"><div class="num" id="finalRank">-</div><div class="lbl">名次</div></div>
-      <div class="stat"><div class="num" id="finalKills">0</div><div class="lbl">擊殺</div></div>
-    </div>
-    <button class="start-btn" onclick="restart()">再 玩 一 次</button>
+    <h2>撞到了！</h2>
+    <div class="label" style="letter-spacing:2px">3 秒後自動重生，時間到才會結算</div>
   </div>
 </div>
+
+<!-- 房間大廳 -->
+<div id="lobby" class="overlay">
+  <div class="overlay-card">
+    <h2>等待開始</h2>
+    <div class="lobby-note">把房間碼告訴同學</div>
+    <div class="big-code" id="lobbyCode">----</div>
+    <img id="lobbyQr" class="lobby-qr" alt="掃描加入房間">
+    <div class="lobby-note">用平板掃描 QR code 也能加入，遊戲開始後仍可隨時加入</div>
+    <div class="lobby-note" id="lobbyInfo"></div>
+    <div class="lobby-list" id="lobbyList"></div>
+    <div class="lobby-actions"><button class="room-btn" id="startRoundBtn">開始遊戲</button><button class="room-btn alt" id="leaveLobbyBtn">離開房間</button></div>
+  </div>
+</div>
+
+<!-- 本局結算 -->
+<div id="results" class="overlay">
+  <div class="overlay-card">
+    <h2>🏆 本局結算</h2>
+    <div class="lobby-note">時間到！依「最長長度」排名</div>
+    <table class="score-table">
+      <thead><tr><th>名次</th><th>玩家</th><th>最長長度</th><th>擊敗</th><th>被撞</th><th>答對</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div class="lobby-actions"><button class="room-btn" id="nextRoundBtn">再玩一局</button><button class="room-btn alt" id="leaveResultsBtn">離開房間</button></div>
+    <div class="lobby-note" id="resultsWait"></div>
+  </div>
+</div>
+
+<div id="roundTimer">05:00</div>
+<div id="spectatorBanner">👀 房主觀戰中・鏡頭跟隨目前最長的蛇</div>
+<div id="joinPanel">
+  <div class="join-title">掃描加入遊戲</div>
+  <img id="joinQr" alt="加入房間 QR code">
+  <div class="join-code" id="joinCode">----</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <!-- 數學題彈窗 -->
 <div id="mathModal">
@@ -358,7 +433,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, where
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -551,6 +626,7 @@ window.submitAnswer = function submitAnswer() {
   if (v === currentQuestion.answer) {
     fb.textContent = '✓ 答對了！+25 長度 + 護盾';
     fb.className = 'math-feedback correct';
+    myCorrect++;
     if (player && player.alive) {
       player.length += 25;
       player.shieldUntil = performance.now() + 4000;
@@ -743,6 +819,9 @@ class Snake {
     if (!this.alive || !data.head) return;
     this.angle = data.angle ?? this.angle;
     this.targetAngle = this.angle;
+    // 重生會瞬間換位置：清掉舊軌跡，避免蛇身橫跨整張地圖
+    const last = this.headHistory[this.headHistory.length - 1];
+    if (last && dist2(last.x, last.y, data.head.x, data.head.y) > 250 * 250) this.headHistory = [];
     this.headHistory.push({ x: data.head.x, y: data.head.y });
     if (this.headHistory.length > 200) this.headHistory.shift();
     const count = Math.max(3, Math.floor(this.length));
@@ -921,7 +1000,8 @@ function ensureRemoteSnake(id, data) {
   return s;
 }
 
-onSnapshot(collection(db, 'snake_players'), (snapshot) => {
+// 只監聽自己房間的玩家（由房間系統呼叫）
+function applyPlayersSnapshot(snapshot) {
   const now = Date.now();
   snapshot.docChanges().forEach((change) => {
     const id = change.doc.id;
@@ -950,7 +1030,7 @@ onSnapshot(collection(db, 'snake_players'), (snapshot) => {
       }
     }
   });
-});
+}
 
 // 定期檢查有沒有玩家斷線失聯（沒有觸發 removed 事件的情況）
 setInterval(() => {
@@ -975,12 +1055,14 @@ function syncToFirestore() {
     name: player.name, hue: player.hue, alive: player.alive,
     length: Math.floor(player.length), kills: player.kills, boosting: player.boosting,
     head: { x: head.x, y: head.y }, angle: player.angle,
+    best: myBest, deaths: myDeaths, correct: myCorrect,
     updated_at: serverTimestamp()
   }).catch(() => {});
 }
 
 window.addEventListener('beforeunload', () => {
   if (myDocRef) deleteDoc(myDocRef).catch(() => {});
+  if (isRoomHost && roomRef) deleteDoc(roomRef).catch(() => {});
 });
 
 // ============== 生成食物 ==============
@@ -1043,7 +1125,8 @@ function renderHUD() {
   }
 
   const top = allSnakes().filter(s => s.alive).sort((a, b) => b.length - a.length).slice(0, 10);
-  const bx = W - 240, by = 24, bw = 220, bh = 40 + top.length * 24;
+  // 觀戰的房主右上角是 QR code，排行榜往下移
+  const bx = W - 240, by = (!player && roundActive) ? 290 : 24, bw = 220, bh = 40 + top.length * 24;
   ctx.fillStyle = 'rgba(8, 10, 28, 0.65)';
   ctx.strokeStyle = 'rgba(120, 200, 255, 0.25)';
   ctx.lineWidth = 1;
@@ -1118,7 +1201,7 @@ function roundRect(x, y, w, h, r, fill, stroke) {
 }
 
 function renderTouchControls() {
-  if (!touchMode) return;
+  if (!touchMode || !player) return;
 
   const j = joyCenter();
   const gOuter = ctx.createRadialGradient(j.cx, j.cy, JOY_BASE_R * 0.6, j.cx, j.cy, JOY_BASE_R * 1.4);
@@ -1183,16 +1266,22 @@ function loop() {
   const time = performance.now();
 
   if (!paused) {
-    player.update();
-    player.checkHeadCollision();
+    if (player) {
+      player.update();
+      player.checkHeadCollision();
+      if (player.alive) myBest = Math.max(myBest, Math.floor(player.length));
+    }
 
     spawnFoods();
 
     for (const p of particles) p.update();
     particles = particles.filter(p => p.life > 0);
 
-    if (player) {
-      const head = player.segments[0];
+    // 玩家看自己的蛇；觀戰的房主跟隨目前最長的蛇
+    const focus = (player && player.alive) ? player
+      : allSnakes().filter(s => s.alive).sort((a, b) => b.length - a.length)[0];
+    if (focus && focus.segments[0]) {
+      const head = focus.segments[0];
       cam.x += (head.x - cam.x) * 0.12;
       cam.y += (head.y - cam.y) * 0.12;
     }
@@ -1212,80 +1301,327 @@ function loop() {
   renderHUD();
   renderTouchControls();
 
-  if (player && !player.alive) {
-    running = false;
-    showGameOver();
-    return;
+  // 撞到後 3 秒自動重生，直到時間到才結算
+  if (player && !player.alive && roundActive && !respawnTimer) {
+    myDeaths++;
+    if (myDocRef) updateDoc(myDocRef, { deaths: myDeaths, best: myBest }).catch(() => {});
+    document.getElementById('gameover').style.display = 'flex';
+    respawnTimer = setTimeout(() => {
+      respawnTimer = null;
+      document.getElementById('gameover').style.display = 'none';
+      if (roundActive) spawnLocalSnake(false);
+    }, 3000);
   }
 
   requestAnimationFrame(loop);
 }
 
-// ============== 開始 / 重啟 ==============
-window.startGame = async function startGame() {
-  const nameInput = document.getElementById('nameInput');
-  const name = (nameInput.value || '').trim() || '玩家';
+// ============== 房間系統（最多 6 人、限時一局、時間到結算）==============
+const MAX_PLAYERS = 6;
+const ROOMS = 'snake_rooms', PLAYERS = 'snake_players';
+const $id = id => document.getElementById(id);
+let roomCode = '', roomRef = null, isRoomHost = false, roomData = null;
+let roomPlayers = [];            // [{id, ...data}]，依加入順序
+let offRoom = null, offPlayers = null;
+let roundSeen = -1, roundActive = false, roundEndsAt = 0;
+let myDeaths = 0, myCorrect = 0, myBest = MIN_LENGTH, respawnTimer = null;
+let myName = '玩家', myHue = 0;
+let serverOffset = 0;            // 伺服器時間 − 本機時間，中途加入時用來算剩餘秒數
 
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('gameover').style.display = 'none';
-  document.getElementById('hud').style.display = 'block';
+// 量測本機與伺服器的時間差（讀回剛寫入的 serverTimestamp）
+async function measureOffset(ref, field) {
+  try {
+    const t0 = Date.now();
+    const ms = (await getDoc(ref)).data()?.[field]?.toMillis?.();
+    if (ms) serverOffset = ms - t0;
+  } catch (err) {}
+}
 
-  foods = [];
-  particles = [];
-  foodsEatenSinceQuiz = 0;
-  paused = false;
-  document.getElementById('mathModal').style.display = 'none';
+// 加入連結帶房間碼，掃描 QR code 後自動填好
+function joinUrl(code) {
+  const url = new URL(location.href);
+  url.search = ''; url.hash = '';
+  url.searchParams.set('room', code);
+  return url.toString();
+}
+function showJoinQr(code) {
+  let src = '';
+  try {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(joinUrl(code));
+    qr.make();
+    src = qr.createDataURL(6, 2);
+  } catch (err) { console.warn('QR code', err); }
+  for (const id of ['lobbyQr', 'joinQr']) { $id(id).src = src; $id(id).style.display = src ? '' : 'none'; }
+  $id('joinCode').textContent = code;
+}
+{
+  const fromLink = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+  if (/^[A-Z]{4}$/.test(fromLink)) {
+    $id('roomCodeInput').value = fromLink;
+    roomMsg(`已帶入房間碼 ${fromLink}，輸入名字後按「加入房間」`);
+  }
+}
 
+function makeRoomCode() {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+}
+function roomMsg(text) { $id('roomMsg').textContent = text || ''; }
+function setRoomButtons(disabled) { $id('createRoomBtn').disabled = $id('joinRoomBtn').disabled = disabled; }
+function showOverlay(which) {
+  $id('lobby').style.display = which === 'lobby' ? 'flex' : 'none';
+  $id('results').style.display = which === 'results' ? 'flex' : 'none';
+}
+function readName() { return ($id('nameInput').value || '').trim().slice(0, 12) || '玩家'; }
+
+async function createRoom() {
+  myName = readName();
+  const hostPlays = $id('hostPlays').checked;
+  const durationSec = Number($id('durationSel').value) || 300;
+  setRoomButtons(true); roomMsg('正在建立房間…');
+  try {
+    let code = '';
+    for (let i = 0; i < 6 && !code; i++) {
+      const c = makeRoomCode();
+      if (!(await getDoc(doc(db, ROOMS, c))).exists()) code = c;
+    }
+    if (!code) throw new Error('暫時無法取得房間碼，請再試一次');
+    roomCode = code; roomRef = doc(db, ROOMS, code); isRoomHost = true;
+    if (hostPlays) myDocRef = doc(collection(db, PLAYERS));
+    await setDoc(roomRef, {
+      hostName: myName, hostPlays, hostPlayerId: hostPlays ? myDocRef.id : null,
+      durationSec, status: 'lobby', round: 0, created_at: serverTimestamp()
+    });
+    await measureOffset(roomRef, 'created_at');
+    if (hostPlays) await joinAsPlayer();
+    enterLobby();
+  } catch (err) {
+    console.error(err); roomMsg('建立房間失敗：' + err.message); setRoomButtons(false);
+    roomCode = ''; roomRef = null; isRoomHost = false; myDocRef = null;
+  }
+}
+
+async function joinRoom() {
+  const code = ($id('roomCodeInput').value || '').trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { roomMsg('請輸入 4 個英文字母的房間碼'); return; }
+  myName = readName();
+  setRoomButtons(true); roomMsg('正在加入房間…');
+  try {
+    const snap = await getDoc(doc(db, ROOMS, code));
+    if (!snap.exists()) throw new Error('找不到這個房間');
+    const players = await getDocs(query(collection(db, PLAYERS), where('room', '==', code)));
+    if (players.size >= MAX_PLAYERS) throw new Error(`房間已滿（最多 ${MAX_PLAYERS} 人）`);
+    roomCode = code; roomRef = doc(db, ROOMS, code); isRoomHost = false;
+    myDocRef = doc(collection(db, PLAYERS));
+    await joinAsPlayer();
+    enterLobby();
+  } catch (err) {
+    console.error(err); roomMsg('加入失敗：' + err.message); setRoomButtons(false);
+    roomCode = ''; roomRef = null; myDocRef = null;
+  }
+}
+
+async function joinAsPlayer() {
+  myHue = Math.random() * 360;
+  await setDoc(myDocRef, {
+    room: roomCode, name: myName, hue: myHue, alive: false,
+    length: MIN_LENGTH, best: MIN_LENGTH, kills: 0, deaths: 0, correct: 0,
+    boosting: false, head: null, angle: 0, killedBy: null,
+    joined_at: serverTimestamp(), updated_at: serverTimestamp()
+  });
+  await measureOffset(myDocRef, 'joined_at');
+}
+
+function enterLobby() {
+  roomMsg('');
+  $id('menu').style.display = 'none';
+  $id('lobbyCode').textContent = roomCode;
+  showJoinQr(roomCode);
+  showOverlay('lobby');
+  offRoom = onSnapshot(roomRef, onRoomSnapshot, err => console.error('room', err));
+  offPlayers = onSnapshot(query(collection(db, PLAYERS), where('room', '==', roomCode)), snapshot => {
+    roomPlayers = snapshot.docs
+      .map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
+      .sort((a, b) => (a.joined_at?.toMillis?.() ?? 0) - (b.joined_at?.toMillis?.() ?? 0));
+    applyPlayersSnapshot(snapshot);
+    renderLobby();
+    if ($id('results').style.display === 'flex') renderResults();
+  }, err => console.error('players', err));
+}
+
+function onRoomSnapshot(snap) {
+  if (!snap.exists()) { leaveRoom('房主已關閉房間。'); return; }
+  roomData = snap.data({ serverTimestamps: 'estimate' });
+  if (roomData.status === 'playing' && roomData.round !== roundSeen && !roundActive) {
+    roundSeen = roomData.round;
+    beginRound(snap.metadata.hasPendingWrites);
+  } else if (roomData.status === 'finished' && roundActive) {
+    endRound();
+  } else if (roomData.status === 'lobby' && !roundActive) {
+    showOverlay('lobby');
+  }
+  renderLobby();
+}
+
+function renderLobby() {
+  const list = $id('lobbyList');
+  list.innerHTML = '';
+  for (let i = 0; i < MAX_PLAYERS; i++) {
+    const p = roomPlayers[i];
+    const div = document.createElement('div');
+    if (p) {
+      div.className = 'lobby-slot';
+      div.textContent = `${i + 1}. ${p.name || '玩家'}${p.id === roomData?.hostPlayerId ? '（房主）' : ''}${myDocRef && p.id === myDocRef.id ? '　← 你' : ''}`;
+      div.style.borderColor = `hsl(${p.hue || 0}, 70%, 60%)`;
+    } else {
+      div.className = 'lobby-slot empty';
+      div.textContent = `${i + 1}. 等待加入…`;
+    }
+    list.append(div);
+  }
+  const mins = Math.round((roomData?.durationSec || 300) / 60);
+  const hostNote = roomData?.hostPlays === false ? `・房主「${roomData.hostName || ''}」只觀戰` : '';
+  $id('lobbyInfo').textContent = `${roomPlayers.length} / ${MAX_PLAYERS} 位玩家・每局 ${mins} 分鐘${hostNote}${isRoomHost ? '' : '・等待房主開始'}`;
+  const btn = $id('startRoundBtn');
+  btn.style.display = isRoomHost ? '' : 'none';
+  btn.disabled = roomPlayers.length === 0 || roomData?.status === 'playing';
+}
+
+async function startRound() {
+  if (!isRoomHost || !roomRef || roomPlayers.length === 0) return;
+  $id('startRoundBtn').disabled = $id('nextRoundBtn').disabled = true;
+  try {
+    await updateDoc(roomRef, { status: 'playing', round: (roomData?.round || 0) + 1, startedAt: serverTimestamp() });
+  } catch (err) { console.error(err); alert('開始失敗：' + err.message); }
+  $id('nextRoundBtn').disabled = false;
+}
+
+function beginRound(justStartedHere) {
+  roundActive = true;
+  // 中途加入的玩家只拿到剩餘時間：以伺服器的開局時間換算成本機時間
+  const duration = (roomData?.durationSec || 300) * 1000;
+  const startedAt = roomData?.startedAt?.toMillis?.();
+  roundEndsAt = (startedAt && !justStartedHere) ? Math.min(startedAt - serverOffset + duration, Date.now() + duration) : Date.now() + duration;
+  showOverlay(null);
+  $id('roundTimer').style.display = 'block';
+  myDeaths = 0; myCorrect = 0; myBest = MIN_LENGTH;
+  foods = []; particles = []; foodsEatenSinceQuiz = 0; paused = false; currentQuestion = null;
+  creditedKills.clear();
+  $id('mathModal').style.display = 'none';
+  $id('gameover').style.display = 'none';
+  if (myDocRef) {
+    $id('hud').style.display = 'block';
+    $id('spectatorBanner').style.display = 'none';
+    spawnLocalSnake(true);
+  } else {
+    player = null;
+    $id('hud').style.display = 'none';
+    $id('spectatorBanner').style.display = 'block';
+    $id('joinPanel').style.display = 'block';
+    cam.x = WORLD_SIZE / 2; cam.y = WORLD_SIZE / 2;
+  }
+  spawnFoods();
+  if (!running) { running = true; requestAnimationFrame(loop); }
+  tickRound();
+}
+
+function spawnLocalSnake(fresh) {
+  const kills = (!fresh && player) ? player.kills : 0;
   player = new Snake({
     x: rand(600, WORLD_SIZE - 600),
     y: rand(600, WORLD_SIZE - 600),
-    name: name,
-    isPlayer: true,
-    hue: Math.random() * 360,
-    length: MIN_LENGTH
+    name: myName, isPlayer: true, hue: myHue, length: MIN_LENGTH
   });
-
-  cam.x = player.x;
-  cam.y = player.y;
-
+  player.kills = kills;
+  player.shieldUntil = performance.now() + 2000; // 重生後短暫保護
+  cam.x = player.x; cam.y = player.y;
   const head = player.segments[0];
-  const payload = {
-    name: player.name, hue: player.hue, alive: true,
-    length: Math.floor(player.length), kills: 0, boosting: false,
-    head: { x: head.x, y: head.y }, angle: player.angle,
-    killedBy: null, updated_at: serverTimestamp()
-  };
-  // 先在本地產生文件 ID 再寫入，避免 addDoc 非同步期間監聽器把自己誤判成另一個玩家
-  if (!myDocRef) myDocRef = doc(collection(db, 'snake_players'));
-  await setDoc(myDocRef, payload).catch(() => {});
+  updateDoc(myDocRef, {
+    name: myName, hue: myHue, alive: true, length: MIN_LENGTH, kills, boosting: false,
+    head: { x: head.x, y: head.y }, angle: player.angle, killedBy: null,
+    best: myBest, deaths: myDeaths, correct: myCorrect, updated_at: serverTimestamp()
+  }).catch(() => {});
   startNetworkSync();
-
-  spawnFoods();
-
-  running = true;
-  requestAnimationFrame(loop);
-};
-
-window.restart = function restart() {
-  document.getElementById('gameover').style.display = 'none';
-  document.getElementById('menu').style.display = 'flex';
-};
-
-function showGameOver() {
-  const allRanked = [...allSnakes()].sort((a, b) => b.length - a.length);
-  let rank = allRanked.indexOf(player) + 1;
-  if (rank <= 0) rank = allRanked.length || 1;
-
-  document.getElementById('finalLength').textContent = Math.floor(player.length);
-  document.getElementById('finalKills').textContent = player.kills;
-  document.getElementById('finalRank').textContent = '#' + rank;
-  document.getElementById('gameover').style.display = 'flex';
-  document.getElementById('hud').style.display = 'none';
 }
 
-document.getElementById('nameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') window.startGame();
-});
+function tickRound() {
+  if (!roundActive) return;
+  const left = Math.max(0, roundEndsAt - Date.now());
+  const sec = Math.ceil(left / 1000);
+  const el = $id('roundTimer');
+  el.textContent = `⏱ ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  el.classList.toggle('urgent', sec <= 10);
+  if (left <= 0) endRound();
+}
+setInterval(tickRound, 250);
+
+function endRound() {
+  if (!roundActive) return;
+  roundActive = false;
+  running = false;
+  clearTimeout(respawnTimer); respawnTimer = null;
+  stopNetworkSync();
+  paused = false; currentQuestion = null;
+  ['mathModal', 'gameover', 'hud', 'roundTimer', 'spectatorBanner', 'joinPanel'].forEach(id => $id(id).style.display = 'none');
+  if (player && player.alive) myBest = Math.max(myBest, Math.floor(player.length));
+  if (myDocRef) {
+    updateDoc(myDocRef, {
+      alive: false, killedBy: null, best: myBest, deaths: myDeaths, correct: myCorrect,
+      kills: player ? player.kills : 0, updated_at: serverTimestamp()
+    }).catch(() => {});
+  }
+  if (isRoomHost && roomData?.status === 'playing') updateDoc(roomRef, { status: 'finished' }).catch(() => {});
+  showOverlay('results');
+  renderResults();
+}
+
+function renderResults() {
+  const rows = [...roomPlayers].sort((a, b) => (b.best || 0) - (a.best || 0) || (b.kills || 0) - (a.kills || 0));
+  const body = $id('resultsBody');
+  body.innerHTML = '';
+  rows.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    if (myDocRef && p.id === myDocRef.id) tr.className = 'me';
+    const medal = ['🥇', '🥈', '🥉'][i] || String(i + 1);
+    for (const value of [medal, p.name || '玩家', p.best || 0, p.kills || 0, p.deaths || 0, p.correct || 0]) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.append(td);
+    }
+    tr.firstChild.className = 'rank';
+    body.append(tr);
+  });
+  if (rows.length === 0) body.innerHTML = '<tr><td colspan="6">沒有玩家資料</td></tr>';
+  $id('nextRoundBtn').style.display = isRoomHost ? '' : 'none';
+  $id('resultsWait').textContent = isRoomHost ? '' : '等待房主開始下一局…';
+}
+
+function leaveRoom(message) {
+  roundActive = false; running = false;
+  clearTimeout(respawnTimer); respawnTimer = null;
+  stopNetworkSync();
+  if (offRoom) offRoom(); if (offPlayers) offPlayers();
+  offRoom = offPlayers = null;
+  if (myDocRef) deleteDoc(myDocRef).catch(() => {});
+  if (isRoomHost && roomRef) deleteDoc(roomRef).catch(() => {});
+  myDocRef = null; roomRef = null; roomCode = ''; isRoomHost = false; roomData = null;
+  roomPlayers = []; roundSeen = -1; player = null;
+  remoteSnakes.clear(); creditedKills.clear();
+  ['mathModal', 'gameover', 'hud', 'roundTimer', 'spectatorBanner', 'joinPanel'].forEach(id => $id(id).style.display = 'none');
+  showOverlay(null);
+  $id('menu').style.display = 'flex';
+  setRoomButtons(false);
+  roomMsg(message || '');
+}
+
+$id('createRoomBtn').addEventListener('click', createRoom);
+$id('joinRoomBtn').addEventListener('click', joinRoom);
+$id('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+$id('startRoundBtn').addEventListener('click', startRound);
+$id('nextRoundBtn').addEventListener('click', startRound);
+$id('leaveLobbyBtn').addEventListener('click', () => leaveRoom());
+$id('leaveResultsBtn').addEventListener('click', () => leaveRoom());
 </script>
 </body>
 </html>

@@ -19,6 +19,8 @@
 .topbar{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 12px;background:#172018;border-bottom:2px solid #546043;z-index:2}.top-brand{font-weight:1000;color:var(--gold);white-space:nowrap}.top-stats{display:flex;gap:clamp(7px,2vw,18px);align-items:center;overflow:hidden}.pill{background:#293628;border:1px solid #5a694b;border-radius:999px;padding:6px 10px;font-size:13px;white-space:nowrap}.player-mini{display:flex;gap:5px;align-items:center}.tiny-dot{width:12px;height:12px;border-radius:3px;display:inline-block}.top-action{border:1px solid #74815e;border-radius:7px;padding:6px 9px;background:#34442e;color:#fff4d0;font-weight:bold;white-space:nowrap}
 .touch-controls{position:absolute;inset:56px 0 0;pointer-events:none;z-index:3}.joystick{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));width:142px;height:142px;border:3px solid #edf1c866;border-radius:50%;background:#21321dbb;box-shadow:inset 0 0 0 17px #ffffff0a,0 4px 14px #0009;pointer-events:auto;touch-action:none}.joy-stick{position:absolute;left:42px;top:42px;width:54px;height:54px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2edaf,#8ba462 72%,#465839);border:2px solid #fff8;box-shadow:0 4px 9px #0008;pointer-events:none}.action-buttons{position:absolute;right:max(20px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));display:flex;align-items:flex-end;pointer-events:auto}.action-btn{width:clamp(52px,7vw,68px);height:clamp(52px,7vw,68px);border-radius:50%;border:3px solid #fff9;color:#fff;font-size:20px;font-weight:1000;text-shadow:0 2px 3px #000;box-shadow:0 4px 0 #1118,0 5px 12px #0008;touch-action:none}.action-btn.a{background:radial-gradient(circle at 33% 25%,#ff9b68,#bb3933 75%)}.action-btn:active,.action-btn.active{transform:translateY(3px);filter:brightness(1.25);box-shadow:0 2px 0 #1118}.action-label{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:12px;text-shadow:0 2px 3px #000}
 .hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:2;background:#101711c9;border:1px solid #566547;border-radius:999px;padding:6px 12px;color:#e4e8d4;font-size:12px;white-space:nowrap;pointer-events:none}.rotate-hint{display:none}
+.lobby-qr{display:block;width:150px;height:150px;margin:0 auto 6px;background:#fff;border-radius:10px;image-rendering:pixelated}
+.join-panel{display:none;position:absolute;top:66px;right:12px;z-index:5;width:172px;padding:9px;text-align:center;background:#172018ed;border:2px solid #ffcf58;border-radius:12px;color:#fff1b9;font-size:13px;font-weight:bold;box-shadow:0 4px 15px #0009;pointer-events:none}.join-panel img{display:block;width:150px;height:150px;margin:6px auto;background:#fff;border-radius:8px;image-rendering:pixelated}.join-code{font-size:28px;font-weight:1000;letter-spacing:6px;color:var(--gold)}.join-panel.compact{width:118px;padding:6px;font-size:11px}.join-panel.compact img{width:100px;height:100px;margin:4px auto}.join-panel.compact .join-code{font-size:20px;letter-spacing:4px}
 .spectator-notice{position:absolute;top:66px;left:50%;transform:translateX(-50%);z-index:4;max-width:calc(100% - 24px);padding:9px 14px;border:2px solid #ffcf58;border-radius:10px;background:#172018ed;color:#fff1b9;text-align:center;font-weight:900;line-height:1.45;box-shadow:0 4px 15px #0009;pointer-events:none}
 .modal{position:fixed;inset:0;z-index:20;display:none;place-items:center;background:#090e0bd9;padding:18px}.modal-card{width:min(440px,100%);background:#1b281b;border:3px solid var(--gold);border-radius:16px;padding:22px;text-align:center;box-shadow:0 10px 0 #0a100c,0 24px 70px #000b}.modal-card h2{color:var(--gold);margin:0 0 8px;font-size:25px}.question-text{font-size:clamp(32px,8vw,52px);font-weight:1000;margin:16px 0;color:white}.answer-row{display:flex;gap:8px}.answer-row input{min-width:0;flex:1;height:54px;font-size:28px;text-align:center;border:2px solid #829064;border-radius:8px;background:#0c130d;color:white}.answer-row button{flex:none}.answer-feedback{min-height:22px;color:var(--gold);margin-top:9px;font-weight:bold}.game-message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;text-align:center;font-size:clamp(24px,6vw,42px);font-weight:1000;color:var(--gold);text-shadow:0 3px #000,0 0 20px #000;background:#172018cc;padding:12px 20px;border:2px solid #b4b87b;border-radius:12px;pointer-events:none;display:none}
 @media(max-width:680px){.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.lobby-card{padding:18px}.topbar{height:50px;padding:4px 7px}.top-brand{font-size:13px}.pill{font-size:11px;padding:5px 7px}.top-stats{gap:4px}.top-action{font-size:12px;padding:5px 7px}.joystick{width:128px;height:128px}.joy-stick{left:37px;top:37px}.action-buttons{gap:10px}.hint{display:none}.rotate-hint{display:block;position:absolute;top:60px;right:8px;color:#d8dfc6;background:#111a12bf;padding:4px 7px;border-radius:6px;font-size:11px;z-index:2}}
@@ -34,15 +36,16 @@
     <div class="form-grid">
       <div class="field"><label for="playerName">玩家暱稱</label><input id="playerName" maxlength="10" autocomplete="nickname" placeholder="輸入你的名字"></div>
       <div class="field"><label for="mathType">我的數學題型</label><select id="mathType"><option value="add20">加法（20 以內）</option><option value="addsub100">加減法（100 以內）</option><option value="mul">九九乘法</option><option value="div">整除除法</option><option value="mixed">四則混合</option></select></div>
+      <div class="field full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input id="hostPlays" type="checkbox" checked style="width:22px;min-height:22px;height:22px;accent-color:#ffcf58">建立房間時，房主也加入遊戲（取消勾選＝房主只開房觀戰，6 個坦克位置都留給學生）</label></div>
       <div class="field full"><label for="roomCode">房間碼（加入遊戲時輸入）</label><input id="roomCode" maxlength="4" minlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="例如：ABCD" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:900"></div>
     </div>
     <div class="actions"><button id="createBtn" class="pixel-btn primary">建立新房間</button><button id="joinBtn" class="pixel-btn">加入房間</button><button id="homeBtn" class="pixel-btn">回教學首頁</button></div>
     <div id="status" role="status">正在連線至 Firebase…</div>
     <div id="roomPanel" class="room-panel">
-      <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div>
+      <div style="text-align:center;color:#d9e0c5">分享房間碼，邀請其他玩家加入</div><div id="roomCodeDisplay" class="room-code">------</div><img id="lobbyQr" class="lobby-qr" alt="掃描加入房間"><div style="text-align:center;color:#aebaa3;font-size:12px;margin-bottom:10px">用平板掃描 QR code 也能加入，遊戲開始後仍可隨時加入</div>
       <div id="seatList" class="seat-list"></div>
       <div class="actions" style="justify-content:center"><button id="readyBtn" class="pixel-btn">我準備好了</button><button id="startBtn" class="pixel-btn primary" disabled>開始闖關</button></div>
-      <div class="small-note">最多 6 人一起遊玩。每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始；開始前房主可移除成員，一人遊玩可直接開始。</div>
+      <div class="small-note">最多 6 人一起遊玩，開打後也能隨時加入。每台平板選擇題型並按「準備好了」，房主等所有已加入玩家準備完成後即可開始（房主可選擇只開房觀戰，不佔坦克位置）；開始前房主可移除成員，一人遊玩可直接開始。</div>
     </div>
     <div class="small-note">本遊戲已設定 Firebase 匿名登入與專用 Firestore 規則；玩家不需要註冊個人帳號即可使用。若換用其他 Firebase 專案，請重新啟用匿名登入並部署規則。</div>
   </div>
@@ -56,11 +59,13 @@
   <div class="hint">鍵盤：方向鍵移動　Space 射擊</div>
   <div id="gameMessage" class="game-message"></div>
   <div id="spectatorNotice" class="spectator-notice" role="status" style="display:none"></div>
+  <div id="joinPanel" class="join-panel"><div>掃描加入遊戲</div><img id="joinQr" alt="加入房間 QR code"><div id="joinCode" class="join-code">----</div></div>
 </main>
 
 <div id="quizModal" class="modal"><div class="modal-card"><h2 id="quizTitle">數學挑戰</h2><div id="quizPrompt" class="question-text">5 + 6 = ?</div><div class="answer-row"><input id="answerInput" type="number" inputmode="numeric" aria-label="答案"><button id="answerBtn" class="pixel-btn primary">送出</button></div><div id="answerFeedback" class="answer-feedback"></div></div></div>
 <div id="endModal" class="modal"><div class="modal-card"><h2 id="endTitle">關卡完成！</h2><div id="endText" style="font-size:18px;line-height:1.6;margin:14px 0"></div><div class="actions" style="justify-content:center"><button id="replayBtn" class="pixel-btn primary">再玩一次</button><button id="returnBtn" class="pixel-btn">回房間大廳</button></div></div></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -80,7 +85,7 @@ const app = initializeApp(firebaseConfig, "tank-battle");
 const auth = getAuth(app);
 const db = getFirestore(app);
 const $ = id => document.getElementById(id);
-const COLORS = ["#57d3ff", "#ffcf58", "#ff7474", "#a8ed70"];
+const COLORS = ["#57d3ff", "#ffcf58", "#ff7474", "#a8ed70", "#ff9de2", "#ffffff"];
 const MATH_NAMES = {add20:"加法（20 以內）",addsub100:"加減法（100 以內）",mul:"九九乘法",div:"整除除法",mixed:"四則混合"};
 const TREASURES = [
   {kind:"invincible",icon:"🛡️",name:"20 秒無敵"},
@@ -99,7 +104,9 @@ let pendingInputWrite=null,inputWriteActive=false;
 let previousRenderPositions=new Map(),renderTransitionStartedAt=0,localTankRender=null;
 const INPUT_SYNC_MS = 70, WORLD_SYNC_MS = 200;
 const colorBySeat = seat => COLORS[Number(seat) % COLORS.length];
-const canStartMatch = () => seats.length === 1 || (seats.length > 1 && seats.every(s => s.ready));
+// 房主不必按準備；其他玩家都準備好才能開始（房主觀戰時至少要有一位玩家）。
+const canStartMatch = () => seats.length > 0 && seats.every(s => s.ready || s.uid === roomData?.hostUid);
+const isSpectatorHost = () => isHost && mySeat < 0;
 let audioContext=null,seenSoundEventIds=null;
 function unlockGameAudio(){
   const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return;
@@ -183,18 +190,18 @@ function detachRoomListeners() {
 
 async function createRoom() {
   if(!uid) return;
-  const name=safeText($("playerName").value,10), topic=$("mathType").value;
+  const name=safeText($("playerName").value,10), topic=$("mathType").value, hostPlays=$("hostPlays").checked;
   localStorage.setItem("tankBattleName",name);
   $("createBtn").disabled=true; say("正在建立房間…");
   try {
     let created=false;
     for(let i=0;i<4&&!created;i++) {
       const code=makeRoomCode(), r=roomRef(code), hostSeat=seatRef(code,0);
-      try { await runTransaction(db,async tx=>{const old=await tx.get(r);if(old.exists()) throw new Error("ROOM_EXISTS");tx.set(r,{hostUid:uid,status:"lobby",level:1,createdAt:serverTimestamp(),hostBeat:serverTimestamp()});tx.set(hostSeat,{uid,name,topic,ready:false,seat:0,joinedAt:serverTimestamp()});}); roomId=code;isHost=true;mySeat=0;created=true; }
+      try { await runTransaction(db,async tx=>{const old=await tx.get(r);if(old.exists()) throw new Error("ROOM_EXISTS");tx.set(r,{hostUid:uid,hostPlays,status:"lobby",level:1,createdAt:serverTimestamp(),hostBeat:serverTimestamp()});if(hostPlays)tx.set(hostSeat,{uid,name,topic,ready:false,seat:0,joinedAt:serverTimestamp()});}); roomId=code;isHost=true;mySeat=hostPlays?0:-1;created=true; }
       catch(err){if(err.message!=="ROOM_EXISTS") throw err;}
     }
     if(!created) throw new Error("暫時無法取得房間碼，請再試一次。");
-    enterRoom(); say("房間已建立，請分享代碼並等待隊友加入。");
+    enterRoom(); say(hostPlays?"房間已建立，請分享代碼並等待隊友加入。":"房間已建立（房主觀戰模式），請分享代碼，最多 6 位玩家加入。");
   } catch(err) {console.error(err);say(`建立房間失敗：${err.message}`,true);$("createBtn").disabled=false;}
 }
 
@@ -208,7 +215,6 @@ async function joinRoom() {
     const r=roomRef(code); let assigned=-1;
     await runTransaction(db,async tx=>{
       const room=await tx.get(r); if(!room.exists()) throw new Error("找不到這個房間碼。");
-      if(room.data().status!=="lobby") throw new Error("遊戲已經開始，不能加入。");
       const refs=[0,1,2,3,4,5].map(i=>seatRef(code,i)); const snaps=[]; for(const ref of refs) snaps.push(await tx.get(ref));
       for(let i=0;i<snaps.length;i++) if(snaps[i].exists()&&snaps[i].data().uid===uid){assigned=i;return;}
       assigned=snaps.findIndex(s=>!s.exists()); if(assigned<0) throw new Error("房間已滿，最多 6 位玩家。");
@@ -219,10 +225,11 @@ async function joinRoom() {
 }
 
 function enterRoom() {
-  unsubscribed=false;hasSeenMySeat=false; $("createBtn").disabled=$("joinBtn").disabled=true; $("roomPanel").style.display="block";$("roomCodeDisplay").textContent=roomId;$("roomPill").textContent=`房間 ${roomId}`;
+  unsubscribed=false;hasSeenMySeat=false; $("createBtn").disabled=$("joinBtn").disabled=true; $("roomPanel").style.display="block";$("readyBtn").style.display=isSpectatorHost()?"none":"";$("roomCodeDisplay").textContent=roomId;showJoinQr(roomId);$("roomPill").textContent=`房間 ${roomId}`;
   offRoom=onSnapshot(roomRef(roomId),snap=>{
     if(!snap.exists()){say("房間已關閉。",true);return;}
     roomData=snap.data();
+    renderSeats();
     if(roomData.status==="playing"||roomData.status==="intermission") startGameView();
   },err=>say(`房間讀取失敗：${err.message}`,true));
   offSeats=onSnapshot(collection(db,"tankRooms",roomId,"seats"),snap=>{
@@ -234,6 +241,7 @@ function enterRoom() {
     if(isHost){
       const occupied=seats.length>0;
       $("startBtn").disabled=!occupied||!canStartMatch()||roomData?.status!=="lobby";
+      addLateJoiners();
     }
   },err=>say(`玩家列表讀取失敗：${err.message}`,true));
   if(isHost){
@@ -245,7 +253,7 @@ function renderSeats() {
   const box=$("seatList"); box.innerHTML="";
   for(let i=0;i<6;i++) {
     const p=seats.find(s=>Number(s.id)===i); const div=document.createElement("div");div.className=`seat ${p?.ready?"ready":""} ${p?"":"empty"}`;
-    if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${i===0?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";if(isHost&&i!==0&&roomData?.status==="lobby"){const kick=document.createElement("button");kick.className="seat-kick";kick.type="button";kick.textContent="移除";kick.setAttribute("aria-label",`移除玩家 ${p.name||"玩家"}`);kick.addEventListener("click",()=>kickMember(String(i),p.uid));div.append(kick);}}
+    if(p){div.innerHTML=`<span class="seat-color" style="background:${colorBySeat(i)}"></span><div style="min-width:0"><div class="seat-name"></div><div class="seat-info"></div></div>`;div.querySelector(".seat-name").textContent=`${p.uid===roomData?.hostUid?"房主・":""}${p.name||"玩家"}`;div.querySelector(".seat-info").textContent=MATH_NAMES[p.topic]||"尚未選題";if(isHost&&p.uid!==uid&&roomData?.status==="lobby"){const kick=document.createElement("button");kick.className="seat-kick";kick.type="button";kick.textContent="移除";kick.setAttribute("aria-label",`移除玩家 ${p.name||"玩家"}`);kick.addEventListener("click",()=>kickMember(String(i),p.uid));div.append(kick);}}
     else div.innerHTML=`<span class="seat-color" style="background:#3a4737"></span><span>坦克 ${i+1}・等待加入</span>`;
     box.append(div);
   }
@@ -254,7 +262,7 @@ function renderSeats() {
 }
 
 async function kickMember(seatId,expectedUid) {
-  if(!isHost||seatId==="0"||roomData?.status!=="lobby")return;
+  if(!isHost||expectedUid===uid||roomData?.status!=="lobby")return;
   try {
     await runTransaction(db,async tx=>{
       const r=roomRef(roomId),target=seatRef(roomId,seatId);
@@ -268,12 +276,20 @@ async function kickMember(seatId,expectedUid) {
   } catch(err) {console.error(err);say(`移除失敗：${err.message}`,true);}
 }
 
+function newTankPlayer(s) { const pos=spawnFor(Number(s.id)); return {uid:s.uid,seat:Number(s.id),name:s.name||"玩家",topic:s.topic||"add20",x:pos.x,y:pos.y,dir:0,lives:3,kills:0,score:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,respawnAt:0,lastFireAt:0}; }
+// 遊戲進行中有人加入：房主把新座位直接放進目前的戰場。
+function addLateJoiners() {
+  if(!isHost||!world||!["playing","intermission"].includes(world.status))return;
+  let added=false;
+  for(const s of seats)if(!world.players?.[s.uid]){world.players[s.uid]=newTankPlayer(s);added=true;showToast(`${safeText(s.name,10)} 加入戰場！`);}
+  if(added)publishWorld();
+}
 function makeWorld(level, previous=null) {
   const players={};
   seats.forEach(s=>{
     const old=previous?.players?.[s.uid];
     const pos=spawnFor(Number(s.id));
-    players[s.uid]=old?{...old,x:pos.x,y:pos.y,dir:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,respawnAt:0,lastFireAt:0}:{uid:s.uid,seat:Number(s.id),name:s.name||"玩家",topic:s.topic||"add20",x:pos.x,y:pos.y,dir:0,lives:3,kills:0,score:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,respawnAt:0,lastFireAt:0};
+    players[s.uid]=old?{...old,x:pos.x,y:pos.y,dir:0,pausedForQuiz:false,invulnerableUntil:Date.now()+1800,respawnAt:0,lastFireAt:0}:newTankPlayer(s);
   });
   // Firestore 不接受巢狀陣列；攤平成一維後仍可用列欄座標讀取地圖。
   return {status:"playing",level,map:level-1,mapTiles:M[level-1].flatMap(row=>[...row]),players,enemies:[],bullets:[],treasures:[],explosions:[],soundEvents:[],enemiesPausedUntil:previous?.enemiesPausedUntil||0,remainingToSpawn:20,destroyed:0,spawnAt:Date.now()+300,enemySeq:0,startedAt:Date.now(),updatedAt:Date.now()};
@@ -326,6 +342,11 @@ function smoothLocalTank(tank,x,y,dir,now) {
 function startGameView() {
   if(offWorld) return;
   $("game").style.display="block"; $("lobby").style.display="none";
+  document.querySelector(".touch-controls").style.display=isSpectatorHost()?"none":"";
+  // 房主的畫面一律顯示加入用 QR code；房主也在玩時縮小，避免擋住戰場。
+  $("joinPanel").style.display=isHost?"block":"none";
+  $("joinPanel").classList.toggle("compact",isHost&&!isSpectatorHost());
+  document.querySelector(".hint").style.visibility=isSpectatorHost()?"hidden":"";
   offWorld=onSnapshot(worldRef(roomId),snap=>{
     if(!snap.exists()) return;
     const incoming=snap.data();syncWorldSounds(incoming);lastWorldReceivedAt=Date.now();
@@ -553,7 +574,8 @@ function updateHud() {
   });
   if(!isHost&&roomData?.hostBeat?.toMillis&&Date.now()-roomData.hostBeat.toMillis()>18000)showToast("房主連線中斷，遊戲同步暫停");
   const notice=$("spectatorNotice");
-  if(mine&&mine.lives<=0){notice.textContent=`遊戲結束｜你的得分：${mine.score||0} 分・擊破 ${mine.kills||0} 台｜可繼續觀戰`;notice.style.display="block";}
+  if(isSpectatorHost()){notice.textContent="房主觀戰模式｜請保持此頁面開啟，遊戲由這台裝置主持";notice.style.display="block";}
+  else if(mine&&mine.lives<=0){notice.textContent=`遊戲結束｜你的得分：${mine.score||0} 分・擊破 ${mine.kills||0} 台｜可繼續觀戰`;notice.style.display="block";}
   else {notice.textContent="";notice.style.display="none";}
 }
 
@@ -580,7 +602,7 @@ function drawBattlefield(w,h,now) {
   ctx.save();ctx.translate(left,top);ctx.scale(tile/40,tile/40);
   for(let row=0;row<13;row++)for(let col=0;col<13;col++)drawTile(ctx,col*40,row*40,world.mapTiles?.[row*13+col]||0,now);
   drawBase(ctx,260,500);
-  const activePlayers=Object.values(world.players||{});
+  const activePlayers=Object.values(world.players||{}),nameTags=[];
   for(const enemy of world.enemies||[]){const display=interpolateRemoteTank(enemy,`e:${enemy.id}`,now);drawTank(ctx,display,display.dir,enemy.special?"#b65bd4":"#d9514b",now,true);}
   for(const p of activePlayers)if(p.lives>0&&!p.pausedForQuiz&&p.x>=0&&p.x<520){
     let displayTank;
@@ -596,12 +618,23 @@ function drawBattlefield(w,h,now) {
       displayTank=interpolateRemoteTank(p,`p:${p.uid}`,now);
     }
     drawTank(ctx,displayTank,displayTank.dir,colorBySeat(p.seat),now,false);
+    nameTags.push({x:displayTank.x,y:displayTank.y,name:safeText(p.name,6),color:p.uid===uid?"#fff59a":colorBySeat(p.seat)});
   }
   for(const b of world.bullets||[]){ctx.fillStyle=b.enemy?"#ff6b5f":"#fff0a6";ctx.fillRect(b.x-3,b.y-4,6,8);ctx.strokeStyle="#6a2c22";ctx.strokeRect(b.x-3,b.y-4,6,8);}
   // 樹叢畫在坦克與砲彈上方，保留經典地形遮蔽感。
   for(let row=0;row<13;row++)for(let col=0;col<13;col++)if(world.mapTiles?.[row*13+col]===3)drawBush(ctx,col*40,row*40);
   for(const treasure of world.treasures||[]){ctx.save();ctx.translate(treasure.x,treasure.y);ctx.shadowColor="#ffe78a";ctx.shadowBlur=12;ctx.fillStyle="#664414";ctx.fillRect(-12,-12,24,24);ctx.fillStyle="#ffd34f";ctx.fillRect(-10,-10,20,18);ctx.fillStyle="#fff1ad";ctx.font="bold 18px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(treasure.icon||"🎁",0,0);ctx.restore();}
   for(const effect of world.explosions||[])drawExplosion(ctx,effect,now);
+  // 玩家名字畫在樹叢上方，躲進樹叢時隊友仍看得到是誰。
+  // 深色名牌底＋玩家顏色外框，平板上也看得清楚；坦克在最上排時名牌改放在坦克下方。
+  ctx.font="900 16px 'Microsoft JhengHei',sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  for(const tag of nameTags){
+    const w=ctx.measureText(tag.name).width+12,h=21,cy=tag.y<44?tag.y+33:tag.y-33;
+    ctx.fillStyle="#101711e6";ctx.strokeStyle=tag.color;ctx.lineWidth=2;
+    ctx.beginPath();ctx.roundRect(tag.x-w/2,cy-h/2,w,h,6);ctx.fill();ctx.stroke();
+    ctx.fillStyle=tag.color;ctx.fillText(tag.name,tag.x,cy+1);
+  }
+  ctx.textBaseline="alphabetic";
   ctx.restore();
   ctx.textAlign="center";ctx.textBaseline="alphabetic";ctx.font="bold 12px monospace";ctx.fillStyle="#e5e6c9";
   ctx.fillText(`STAGE ${world.level}　・　擊破 ${world.destroyed||0} / 20`,w/2,Math.min(h-5,top+boardSize+25));
@@ -711,6 +744,18 @@ async function leaveRoom() {
 
 window.addEventListener("beforeunload",()=>{if(roomId&&uid&&mySeat>=0)deleteDoc(seatRef(roomId,mySeat)).catch(()=>{});});
 window.addEventListener("resize",()=>{if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=requestAnimationFrame(drawLoop);}});
+// 加入連結帶房間碼，掃描 QR code 後自動填好
+function joinUrl(code) { const url=new URL(location.href); url.search=""; url.hash=""; url.searchParams.set("room",code); return url.toString(); }
+function showJoinQr(code) {
+  let src="";
+  try { const qr=window.qrcode(0,"M"); qr.addData(joinUrl(code)); qr.make(); src=qr.createDataURL(6,2); } catch(err) { console.warn("QR code",err); }
+  for(const id of ["lobbyQr","joinQr"]){$(id).src=src;$(id).style.display=src?"":"none";}
+  $("joinCode").textContent=code;
+}
+{
+  const fromLink=(new URLSearchParams(location.search).get("room")||"").toUpperCase();
+  if(/^[A-HJ-NP-Z]{4}$/.test(fromLink)){$("roomCode").value=fromLink;}
+}
 connectFirebase();
 </script>
 </body>

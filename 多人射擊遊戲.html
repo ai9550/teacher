@@ -258,6 +258,40 @@
   .math-feedback.wrong { color: #f88; }
   @keyframes shake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-12px);} 40%,80%{transform:translateX(12px);} }
   .math-card.shake { animation: shake 0.4s ease; }
+
+  /* ---------- 房間 / 大廳 / 結算 ---------- */
+  .room-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .room-row input, .room-row select { flex: 1; min-width: 0; font-size: 16px; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(120,200,255,0.4); border-radius: 12px; color: #fff; outline: none; font-family: 'Noto Sans TC', sans-serif; }
+  .room-row select option { background: #12161f; }
+  #roomCodeInput { text-transform: uppercase; letter-spacing: 6px; text-align: center; font-family: 'Orbitron', sans-serif; }
+  .room-btn { flex: none; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-weight: 700; font-size: 16px; padding: 12px 22px; color: #0a0e14; background: linear-gradient(135deg, #4cf 0%, #f84 100%); border: none; border-radius: 12px; touch-action: manipulation; }
+  .room-btn.alt { background: rgba(255,255,255,0.08); color: #cef; border: 1px solid rgba(120,200,255,0.4); }
+  .room-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .host-check { display: flex; align-items: center; gap: 8px; color: #cef; font-size: 14px; text-align: left; margin-bottom: 12px; cursor: pointer; }
+  .host-check input { width: 20px; height: 20px; accent-color: #4cf; flex: none; }
+  #roomMsg { min-height: 22px; color: #ffd84a; font-size: 14px; }
+  .overlay { display: none; position: fixed; inset: 0; z-index: 25; align-items: center; justify-content: center; background: rgba(5,8,18,0.86); backdrop-filter: blur(8px); padding: 16px; }
+  .overlay-card { background: rgba(15,18,28,0.94); border: 1px solid rgba(120,200,255,0.4); border-radius: 22px; padding: 28px 32px; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; text-align: center; color: #dfe7f3; box-shadow: 0 20px 60px rgba(0,0,0,0.6); touch-action: pan-y; }
+  .overlay-card h2 { font-size: 26px; color: #ffd84a; margin-bottom: 6px; }
+  .big-code { font-family: 'Orbitron', sans-serif; font-size: 44px; font-weight: 900; letter-spacing: 10px; color: #4cf; margin: 4px 0 6px; }
+  .lobby-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 16px; text-align: left; }
+  .lobby-slot { border: 1px solid rgba(120,200,255,0.3); border-radius: 10px; padding: 10px 12px; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lobby-slot.empty { color: #667; border-style: dashed; }
+  .lobby-note { color: #99a; font-size: 14px; line-height: 1.6; margin: 6px 0; }
+  .lobby-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .score-table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 15px; }
+  .score-table th { color: #88aacc; font-weight: 700; font-size: 13px; padding: 6px 4px; border-bottom: 1px solid rgba(120,200,255,0.3); }
+  .score-table td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .score-table tr.me td { color: #ffea66; font-weight: 700; }
+  .score-table td.rank { font-family: 'Orbitron', sans-serif; font-weight: 900; }
+  #roundTimer { display: none; position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 6; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 20px; color: #fff; background: rgba(8,10,20,0.6); border: 1px solid rgba(120,200,255,0.35); border-radius: 999px; padding: 5px 18px; pointer-events: none; }
+  #roundTimer.urgent { color: #ff6b8a; border-color: #ff6b8a; }
+  .lobby-qr { display: block; width: 150px; height: 150px; margin: 6px auto 4px; background: #fff; border-radius: 10px; image-rendering: pixelated; }
+  #joinPanel { display: none; position: fixed; top: 20px; right: 20px; z-index: 7; width: 180px; padding: 10px; text-align: center; background: rgba(8,10,20,0.85); border: 1px solid rgba(255,216,74,0.7); border-radius: 14px; color: #fff1b9; pointer-events: none; }
+  #joinPanel .join-title { font-size: 13px; }
+  #joinPanel img { display: block; width: 160px; height: 160px; margin: 6px auto; background: #fff; border-radius: 8px; image-rendering: pixelated; }
+  #joinPanel .join-code { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 6px; color: #4cf; }
+  #spectatorBanner { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 6; background: rgba(8,10,20,0.7); border: 1px solid #ffd84a; color: #fff1b9; border-radius: 999px; padding: 8px 20px; font-size: 14px; pointer-events: none; }
 </style>
   <style>
     /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
@@ -291,9 +325,18 @@
       <div class="qtype-card" data-type="div"><div class="op">÷</div><div class="name">二位數除法</div><div class="ex">56÷7</div></div>
     </div>
 
-    <button class="start-btn" onclick="startGame()">開 始 戰 鬥</button>
+    <label class="host-check"><input type="checkbox" id="hostPlays" checked>建立房間時，房主也一起玩（取消勾選＝房主只開房觀戰）</label>
+    <div class="room-row">
+      <select id="durationSel"><option value="180">每局 3 分鐘</option><option value="300" selected>每局 5 分鐘</option><option value="480">每局 8 分鐘</option><option value="600">每局 10 分鐘</option></select>
+      <button class="room-btn" id="createRoomBtn">建立房間</button>
+    </div>
+    <div class="room-row">
+      <input id="roomCodeInput" maxlength="4" placeholder="房間碼" autocomplete="off">
+      <button class="room-btn alt" id="joinRoomBtn">加入房間</button>
+    </div>
+    <div id="roomMsg"></div>
     <div class="controls">
-      🤝 <strong style="color:#cef">合作模式：</strong>跟同學連線組隊，一起在草原上抵擋殭屍（子彈不會傷害隊友）<br>
+      🤝 <strong style="color:#cef">合作模式：</strong>建立或加入房間，最多 6 人一起抵擋殭屍（子彈不會傷害隊友），開打後也能隨時加入；時間到依「擊倒殭屍數」排名<br>
       📱 <strong style="color:#cef">平板操作：</strong>左下角<span class="key">搖桿</span>移動、右下角<span class="key">搖桿</span>轉視角、<span class="key">🔫按鈕</span>射擊<br>
       ⌨️ <strong style="color:#cef">電腦操作：</strong><span class="key">↑</span><span class="key">↓</span>前進後退、<span class="key">←</span><span class="key">→</span>轉向、<span class="key">A</span><span class="key">D</span>平移、<span class="key">空白鍵</span>射擊（按住連發）、<span class="key">M</span>靜音；答題可直接打數字<br>
       🔋 <strong style="color:#ffd84a">彈匣：</strong>走過去直接補 5 發子彈，不用解題<br>
@@ -328,10 +371,48 @@
 <div id="eliminated">
   <div class="elim-card">
     <h2>已 淘 汰</h2>
-    <p style="color:#aac; margin-bottom:26px; letter-spacing:2px; font-family:'Orbitron',sans-serif; font-size:12px;">ELIMINATED — 隊友仍在奮戰中</p>
+    <p style="color:#aac; margin-bottom:26px; letter-spacing:2px; font-family:'Orbitron',sans-serif; font-size:12px;">ELIMINATED — 時間到之前都可以重新加入</p>
     <button class="start-btn" onclick="respawnPlayer()">重 新 加 入 戰 場</button>
   </div>
 </div>
+
+<!-- 房間大廳 -->
+<div id="lobby" class="overlay">
+  <div class="overlay-card">
+    <h2>等待開始</h2>
+    <div class="lobby-note">把房間碼告訴同學</div>
+    <div class="big-code" id="lobbyCode">----</div>
+    <img id="lobbyQr" class="lobby-qr" alt="掃描加入房間">
+    <div class="lobby-note">用平板掃描 QR code 也能加入，遊戲開始後仍可隨時加入</div>
+    <div class="lobby-note" id="lobbyInfo"></div>
+    <div class="lobby-list" id="lobbyList"></div>
+    <div class="lobby-actions"><button class="room-btn" id="startRoundBtn">開始遊戲</button><button class="room-btn alt" id="leaveLobbyBtn">離開房間</button></div>
+  </div>
+</div>
+
+<!-- 本局結算 -->
+<div id="results" class="overlay">
+  <div class="overlay-card">
+    <h2>🏆 本局結算</h2>
+    <div class="lobby-note">時間到！依「擊倒殭屍數」排名</div>
+    <table class="score-table">
+      <thead><tr><th>名次</th><th>玩家</th><th>擊倒殭屍</th><th>被淘汰</th><th>答對</th></tr></thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div class="lobby-actions"><button class="room-btn" id="nextRoundBtn">再玩一局</button><button class="room-btn alt" id="leaveResultsBtn">離開房間</button></div>
+    <div class="lobby-note" id="resultsWait"></div>
+  </div>
+</div>
+
+<div id="roundTimer">05:00</div>
+<div id="spectatorBanner">👀 房主觀戰中・鏡頭環繞整個戰場</div>
+<div id="joinPanel">
+  <div class="join-title">掃描加入遊戲</div>
+  <img id="joinQr" alt="加入房間 QR code">
+  <div class="join-code" id="joinCode">----</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <!-- 數學題 -->
 <div id="mathModal">
@@ -356,7 +437,7 @@
 import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, increment
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, increment, query, where
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -870,6 +951,7 @@ window.submitAnswer = function submitAnswer() {
     fb.textContent = '✓ 答對了！+1 ❤️';
     SFX.correct();
     fb.className = 'math-feedback correct';
+    myCorrect++;
     if (player.alive && player.hp < MAX_HP) {
       player.hp++;
       // 直接寫入（不用 increment），避免疊到超過上限
@@ -979,7 +1061,7 @@ shootBtn.addEventListener('pointerdown', e => { e.preventDefault(); tryShoot(); 
 // 平板輸入強化：擋掉瀏覽器的捲動/縮放/長按手勢，避免吃掉遊戲觸控。
 // 觸控備援：若裝置不支援 Pointer Events（少數舊平板），改掛 touch 事件對應同一套邏輯。
 document.addEventListener('touchmove', e => {
-  if (!e.target.closest('.menu-card')) e.preventDefault();
+  if (!e.target.closest('.menu-card, .overlay-card')) e.preventDefault();
 }, { passive: false });
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault());
@@ -1018,7 +1100,7 @@ const keys = {};
 const GAME_KEYS = new Set(['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'w', 'a', 's', 'd', 'f']);
 const KEYBOARD_TURN_RATE = 2.0; // 弧度/秒
 window.addEventListener('keydown', e => {
-  if (e.target && e.target.id === 'nameInput') return; // 輸入名字時不攔截
+  if (e.target && ['INPUT', 'SELECT'].includes(e.target.tagName)) return; // 輸入名字/房間碼時不攔截
   const k = e.key.toLowerCase();
 
   // 數學題開著：可以直接用鍵盤打數字作答
@@ -1116,9 +1198,10 @@ for (let i = 0; i < ZOMBIE_COUNT; i++) {
   zombies[i].target.z = zombies[i].z;
 }
 
-// ---- 合作模式：殭屍狀態全班共用，由「主機」玩家模擬 ----
-// 主機 = 存活玩家中文件 ID 最小者；主機離線或陣亡後自動換人接手
-const zombieDocRef = doc(db, 'fps_zombies', 'state');
+// ---- 合作模式：殭屍狀態同一房間共用，由「主機」玩家模擬 ----
+// 主機 = 存活玩家中文件 ID 最小者；主機離線或陣亡後自動換人接手（觀戰的房主不模擬）
+// 每個房間一份殭屍狀態：fps_zombies/{房間碼}
+let zombieDocRef = null;
 
 function isHost() {
   if (!player.alive || !myDocRef) return false;
@@ -1130,6 +1213,7 @@ function isHost() {
 }
 
 async function ensureZombieDoc() {
+  if (!zombieDocRef) return;
   try {
     const snap = await getDoc(zombieDocRef);
     if (!snap.exists()) {
@@ -1141,7 +1225,7 @@ async function ensureZombieDoc() {
 }
 
 // 殭屍狀態監聽：血量一律以伺服器為準；非主機另外接收位置與存活狀態
-onSnapshot(zombieDocRef, snap => {
+function applyZombieSnapshot(snap) {
   if (!snap.exists()) return;
   const d = snap.data();
   const host = isHost();
@@ -1166,11 +1250,11 @@ onSnapshot(zombieDocRef, snap => {
       if (!wasAlive && z.alive) { z.x = s.x; z.z = s.z; } // 重生直接跳到新位置，不要滑過去
     }
   }
-});
+}
 
 // 主機定期把殭屍位置/存活寫回（血量不寫，血量只靠大家的 increment 扣）
 setInterval(() => {
-  if (!running || !isHost()) return;
+  if (!running || !zombieDocRef || !isHost()) return;
   const upd = { updated_at: serverTimestamp() };
   zombies.forEach((z, i) => {
     upd['z' + i + '.x'] = z.x;
@@ -1333,7 +1417,8 @@ function removeRemote(id) {
 }
 
 // ============== Firestore 同步 ==============
-onSnapshot(collection(db, 'fps_players'), snapshot => {
+// 只套用自己房間的玩家（由房間系統呼叫）
+function applyPlayersSnapshot(snapshot) {
   const now = Date.now();
   snapshot.docChanges().forEach(change => {
     const id = change.doc.id;
@@ -1365,7 +1450,7 @@ onSnapshot(collection(db, 'fps_players'), snapshot => {
       r.target.x = data.pos.x; r.target.z = data.pos.z; r.target.rotY = data.rotY || 0;
     }
   });
-});
+}
 setInterval(() => {
   const now = Date.now();
   for (const r of remotePlayers.values()) {
@@ -1380,10 +1465,15 @@ function syncToFirestore() {
   updateDoc(myDocRef, {
     name: player.name, hue: player.hue, alive: player.alive, ammo: player.ammo,
     pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, busy: paused,
+    kills: player.kills, deaths: myDeaths, correct: myCorrect,
     updated_at: serverTimestamp()
   }).catch(()=>{});
 }
-window.addEventListener('beforeunload', () => { if (myDocRef) deleteDoc(myDocRef).catch(()=>{}); });
+window.addEventListener('beforeunload', () => {
+  if (myDocRef) deleteDoc(myDocRef).catch(()=>{});
+  if (isRoomHost && roomRef) deleteDoc(roomRef).catch(()=>{});
+  if (isRoomHost && zombieDocRef) deleteDoc(zombieDocRef).catch(()=>{});
+});
 
 // ============== 手持武器（第一人稱視角模型） ==============
 // 掛在相機底下跟著視角走；關閉深度測試畫在最上層，貼牆時才不會穿進牆裡
@@ -1627,7 +1717,7 @@ function renderMinimap() {
 
 let hudAlive = -1;
 function renderStatus() {
-  const alive = 1 + [...remotePlayers.values()].filter(r => r.alive).length;
+  const alive = (player.alive ? 1 : 0) + [...remotePlayers.values()].filter(r => r.alive).length;
   if (alive !== hudAlive) { hudAlive = alive; document.getElementById('aliveCount').textContent = alive; }
 }
 
@@ -1726,6 +1816,11 @@ function animate() {
         }
       }
     }
+  } else if (!myDocRef) {
+    // 觀戰的房主：鏡頭在高處慢慢繞場，看得到所有玩家頭上的名字
+    spectatorAngle += dt * 0.12;
+    camera.position.set(Math.sin(spectatorAngle) * HALF * 1.15, 26, Math.cos(spectatorAngle) * HALF * 1.15);
+    camera.lookAt(0, 0, 0);
   } else {
     camera.rotation.order = 'YXZ';
     camera.rotation.y = yaw;
@@ -1760,11 +1855,14 @@ function animate() {
   ammoCrates.forEach(c => { c.mesh.rotation.y += dt * 1.2; });
   healthPacks.forEach(p => { p.mesh.rotation.y += dt * 0.8; });
 
-  // 遠端玩家插值移動
+  // 遠端玩家插值移動；觀戰鏡頭離得遠，名牌放大才看得清楚
+  const bigPlate = !myDocRef;
   for (const r of remotePlayers.values()) {
     r.group.position.x += (r.target.x - r.group.position.x) * 0.18;
     r.group.position.z += (r.target.z - r.group.position.z) * 0.18;
     r.group.rotation.y = r.target.rotY;
+    r.nameplate.sprite.scale.set(bigPlate ? 12 : 1.5, bigPlate ? 3.36 : 0.42, 1);
+    r.nameplate.sprite.position.y = bigPlate ? 4.5 : 2.15;
   }
 
   // 殭屍：主機玩家負責模擬並同步；其他人平滑跟隨主機的位置
@@ -1792,39 +1890,13 @@ function animate() {
 animate();
 
 // ============== 開始 / 淘汰 / 重生 ==============
-window.startGame = async function startGame() {
-  SFX.init();
-  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-  gun.visible = true;
-  const nameInput = document.getElementById('nameInput');
-  const name = (nameInput.value || '').trim() || '玩家';
-  player.name = name;
-  player.hue = Math.random() * 360;
-
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('eliminated').style.display = 'none';
-  document.getElementById('hud').style.display = 'block';
-  document.getElementById('joyBase').style.display = 'block';
-  document.getElementById('lookBase').style.display = 'block';
-  document.getElementById('shootBtn').style.display = 'flex';
-
-  spawnPlayerAt();
-  player.hp = MAX_HP;
-  player.ammo = 0;
-  player.kills = 0;
-  player.alive = true;
-
-  const payload = {
-    name: player.name, hue: player.hue, alive: true, hp: player.hp, ammo: player.ammo,
-    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, busy: false, updated_at: serverTimestamp()
-  };
-  if (!myDocRef) myDocRef = doc(collection(db, 'fps_players'));
-  await setDoc(myDocRef, payload).catch(()=>{});
-  ensureZombieDoc();
-  startNetworkSync();
-
-  running = true;
-};
+function showPlayControls(show) {
+  document.getElementById('hud').style.display = show ? 'block' : 'none';
+  document.getElementById('joyBase').style.display = show ? 'block' : 'none';
+  document.getElementById('lookBase').style.display = show ? 'block' : 'none';
+  document.getElementById('shootBtn').style.display = show ? 'flex' : 'none';
+  gun.visible = show;
+}
 
 function spawnPlayerAt() {
   const spot = randomFreeSpot(PLAYER_RADIUS);
@@ -1837,11 +1909,13 @@ function eliminatePlayer() {
   gun.visible = false;
   SFX.eliminated();
   stopNetworkSync();
-  if (myDocRef) updateDoc(myDocRef, { alive: false, updated_at: serverTimestamp() }).catch(()=>{});
-  document.getElementById('eliminated').style.display = 'flex';
+  myDeaths++;
+  if (myDocRef) updateDoc(myDocRef, { alive: false, deaths: myDeaths, kills: player.kills, updated_at: serverTimestamp() }).catch(()=>{});
+  if (roundActive) document.getElementById('eliminated').style.display = 'flex';
 }
 
 window.respawnPlayer = async function respawnPlayer() {
+  if (!roundActive || !myDocRef) return;
   SFX.init();
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   document.getElementById('eliminated').style.display = 'none';
@@ -1850,16 +1924,317 @@ window.respawnPlayer = async function respawnPlayer() {
   player.hp = MAX_HP;
   player.ammo = 0;
   player.alive = true;
-  if (myDocRef) {
-    await updateDoc(myDocRef, {
-      alive: true, hp: player.hp, ammo: player.ammo,
-      pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, updated_at: serverTimestamp()
-    }).catch(()=>{});
-  }
+  await updateDoc(myDocRef, {
+    alive: true, hp: player.hp, ammo: player.ammo,
+    pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, updated_at: serverTimestamp()
+  }).catch(()=>{});
   startNetworkSync();
 };
 
-document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') window.startGame(); });
+// ============== 房間系統（最多 6 人、限時一局、時間到結算）==============
+const MAX_PLAYERS = 6;
+const ROOMS = 'fps_rooms', PLAYERS = 'fps_players';
+const $id = id => document.getElementById(id);
+let roomCode = '', roomRef = null, isRoomHost = false, roomData = null;
+let roomPlayers = [];            // [{id, ...data}]，依加入順序
+let offRoom = null, offPlayers = null, offZombies = null;
+let roundSeen = -1, roundActive = false, roundEndsAt = 0;
+let myDeaths = 0, myCorrect = 0, spectatorAngle = 0;
+let serverOffset = 0;            // 伺服器時間 − 本機時間，中途加入時用來算剩餘秒數
+
+// 量測本機與伺服器的時間差（讀回剛寫入的 serverTimestamp）
+async function measureOffset(ref, field) {
+  try {
+    const t0 = Date.now();
+    const ms = (await getDoc(ref)).data()?.[field]?.toMillis?.();
+    if (ms) serverOffset = ms - t0;
+  } catch (err) {}
+}
+
+// 加入連結帶房間碼，掃描 QR code 後自動填好
+function joinUrl(code) {
+  const url = new URL(location.href);
+  url.search = ''; url.hash = '';
+  url.searchParams.set('room', code);
+  return url.toString();
+}
+function showJoinQr(code) {
+  let src = '';
+  try {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(joinUrl(code));
+    qr.make();
+    src = qr.createDataURL(6, 2);
+  } catch (err) { console.warn('QR code', err); }
+  for (const id of ['lobbyQr', 'joinQr']) { $id(id).src = src; $id(id).style.display = src ? '' : 'none'; }
+  $id('joinCode').textContent = code;
+}
+{
+  const fromLink = (new URLSearchParams(location.search).get('room') || '').toUpperCase();
+  if (/^[A-Z]{4}$/.test(fromLink)) {
+    $id('roomCodeInput').value = fromLink;
+    roomMsg(`已帶入房間碼 ${fromLink}，輸入名字後按「加入房間」`);
+  }
+}
+
+function makeRoomCode() {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join('');
+}
+function roomMsg(text) { $id('roomMsg').textContent = text || ''; }
+function setRoomButtons(disabled) { $id('createRoomBtn').disabled = $id('joinRoomBtn').disabled = disabled; }
+function showOverlay(which) {
+  $id('lobby').style.display = which === 'lobby' ? 'flex' : 'none';
+  $id('results').style.display = which === 'results' ? 'flex' : 'none';
+}
+function readName() { return ($id('nameInput').value || '').trim().slice(0, 10) || '玩家'; }
+
+async function createRoom() {
+  SFX.init();
+  player.name = readName();
+  const hostPlays = $id('hostPlays').checked;
+  const durationSec = Number($id('durationSel').value) || 300;
+  setRoomButtons(true); roomMsg('正在建立房間…');
+  try {
+    let code = '';
+    for (let i = 0; i < 6 && !code; i++) {
+      const c = makeRoomCode();
+      if (!(await getDoc(doc(db, ROOMS, c))).exists()) code = c;
+    }
+    if (!code) throw new Error('暫時無法取得房間碼，請再試一次');
+    roomCode = code; roomRef = doc(db, ROOMS, code); isRoomHost = true;
+    if (hostPlays) myDocRef = doc(collection(db, PLAYERS));
+    await setDoc(roomRef, {
+      hostName: player.name, hostPlays, hostPlayerId: hostPlays ? myDocRef.id : null,
+      durationSec, status: 'lobby', round: 0, created_at: serverTimestamp()
+    });
+    await measureOffset(roomRef, 'created_at');
+    if (hostPlays) await joinAsPlayer();
+    enterLobby();
+  } catch (err) {
+    console.error(err); roomMsg('建立房間失敗：' + err.message); setRoomButtons(false);
+    roomCode = ''; roomRef = null; isRoomHost = false; myDocRef = null;
+  }
+}
+
+async function joinRoom() {
+  SFX.init();
+  const code = ($id('roomCodeInput').value || '').trim().toUpperCase();
+  if (!/^[A-Z]{4}$/.test(code)) { roomMsg('請輸入 4 個英文字母的房間碼'); return; }
+  player.name = readName();
+  setRoomButtons(true); roomMsg('正在加入房間…');
+  try {
+    const snap = await getDoc(doc(db, ROOMS, code));
+    if (!snap.exists()) throw new Error('找不到這個房間');
+    const players = await getDocs(query(collection(db, PLAYERS), where('room', '==', code)));
+    if (players.size >= MAX_PLAYERS) throw new Error(`房間已滿（最多 ${MAX_PLAYERS} 人）`);
+    roomCode = code; roomRef = doc(db, ROOMS, code); isRoomHost = false;
+    myDocRef = doc(collection(db, PLAYERS));
+    await joinAsPlayer();
+    enterLobby();
+  } catch (err) {
+    console.error(err); roomMsg('加入失敗：' + err.message); setRoomButtons(false);
+    roomCode = ''; roomRef = null; myDocRef = null;
+  }
+}
+
+async function joinAsPlayer() {
+  player.hue = Math.random() * 360;
+  await setDoc(myDocRef, {
+    room: roomCode, name: player.name, hue: player.hue, alive: false,
+    hp: MAX_HP, ammo: 0, kills: 0, deaths: 0, correct: 0,
+    pos: { x: 0, y: 0, z: 0 }, rotY: 0, busy: false,
+    joined_at: serverTimestamp(), updated_at: serverTimestamp()
+  });
+  await measureOffset(myDocRef, 'joined_at');
+}
+
+function enterLobby() {
+  roomMsg('');
+  $id('menu').style.display = 'none';
+  $id('lobbyCode').textContent = roomCode;
+  showJoinQr(roomCode);
+  showOverlay('lobby');
+  zombieDocRef = doc(db, 'fps_zombies', roomCode);
+  offZombies = onSnapshot(zombieDocRef, applyZombieSnapshot, err => console.error('zombies', err));
+  offRoom = onSnapshot(roomRef, onRoomSnapshot, err => console.error('room', err));
+  offPlayers = onSnapshot(query(collection(db, PLAYERS), where('room', '==', roomCode)), snapshot => {
+    roomPlayers = snapshot.docs
+      .map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
+      .sort((a, b) => (a.joined_at?.toMillis?.() ?? 0) - (b.joined_at?.toMillis?.() ?? 0));
+    applyPlayersSnapshot(snapshot);
+    renderLobby();
+    if ($id('results').style.display === 'flex') renderResults();
+  }, err => console.error('players', err));
+}
+
+function onRoomSnapshot(snap) {
+  if (!snap.exists()) { leaveRoom('房主已關閉房間。'); return; }
+  roomData = snap.data({ serverTimestamps: 'estimate' });
+  if (roomData.status === 'playing' && roomData.round !== roundSeen && !roundActive) {
+    roundSeen = roomData.round;
+    beginRound(snap.metadata.hasPendingWrites);
+  } else if (roomData.status === 'finished' && roundActive) {
+    endRound();
+  } else if (roomData.status === 'lobby' && !roundActive) {
+    showOverlay('lobby');
+  }
+  renderLobby();
+}
+
+function renderLobby() {
+  const list = $id('lobbyList');
+  list.innerHTML = '';
+  for (let i = 0; i < MAX_PLAYERS; i++) {
+    const p = roomPlayers[i];
+    const div = document.createElement('div');
+    if (p) {
+      div.className = 'lobby-slot';
+      div.textContent = `${i + 1}. ${p.name || '玩家'}${p.id === roomData?.hostPlayerId ? '（房主）' : ''}${myDocRef && p.id === myDocRef.id ? '　← 你' : ''}`;
+      div.style.borderColor = `hsl(${p.hue || 0}, 70%, 60%)`;
+    } else {
+      div.className = 'lobby-slot empty';
+      div.textContent = `${i + 1}. 等待加入…`;
+    }
+    list.append(div);
+  }
+  const mins = Math.round((roomData?.durationSec || 300) / 60);
+  const hostNote = roomData?.hostPlays === false ? `・房主「${roomData.hostName || ''}」只觀戰` : '';
+  $id('lobbyInfo').textContent = `${roomPlayers.length} / ${MAX_PLAYERS} 位玩家・每局 ${mins} 分鐘${hostNote}${isRoomHost ? '' : '・等待房主開始'}`;
+  const btn = $id('startRoundBtn');
+  btn.style.display = isRoomHost ? '' : 'none';
+  btn.disabled = roomPlayers.length === 0 || roomData?.status === 'playing';
+}
+
+async function startRound() {
+  if (!isRoomHost || !roomRef || roomPlayers.length === 0) return;
+  SFX.init();
+  $id('startRoundBtn').disabled = $id('nextRoundBtn').disabled = true;
+  try {
+    await updateDoc(roomRef, { status: 'playing', round: (roomData?.round || 0) + 1, startedAt: serverTimestamp() });
+  } catch (err) { console.error(err); alert('開始失敗：' + err.message); }
+  $id('nextRoundBtn').disabled = false;
+}
+
+function beginRound(justStartedHere) {
+  roundActive = true;
+  // 中途加入的玩家只拿到剩餘時間：以伺服器的開局時間換算成本機時間
+  const duration = (roomData?.durationSec || 300) * 1000;
+  const startedAt = roomData?.startedAt?.toMillis?.();
+  roundEndsAt = (startedAt && !justStartedHere) ? Math.min(startedAt - serverOffset + duration, Date.now() + duration) : Date.now() + duration;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  showOverlay(null);
+  $id('roundTimer').style.display = 'block';
+  $id('eliminated').style.display = 'none';
+  $id('mathModal').style.display = 'none';
+  paused = false; currentQuestion = null; activeCrate = null;
+  myDeaths = 0; myCorrect = 0; player.kills = 0;
+  if (myDocRef) {
+    showPlayControls(true);
+    $id('minimapWrap').style.display = '';
+    $id('spectatorBanner').style.display = 'none';
+    spawnPlayerAt();
+    player.hp = MAX_HP;
+    player.ammo = 0;
+    player.alive = true;
+    updateDoc(myDocRef, {
+      name: player.name, hue: player.hue, alive: true, hp: player.hp, ammo: player.ammo,
+      kills: 0, deaths: 0, correct: 0,
+      pos: { x: player.x, y: 0, z: player.z }, rotY: yaw, busy: false, updated_at: serverTimestamp()
+    }).catch(()=>{});
+    ensureZombieDoc();
+    startNetworkSync();
+  } else {
+    player.alive = false;
+    showPlayControls(false);
+    $id('minimapWrap').style.display = 'none';
+    $id('spectatorBanner').style.display = 'block';
+    $id('joinPanel').style.display = 'block';
+  }
+  running = true;
+  tickRound();
+}
+
+function tickRound() {
+  if (!roundActive) return;
+  const left = Math.max(0, roundEndsAt - Date.now());
+  const sec = Math.ceil(left / 1000);
+  const el = $id('roundTimer');
+  el.textContent = `⏱ ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+  el.classList.toggle('urgent', sec <= 10);
+  if (left <= 0) endRound();
+}
+setInterval(tickRound, 250);
+
+function endRound() {
+  if (!roundActive) return;
+  roundActive = false;
+  running = false;
+  stopNetworkSync();
+  player.alive = false;
+  paused = false; currentQuestion = null; activeCrate = null;
+  for (const k in keys) keys[k] = false;
+  showPlayControls(false);
+  ['eliminated', 'mathModal', 'roundTimer', 'spectatorBanner', 'joinPanel'].forEach(id => $id(id).style.display = 'none');
+  $id('minimapWrap').style.display = '';
+  if (myDocRef) {
+    updateDoc(myDocRef, {
+      alive: false, kills: player.kills, deaths: myDeaths, correct: myCorrect, updated_at: serverTimestamp()
+    }).catch(()=>{});
+  }
+  if (isRoomHost && roomData?.status === 'playing') updateDoc(roomRef, { status: 'finished' }).catch(()=>{});
+  showOverlay('results');
+  renderResults();
+}
+
+function renderResults() {
+  const rows = [...roomPlayers].sort((a, b) => (b.kills || 0) - (a.kills || 0) || (a.deaths || 0) - (b.deaths || 0));
+  const body = $id('resultsBody');
+  body.innerHTML = '';
+  rows.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    if (myDocRef && p.id === myDocRef.id) tr.className = 'me';
+    const medal = ['🥇', '🥈', '🥉'][i] || String(i + 1);
+    for (const value of [medal, p.name || '玩家', p.kills || 0, p.deaths || 0, p.correct || 0]) {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.append(td);
+    }
+    tr.firstChild.className = 'rank';
+    body.append(tr);
+  });
+  if (rows.length === 0) body.innerHTML = '<tr><td colspan="5">沒有玩家資料</td></tr>';
+  $id('nextRoundBtn').style.display = isRoomHost ? '' : 'none';
+  $id('resultsWait').textContent = isRoomHost ? '' : '等待房主開始下一局…';
+}
+
+function leaveRoom(message) {
+  roundActive = false; running = false;
+  stopNetworkSync();
+  for (const off of [offRoom, offPlayers, offZombies]) if (off) off();
+  offRoom = offPlayers = offZombies = null;
+  if (myDocRef) deleteDoc(myDocRef).catch(()=>{});
+  if (isRoomHost && roomRef) deleteDoc(roomRef).catch(()=>{});
+  if (isRoomHost && zombieDocRef) deleteDoc(zombieDocRef).catch(()=>{}); // 房間關閉時一併清掉該房間的殭屍狀態
+  myDocRef = null; roomRef = null; zombieDocRef = null; roomCode = ''; isRoomHost = false; roomData = null;
+  roomPlayers = []; roundSeen = -1; player.alive = false;
+  for (const id of [...remotePlayers.keys()]) removeRemote(id);
+  showPlayControls(false);
+  ['eliminated', 'mathModal', 'roundTimer', 'spectatorBanner', 'joinPanel'].forEach(id => $id(id).style.display = 'none');
+  $id('minimapWrap').style.display = '';
+  showOverlay(null);
+  $id('menu').style.display = 'flex';
+  setRoomButtons(false);
+  roomMsg(message || '');
+}
+
+$id('createRoomBtn').addEventListener('click', createRoom);
+$id('joinRoomBtn').addEventListener('click', joinRoom);
+$id('roomCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+$id('startRoundBtn').addEventListener('click', startRound);
+$id('nextRoundBtn').addEventListener('click', startRound);
+$id('leaveLobbyBtn').addEventListener('click', () => leaveRoom());
+$id('leaveResultsBtn').addEventListener('click', () => leaveRoom());
 </script>
 </body>
 </html>

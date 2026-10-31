@@ -17,26 +17,29 @@ service cloud.firestore {
     match /fps_zombies/{document} {
       allow read, write: if true;
     }
+    // 貪食蛇、射擊遊戲的房間（房間碼、房主設定、本局狀態），沿用相同的課堂開放規則
+    match /snake_rooms/{document} {
+      allow read, write: if true;
+    }
+    match /fps_rooms/{document} {
+      allow read, write: if true;
+    }
 
     // 多人坦克大戰：匿名登入玩家才能存取自己的房間資料
     match /tankRooms/{roomId} {
       function signedIn() { return request.auth != null; }
       function roomPath() { return /databases/$(database)/documents/tankRooms/$(roomId); }
+      // Firestore 每個請求最多 10 次 get()/exists()；房主檢查只用 1 次。
       function isHost() {
-        return signedIn() && exists(roomPath()) && get(roomPath()).data.hostUid == request.auth.uid;
+        return signedIn() && get(roomPath()).data.hostUid == request.auth.uid;
+      }
+      // 只用 get()（不先 exists()），6 個座位共 6 次讀取；空座位產生的錯誤在 || 中會被略過。
+      // 原本 exists()+get() 共 12 次，第 6 位玩家（seats/5）會超過上限而被拒絕。
+      function seatIs(n) {
+        return get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/$(n)).data.uid == request.auth.uid;
       }
       function isMember() {
-        return signedIn() && (
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/0).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/1).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/2).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/3).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/4) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/4).data.uid == request.auth.uid) ||
-          (exists(/databases/$(database)/documents/tankRooms/$(roomId)/seats/5) && get(/databases/$(database)/documents/tankRooms/$(roomId)/seats/5).data.uid == request.auth.uid)
-        );
-      }
-      function afterRoomIsLobby() {
-        return getAfter(roomPath()).data.status == 'lobby';
+        return signedIn() && (seatIs('0') || seatIs('1') || seatIs('2') || seatIs('3') || seatIs('4') || seatIs('5'));
       }
 
       allow read: if signedIn();
@@ -52,9 +55,9 @@ service cloud.firestore {
         allow create: if signedIn()
           && seatId in ['0', '1', '2', '3', '4', '5']
           && request.resource.data.uid == request.auth.uid
-          && afterRoomIsLobby()
-          && (seatId != '0' || getAfter(roomPath()).data.hostUid == request.auth.uid)
-          && (seatId == '0' || get(roomPath()).data.status == 'lobby');
+          // 遊戲進行中也能加入；只要房間存在即可佔用空座位
+          && getAfter(roomPath()).data.hostUid is string
+          && (seatId != '0' || getAfter(roomPath()).data.hostUid == request.auth.uid || getAfter(roomPath()).data.get('hostPlays', true) == false);
         allow update: if signedIn()
           && resource.data.uid == request.auth.uid
           && request.resource.data.uid == request.auth.uid
@@ -64,7 +67,7 @@ service cloud.firestore {
       }
 
       match /state/{stateId} {
-        allow read: if isMember();
+        allow read: if isMember() || isHost();
         allow create, update: if isHost() && stateId == 'world';
         allow delete: if false;
       }
