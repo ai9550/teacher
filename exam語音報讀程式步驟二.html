@@ -139,22 +139,23 @@
                     </div>
                 </div>
 
-                <!-- 方式三：雲端硬碟 (密碼框+下拉選單) -->
+                <!-- 方式三：上傳到線上題庫 (密碼在 exam-upload-backend 服務端驗證) -->
                 <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition flex flex-col items-center justify-center">
-                    <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">方式三：從雲端硬碟載入</h2>
-                    <div class="w-full flex flex-col items-center justify-center gap-3">
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 text-center">方式三：上傳到線上題庫</h2>
+                    <form id="upload-form" class="w-full flex flex-col items-center justify-center gap-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <div class="w-full flex gap-2">
-                            <input type="password" id="gdrive-api-key" placeholder="請貼上 API 金鑰" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
-                            <button id="load-gdrive-btn" class="px-3 py-2 bg-green-500 text-white rounded-md text-sm font-bold hover:bg-green-600 shrink-0 transition">載入</button>
+                        <label for="upload-file" class="w-full max-w-[250px] p-2 border border-gray-300 rounded-md bg-white text-sm text-gray-700 cursor-pointer hover:bg-gray-100 transition truncate">
+                            <span id="upload-file-name">選擇要上傳的 PDF</span>
+                            <input type="file" id="upload-file" accept="application/pdf" class="hidden">
+                        </label>
+                        <div class="w-full max-w-[250px] flex gap-2">
+                            <input type="password" id="upload-password" placeholder="請輸入上傳密碼" autocomplete="new-password" class="min-w-0 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700">
+                            <button type="submit" id="upload-btn" class="px-3 py-2 bg-green-500 text-white rounded-md text-sm font-bold hover:bg-green-600 shrink-0 transition disabled:opacity-50 disabled:cursor-not-allowed">上傳</button>
                         </div>
-                        <select id="gdrive-pdf-select" class="w-full max-w-[250px] p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm text-gray-700 cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed" disabled>
-                            <option value="">請先輸入上方金鑰並載入</option>
-                        </select>
-                        <span class="text-xs text-gray-500 text-center">雲端資料夾：1u5VANt...</span>
-                    </div>
+                        <span id="upload-status" role="status" class="text-xs text-gray-500 text-center">上傳後會出現在方式二的清單</span>
+                    </form>
                 </div>
             </div>
 
@@ -229,7 +230,11 @@
         const CMAP_PACKED = true;
 
         // ================= 設定區 =================
-        const GDRIVE_FOLDER_ID = '1u5VANtBOPraiVsnKOvln9XME43UWtW-T'; // 您的雲端資料夾ID
+        // 方式二列出的題庫，同名檔案以排在前面的為準
+        const QUESTION_BANK_REPOS = ['ai9550/teacher', 'happy690331/teacher'];
+        // 上傳服務的 /exec 網址，設定方式見 exam-upload-backend/README.md
+        const UPLOAD_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyjMtv6zxkhXEG9qgEody2v7DWYbuefMhvCoTyIvOBLx7CUpxtDtU9YR4hPbx1ElAPBrw/exec';
+        const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 與上傳服務的上限相同
         // ==========================================
 
         // 全域變數
@@ -250,9 +255,12 @@
         const fileInput = document.getElementById('pdf-upload');
         const fileNameDisplay = document.getElementById('file-name-display');
         const githubPdfSelect = document.getElementById('github-pdf-select');
-        const gdriveApiKeyInput = document.getElementById('gdrive-api-key'); 
-        const loadGdriveBtn = document.getElementById('load-gdrive-btn'); 
-        const gdrivePdfSelect = document.getElementById('gdrive-pdf-select'); 
+        const uploadForm = document.getElementById('upload-form');
+        const uploadFileInput = document.getElementById('upload-file');
+        const uploadFileName = document.getElementById('upload-file-name');
+        const uploadPasswordInput = document.getElementById('upload-password');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadStatus = document.getElementById('upload-status');
         const startBtn = document.getElementById('start-btn');
         const pdfPagesWrapper = document.getElementById('pdf-pages-wrapper');
         const loadingIndicator = document.getElementById('loading-indicator');
@@ -263,74 +271,126 @@
         const pauseBtn = document.getElementById('pause-btn');
         const cancelReadBtn = document.getElementById('cancel-read-btn');
 
-        // 載入 GitHub 題庫清單
+        // 載入 GitHub 題庫清單（合併所有題庫，某個題庫讀取失敗時仍顯示其他題庫）
         async function loadGitHubPdfs() {
-            try {
-                const response = await fetch('https://api.github.com/repos/happy690331/teacher/contents/exam%20paper2');
-                if (!response.ok) throw new Error('無法讀取題庫');
-                const data = await response.json();
-                
-                githubPdfSelect.innerHTML = '<option value="">-- 請選擇線上考卷 --</option>';
-                data.forEach(item => {
-                    if (item.name.endsWith('.pdf')) {
-                        const option = document.createElement('option');
-                        option.value = item.download_url;
-                        option.textContent = item.name;
-                        githubPdfSelect.appendChild(option);
+            const results = await Promise.allSettled(QUESTION_BANK_REPOS.map(async (repo) => {
+                const response = await fetch(`https://api.github.com/repos/${repo}/contents/exam%20paper2`);
+                if (!response.ok) throw new Error(`無法讀取題庫 ${repo}`);
+                return response.json();
+            }));
+
+            const pdfs = new Map();
+            results.forEach((result) => {
+                if (result.status === 'rejected') {
+                    console.error('GitHub 題庫載入失敗:', result.reason);
+                    return;
+                }
+                result.value.forEach((item) => {
+                    if (item.name.endsWith('.pdf') && !pdfs.has(item.name)) {
+                        pdfs.set(item.name, item.download_url);
                     }
                 });
-            } catch (error) {
-                console.error('GitHub 題庫載入失敗:', error);
-                githubPdfSelect.innerHTML = '<option value="">載入失敗，請確認網路或 API 限制</option>';
-            }
-        }
+            });
 
-        // 載入 Google Drive 題庫清單
-        async function loadGoogleDrivePdfs(apiKey) {
-            if (!apiKey) {
-                gdrivePdfSelect.innerHTML = '<option value="">請先輸入上方金鑰並載入</option>';
-                gdrivePdfSelect.disabled = true;
+            if (results.every((result) => result.status === 'rejected')) {
+                githubPdfSelect.innerHTML = '<option value="">載入失敗，請確認網路或 API 限制</option>';
                 return;
             }
-            try {
-                gdrivePdfSelect.innerHTML = '<option value="">載入雲端題庫中...</option>';
-                gdrivePdfSelect.disabled = true;
-                const url = `https://www.googleapis.com/drive/v3/files?q='${GDRIVE_FOLDER_ID}'+in+parents+and+mimeType='application/pdf'&key=${apiKey}&fields=files(id,name)`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('無法讀取雲端硬碟');
-                const data = await response.json();
-                
-                gdrivePdfSelect.innerHTML = '<option value="">-- 請選擇雲端考卷 --</option>';
-                data.files.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file.id;
-                    option.textContent = file.name;
-                    gdrivePdfSelect.appendChild(option);
-                });
-                gdrivePdfSelect.disabled = false; 
-            } catch (error) {
-                console.error('雲端硬碟載入失敗:', error);
-                gdrivePdfSelect.innerHTML = '<option value="">載入失敗，請確認 API 金鑰是否正確</option>';
-                gdrivePdfSelect.disabled = true;
-                localStorage.removeItem('gdrive_api_key'); 
-            }
+
+            githubPdfSelect.innerHTML = '<option value="">-- 請選擇線上考卷 --</option>';
+            [...pdfs.keys()].sort((a, b) => a.localeCompare(b, 'zh-Hant')).forEach((name) => {
+                githubPdfSelect.add(new Option(name, pdfs.get(name)));
+            });
         }
 
         loadGitHubPdfs();
-        
-        const savedApiKey = localStorage.getItem('gdrive_api_key');
-        if (savedApiKey) {
-            gdriveApiKeyInput.value = savedApiKey;
-            loadGoogleDrivePdfs(savedApiKey);
+        localStorage.removeItem('gdrive_api_key'); // 清除舊版方式三存放的金鑰
+
+        function setUploadStatus(message, tone) {
+            const tones = { info: 'text-gray-500', error: 'text-red-600', success: 'text-green-700' };
+            uploadStatus.textContent = message;
+            uploadStatus.className = `text-xs text-center ${tones[tone]}`;
         }
 
-        loadGdriveBtn.addEventListener('click', () => {
-            const key = gdriveApiKeyInput.value.trim();
-            if (key) {
-                localStorage.setItem('gdrive_api_key', key); 
-                loadGoogleDrivePdfs(key);
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 用 text/plain 送出，才不會觸發 Apps Script 不支援的 CORS 預檢
+        async function postUpload(payload) {
+            const response = await fetch(UPLOAD_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
+            return response.json();
+        }
+
+        // 上傳完成後放進方式二的清單並選取，不必等 GitHub 清單更新
+        function selectUploadedPdf(name, url) {
+            let option = [...githubPdfSelect.options].find((item) => item.text === name);
+            if (option) {
+                option.value = url;
             } else {
-                alert('請先輸入 API 金鑰');
+                option = new Option(name, url);
+                githubPdfSelect.add(option, 1);
+            }
+            githubPdfSelect.value = url;
+            githubPdfSelect.dispatchEvent(new Event('change'));
+        }
+
+        uploadFileInput.addEventListener('change', () => {
+            const file = uploadFileInput.files[0];
+            uploadFileName.textContent = file ? file.name : '選擇要上傳的 PDF';
+            uploadFileName.parentElement.title = file ? file.name : '';
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = uploadFileInput.files[0];
+            const password = uploadPasswordInput.value;
+
+            if (!UPLOAD_ENDPOINT) return setUploadStatus('上傳服務尚未設定，請聯絡管理者。', 'error');
+            if (!file) return setUploadStatus('請先選擇 PDF 檔案。', 'error');
+            if (!file.name.toLowerCase().endsWith('.pdf')) return setUploadStatus('只能上傳 PDF 檔案。', 'error');
+            if (file.size > MAX_UPLOAD_BYTES) return setUploadStatus('檔案超過 25 MB，無法上傳。', 'error');
+            if (!password) return setUploadStatus('請輸入上傳密碼。', 'error');
+
+            uploadBtn.disabled = true;
+            setUploadStatus('上傳中，請稍候...', 'info');
+            try {
+                const payload = { name: file.name, password, contentBase64: await readFileAsBase64(file) };
+                let result = await postUpload(payload);
+
+                if (result.code === 'EXISTS') {
+                    if (!confirm(`${result.error}\n\n要用這個檔案覆蓋嗎？`)) {
+                        setUploadStatus('已取消，題庫沒有變更。', 'info');
+                        return;
+                    }
+                    setUploadStatus('覆蓋中，請稍候...', 'info');
+                    result = await postUpload({ ...payload, overwrite: true });
+                }
+
+                if (!result.ok) {
+                    setUploadStatus(result.error, 'error');
+                    return;
+                }
+
+                uploadForm.reset();
+                uploadFileName.textContent = '選擇要上傳的 PDF';
+                uploadFileName.parentElement.title = '';
+                selectUploadedPdf(result.name, result.downloadUrl);
+                setUploadStatus(`上傳成功：${result.name}，已在方式二選取。`, 'success');
+            } catch (error) {
+                console.error('上傳失敗:', error);
+                setUploadStatus('無法連線到上傳服務，請確認網路後再試。', 'error');
+            } finally {
+                uploadBtn.disabled = false;
             }
         });
 
@@ -348,7 +408,6 @@
                 fileNameDisplay.classList.add('text-blue-600');
                 
                 githubPdfSelect.value = "";
-                gdrivePdfSelect.value = "";
                 startBtn.disabled = false;
             } else {
                 alert('請上傳有效的 PDF 檔案。');
@@ -365,34 +424,9 @@
                 fileInput.value = "";
                 fileNameDisplay.textContent = "選擇 PDF 檔案";
                 fileNameDisplay.classList.remove('text-blue-600');
-                gdrivePdfSelect.value = "";
                 startBtn.disabled = false;
             } else {
-                if (!fileInput.files.length && !gdrivePdfSelect.value) {
-                    startBtn.disabled = true;
-                    pdfSource = null;
-                }
-            }
-        });
-
-        gdrivePdfSelect.addEventListener('change', function(e) {
-            const fileId = e.target.value;
-            if (fileId) {
-                const fileName = e.target.options[e.target.selectedIndex].text;
-                
-                const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
-                
-                pdfSource = { type: 'url', url: proxyUrl, name: fileName };
-                
-                fileInput.value = "";
-                fileNameDisplay.textContent = "選擇 PDF 檔案";
-                fileNameDisplay.classList.remove('text-blue-600');
-                githubPdfSelect.value = "";
-                
-                startBtn.disabled = false;
-            } else {
-                if (!fileInput.files.length && !githubPdfSelect.value) {
+                if (!fileInput.files.length) {
                     startBtn.disabled = true;
                     pdfSource = null;
                 }
