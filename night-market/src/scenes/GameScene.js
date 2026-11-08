@@ -50,6 +50,10 @@ export class GameScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,Q');
     this.input.keyboard.on('keydown-SPACE', () => this.interact());
     this.input.keyboard.on('keydown-Q', () => this.discard());
+    this.ui.onAction = () => this.interact();
+    this.ui.onDrop = () => this.discard();
+    this.actionKey = this.ui.isTouch ? '' : '空白鍵：';
+    this.dropHint = this.ui.isTouch ? '按丟掉鈕丟一樣' : '按 Q 丟掉一樣';
 
     this.customers = new Map();
     this.remotes = new Map();
@@ -368,17 +372,26 @@ export class GameScene extends Phaser.Scene {
     if (target.type === 'stall') {
       const info = STALLS[target.stall.index];
       if (this.cooking) return `${info.food} 製作中…站著別動`;
-      if (this.carrying.length >= BALANCE.maxCarry) return '手上拿滿了（按 Q 丟掉一樣）';
-      return `空白鍵：拿 ${info.emoji} ${info.food}${info.cookSec ? `（等 ${info.cookSec} 秒）` : ''}`;
+      if (this.carrying.length >= BALANCE.maxCarry) return `手上拿滿了（${this.dropHint}）`;
+      return `${this.actionKey}拿 ${info.emoji} ${info.food}${info.cookSec ? `（等 ${info.cookSec} 秒）` : ''}`;
     }
     const o = target.order;
     if (!o.owner) {
       if (this.myOrderIds.size >= BALANCE.maxOrdersPerPlayer) return `你已經有 ${BALANCE.maxOrdersPerPlayer} 張單了，先送完再接`;
-      return `空白鍵：接單（${o.customer}要 ${emojis(o.items)}）`;
+      return `${this.actionKey}接單（${o.customer}要 ${emojis(o.items)}）`;
     }
     if (o.owner !== this.me) return `這張單是 ${this.ownerName(o.owner)} 的`;
     const missing = this.missingItems(o);
-    return missing.length ? `還缺 ${emojis(missing)}` : `空白鍵：送餐給${o.customer}`;
+    return missing.length ? `還缺 ${emojis(missing)}` : `${this.actionKey}送餐給${o.customer}`;
+  }
+
+  // 觸控動作鈕上的字；空字串表示現在沒有可做的事
+  actionLabel(target) {
+    if (!target || this.modalOpen) return '';
+    if (target.type === 'stall') return !this.cooking && this.carrying.length < BALANCE.maxCarry ? '拿餐' : '';
+    const o = target.order;
+    if (!o.owner) return this.myOrderIds.size < BALANCE.maxOrdersPerPlayer ? '接單' : '';
+    return o.owner === this.me && !this.missingItems(o).length ? '送餐' : '';
   }
 
   async interact() {
@@ -406,7 +419,7 @@ export class GameScene extends Phaser.Scene {
     }
     const info = STALLS[target.stall.index];
     if (this.cooking) return;
-    if (this.carrying.length >= BALANCE.maxCarry) { this.ui.toast('手上拿滿了，按 Q 丟掉一樣'); return; }
+    if (this.carrying.length >= BALANCE.maxCarry) { this.ui.toast(`手上拿滿了，${this.dropHint}`); return; }
     if (!info.cookSec) this.giveItem(info);
     else this.cooking = { stall: target.stall, start: this.time.now, dur: info.cookSec * 1000 };
   }
@@ -514,7 +527,9 @@ export class GameScene extends Phaser.Scene {
     this.drawSelf();
     this.room.sendPos(this.player.x, this.player.y, this.player.flipX, this.carrying.join(','), now);
 
-    this.ui.setPrompt(this.modalOpen ? '' : this.promptFor(this.findTarget()));
+    const target = this.findTarget();
+    this.ui.setPrompt(this.modalOpen ? '' : this.promptFor(target));
+    this.ui.setAction(this.actionLabel(target));
     if (now - this.hudAt > 100) { this.hudAt = now; this.pushHud(now); }
   }
 
@@ -533,6 +548,7 @@ export class GameScene extends Phaser.Scene {
       if (k.RIGHT.isDown || k.D.isDown) vx += 1;
       if (k.UP.isDown || k.W.isDown) vy -= 1;
       if (k.DOWN.isDown || k.S.isDown) vy += 1;
+      if (!vx && !vy) ({ x: vx, y: vy } = this.ui.stick);
     }
     const len = Math.hypot(vx, vy) || 1;
     const speed = BALANCE.playerSpeedTiles * T;

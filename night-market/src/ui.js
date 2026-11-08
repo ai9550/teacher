@@ -16,10 +16,29 @@ export const cleanName = raw => {
   return name;
 };
 const medal = i => ['🥇', '🥈', '🥉'][i] ?? `${i + 1}`;
+const STICK_DEADZONE = 0.2;
+// 平板、手機等觸控裝置才顯示搖桿；網址加 ?touch 可在電腦上強制顯示
+const detectTouch = () => navigator.maxTouchPoints > 0
+  || window.matchMedia('(any-pointer: coarse)').matches
+  || new URLSearchParams(location.search).has('touch');
 
 export class UI {
   constructor(root) {
     this.root = root;
+    this.isTouch = detectTouch();
+    document.body.classList.toggle('touch', this.isTouch);
+    this.stick = { x: 0, y: 0 };
+    const howto = this.isTouch
+      ? `<li>用左下角的搖桿移動</li>
+         <li>走到頭上有餐點泡泡的客人旁，按右下角的 <kbd>接單</kbd></li>
+         <li>到攤位按 <kbd>拿餐</kbd>（有些要站著等一下）</li>
+         <li>回到客人身邊按 <kbd>送餐</kbd>，再算出要找多少錢</li>
+         <li>拿錯了按 <kbd>丟掉</kbd></li>`
+      : `<li>方向鍵 / WASD 移動</li>
+         <li>走到頭上有餐點泡泡的客人旁，按 <kbd>空白鍵</kbd> 接單</li>
+         <li>到攤位按 <kbd>空白鍵</kbd> 拿餐點（有些要站著等一下）</li>
+         <li>回到客人身邊按 <kbd>空白鍵</kbd> 送餐，再算出要找多少錢</li>
+         <li>拿錯了按 <kbd>Q</kbd> 丟掉</li>`;
     root.innerHTML = `
       <section id="loading" class="screen"><div class="panel"><h1>🏮 夜市跑腿王</h1><p class="sub" id="loadingText">連線中…</p></div></section>
 
@@ -35,13 +54,7 @@ export class UI {
             <button id="joinBtn" class="big secondary">加入</button>
           </div>
           <p id="homeError" class="error"></p>
-          <ol class="howto">
-            <li>方向鍵 / WASD 移動</li>
-            <li>走到頭上有餐點泡泡的客人旁，按 <kbd>空白鍵</kbd> 接單</li>
-            <li>到攤位按 <kbd>空白鍵</kbd> 拿餐點（有些要站著等一下）</li>
-            <li>回到客人身邊按 <kbd>空白鍵</kbd> 送餐，再算出要找多少錢</li>
-            <li>拿錯了按 <kbd>Q</kbd> 丟掉</li>
-          </ol>
+          <ol class="howto">${howto}</ol>
         </div>
       </section>
 
@@ -69,6 +82,11 @@ export class UI {
         <div id="carry"></div>
         <div id="prompt"></div>
         <div id="toasts"></div>
+        <div id="touch">
+          <div id="stick"><div id="stickKnob"></div></div>
+          <button id="dropBtn">丟掉</button>
+          <button id="actionBtn">互動</button>
+        </div>
       </section>
 
       <div id="countdown" hidden></div>
@@ -103,6 +121,7 @@ export class UI {
       'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError',
       'roomCode', 'charPicker', 'playerCount', 'playerList', 'settingsBox', 'startGameBtn', 'waitHint', 'leaveBtn',
       'time', 'money', 'combo', 'board', 'rank', 'carry', 'prompt', 'toasts',
+      'stick', 'stickKnob', 'dropBtn', 'actionBtn',
       'bill', 'paid', 'answer', 'feedback', 'keypad', 'revealOk', 'podium', 'resultActions']
       .forEach(id => { this.el[id] = $(root, '#' + id); });
 
@@ -160,7 +179,44 @@ export class UI {
     });
     this.el.revealOk.addEventListener('click', () => this.closeCheckout());
 
+    // ---------- 觸控操作 ----------
+    this.initStick();
+    const press = (btn, fn) => btn.addEventListener('pointerdown', e => { e.preventDefault(); fn(); });
+    press(this.el.actionBtn, () => this.onAction?.());
+    press(this.el.dropBtn, () => this.onDrop?.());
+
     this.lastPrompt = null;
+    this.lastAction = null;
+  }
+
+  // 搖桿用 window 監聽手指，手指滑出底盤也不會斷，另一隻手同時按按鈕也互不影響
+  initStick() {
+    const { stick, stickKnob } = this.el;
+    let active = null;
+    const move = e => {
+      const r = stick.getBoundingClientRect();
+      const reach = r.width / 2;
+      let x = (e.clientX - (r.left + reach)) / reach;
+      let y = (e.clientY - (r.top + reach)) / reach;
+      const len = Math.hypot(x, y);
+      if (len > 1) { x /= len; y /= len; }
+      this.stick = len < STICK_DEADZONE ? { x: 0, y: 0 } : { x, y };
+      stickKnob.style.transform = `translate(${x * reach * 0.6}px, ${y * reach * 0.6}px)`;
+    };
+    this.resetStick = () => {
+      active = null;
+      this.stick = { x: 0, y: 0 };
+      stickKnob.style.transform = '';
+    };
+    stick.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      active = e.pointerId;
+      move(e);
+    });
+    window.addEventListener('pointermove', e => { if (e.pointerId === active) move(e); });
+    const end = e => { if (e.pointerId === active) this.resetStick(); };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
   }
 
   async busy(fn) {
@@ -232,6 +288,8 @@ export class UI {
     this.el.hud.hidden = false;
     this.el.toasts.innerHTML = '';
     this.lastPrompt = null;
+    this.lastAction = null;
+    this.resetStick();
   }
 
   startCountdown(startAt, now) {
@@ -279,6 +337,14 @@ export class UI {
     this.lastPrompt = text;
     this.el.prompt.textContent = text;
     this.el.prompt.hidden = !text;
+  }
+
+  // 動作鈕顯示現在能做的事（接單／拿餐／送餐），沒有可做的事就變暗
+  setAction(label) {
+    if (label === this.lastAction) return;
+    this.lastAction = label;
+    this.el.actionBtn.textContent = label || '互動';
+    this.el.actionBtn.classList.toggle('ready', !!label);
   }
 
   toast(text) {
