@@ -17,6 +17,12 @@
         }
 
         /* 頁面切換邏輯 (使用 data-mode 控制顯示與隱藏) */
+        #view-gate { display: none; }
+        body[data-mode="locked"] #view-gate { display: flex; }
+        body[data-mode="locked"] #view-page1,
+        body[data-mode="locked"] #view-pdf-container,
+        body[data-mode="locked"] #toolbar-page2 { display: none; }
+
         body[data-mode="page1"] #view-page1 { display: flex; }
         body[data-mode="page1"] #view-pdf-container { display: none; }
         body[data-mode="page1"] #toolbar-page2 { display: none; }
@@ -102,7 +108,18 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body data-mode="page1" class="text-gray-800">
+<body data-mode="locked" class="text-gray-800">
+
+    <!-- ==================== 進入網頁的密碼畫面 ==================== -->
+    <div id="view-gate" class="h-screen w-full items-center justify-center bg-white p-4">
+        <form id="gate-form" class="w-full max-w-sm text-center space-y-4">
+            <h1 class="text-3xl font-bold text-blue-700">PDF 考卷朗讀輔助系統</h1>
+            <p class="text-gray-500">請輸入密碼以使用報讀服務</p>
+            <input type="password" id="gate-password" placeholder="請輸入密碼" autocomplete="off" autofocus class="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-gray-700">
+            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-md transition">進入</button>
+            <p id="gate-error" role="alert" class="text-sm text-red-600"></p>
+        </form>
+    </div>
 
     <!-- ==================== PAGE 1: 上傳與開始辨識 ==================== -->
     <div id="view-page1" class="h-screen w-full flex-col items-center justify-center bg-white p-4">
@@ -230,6 +247,8 @@
         const CMAP_PACKED = true;
 
         // ================= 設定區 =================
+        // 進入網頁的密碼 (SHA-256)。只在瀏覽器檢查，能擋一般使用者，不是真正的存取控制
+        const GATE_PASSWORD_HASH = '15e2b0d3c33891ebb0f1ef609ec419420c20e320ce94c65fbc8c3312448eb225';
         // 方式二列出的題庫，同名檔案以排在前面的為準
         const QUESTION_BANK_REPOS = ['ai9550/teacher', 'happy690331/teacher'];
         // 上傳服務的 /exec 網址，設定方式見 exam-upload-backend/README.md
@@ -303,8 +322,41 @@
             });
         }
 
-        loadGitHubPdfs();
         localStorage.removeItem('gdrive_api_key'); // 清除舊版方式三存放的金鑰
+
+        async function sha256Hex(text) {
+            const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function unlockPage() {
+            body.dataset.mode = 'page1';
+            loadGitHubPdfs();
+        }
+
+        function rememberUnlocked() {
+            try { sessionStorage.setItem('exam_gate_unlocked', GATE_PASSWORD_HASH); } catch (error) { /* 無法記住時，下次重新輸入 */ }
+        }
+
+        function isRememberedUnlocked() {
+            try { return sessionStorage.getItem('exam_gate_unlocked') === GATE_PASSWORD_HASH; } catch (error) { return false; }
+        }
+
+        document.getElementById('gate-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const passwordInput = document.getElementById('gate-password');
+            if (await sha256Hex(passwordInput.value) === GATE_PASSWORD_HASH) {
+                passwordInput.value = '';
+                rememberUnlocked();
+                unlockPage();
+            } else {
+                document.getElementById('gate-error').textContent = '密碼錯誤，請再試一次。';
+                passwordInput.select();
+            }
+        });
+
+        // 同一個分頁重新整理時不必重打；關閉分頁後要重新輸入
+        if (isRememberedUnlocked()) unlockPage();
 
         function setUploadStatus(message, tone) {
             const tones = { info: 'text-gray-500', error: 'text-red-600', success: 'text-green-700' };
