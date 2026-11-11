@@ -380,7 +380,7 @@
         ];
 
         let allFiles = [];
-        let activeCategory = 'all';
+        let activeCategory = 'chinese';
 
         function getRepoInfo() {
             const hostname = window.location.hostname;
@@ -519,9 +519,6 @@
             const nav = document.getElementById('categoryNav');
             nav.innerHTML = '';
 
-            const allCount = allFiles.length;
-            nav.appendChild(makeCatButton('all', '全部', '🗂️', '#5c3d24', allCount));
-
             CATEGORIES.forEach(cat => {
                 const count = allFiles.filter(f => f.categoryId === cat.id).length;
                 const btn = makeCatButton(cat.id, cat.name, cat.icon, cat.color, count);
@@ -552,9 +549,7 @@
             loadingDiv.style.display = 'none';
             contentDiv.style.display = 'block';
 
-            const files = activeCategory === 'all'
-                ? allFiles
-                : allFiles.filter(f => f.categoryId === activeCategory);
+            const files = allFiles.filter(f => f.categoryId === activeCategory);
 
             grid.innerHTML = '';
 
