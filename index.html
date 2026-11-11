@@ -302,34 +302,74 @@
         }
 
         /* ---------- Mobile ---------- */
+        /* 窄螢幕一樣維持左側分類欄，只縮窄尺寸 */
         @media (max-width: 720px) {
-            .app {
-                flex-direction: column;
-            }
             .sidebar {
-                width: 100%;
-                flex-direction: row;
+                width: 112px;
+                padding: 14px 8px;
+                gap: 12px;
+            }
+            .sidebar-title {
+                font-size: 0.95em;
+                letter-spacing: 0;
+                padding-bottom: 8px;
+            }
+            .category-nav {
+                gap: 8px;
+            }
+            .cat-btn {
+                flex-direction: column;
                 align-items: center;
-                overflow-x: auto;
-                padding: 14px;
+                padding: 8px 4px;
+                gap: 2px;
+                font-size: 0.8em;
+                border-left-width: 5px;
+                transform: none !important;
+            }
+            .cat-icon {
+                font-size: 1.15em;
+            }
+            .cat-name {
+                text-align: center;
+                white-space: nowrap;
+            }
+            .cat-count {
+                font-size: 0.7em;
+                padding: 0 6px;
+                min-width: 16px;
+            }
+            .main {
+                padding: 20px 16px 40px;
+            }
+            .blackboard {
+                padding: 18px 20px;
+            }
+            .blackboard h1 {
+                font-size: 1.4em;
+            }
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                gap: 16px;
+            }
+        }
+
+        /* 手機：分類欄再窄一點，圖示與名稱改為直式 */
+        @media (max-width: 460px) {
+            .sidebar {
+                width: 86px;
+                padding: 12px 6px;
             }
             .sidebar-title {
                 display: none;
             }
-            .category-nav {
-                flex-direction: row;
-                gap: 8px;
-            }
             .cat-btn {
-                flex-shrink: 0;
-                width: auto;
-                transform: none !important;
+                font-size: 0.72em;
+            }
+            .cat-count {
+                display: none;
             }
             .main {
-                padding: 20px;
-            }
-            .blackboard h1 {
-                font-size: 1.6em;
+                padding: 16px 12px 36px;
             }
         }
     </style>
