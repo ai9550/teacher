@@ -448,6 +448,7 @@
         }
 
         function categorize(filename) {
+            if (filename === '大富遊戲數學四上單元公里.html') return 'puzzle';
             for (const cat of CATEGORIES) {
                 if (cat.id === 'other') continue;
                 if (cat.keywords.some(kw => filename.includes(kw))) return cat.id;
@@ -456,6 +457,7 @@
         }
 
         const STATIC_FILES = [
+            "大富遊戲數學四上單元公里.html",
             "一位數加法小朋友下樓梯.html",
             "三位數直式減法計算練習.html",
             "三位數除以一位數直式除法.html",
