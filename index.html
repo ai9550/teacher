@@ -613,7 +613,7 @@
                 a.style.setProperty('--tilt', `${tilts[index % tilts.length]}deg`);
                 a.style.animationDelay = `${index * 0.03}s`;
 
-                const displayName = file.name.replace(/\.html$/i, '');
+                const displayName = file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name.replace(/\.html$/i, '');
 
                 a.innerHTML = `
                     <span class="card-tag">${cat.icon} ${cat.name}</span>
