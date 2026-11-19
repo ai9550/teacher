@@ -49,6 +49,7 @@ export class UI {
         <div class="panel">
           <h1>🏮 夜市跑腿王</h1>
           <p class="sub">接單、取餐、送餐、算找零，看誰賺最多！</p>
+          <p id="roomLinkHint" class="room-link-hint" hidden></p>
           <label class="field"><span>你的名字</span><input id="nameInput" maxlength="8" placeholder="最多 8 個字" autocomplete="off"></label>
           <button id="createBtn" class="big">建立房間</button>
           <div class="divider">或是輸入房號加入</div>
@@ -98,6 +99,10 @@ export class UI {
 
       <div id="countdown" hidden></div>
 
+      <aside id="roomQr" class="room-qr" aria-label="掃描加入目前房間" hidden>
+        <div id="roomQrcode"></div><b>掃碼加入這間房</b><small>房號 <span id="roomQrCode"></span></small>
+      </aside>
+
       <section id="checkout" class="screen dim" hidden>
         <div class="panel checkout">
           <h2>🧾 結帳</h2>
@@ -133,7 +138,8 @@ export class UI {
 
     this.el = {};
     ['loading', 'loadingText', 'home', 'lobby', 'hud', 'countdown', 'checkout', 'results',
-      'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError', 'qrcode',
+      'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError', 'qrcode', 'roomLinkHint',
+      'roomQr', 'roomQrcode', 'roomQrCode',
       'roomCode', 'charPickerField', 'charPicker', 'playerCount', 'playerList', 'settingsBox', 'startGameBtn', 'waitHint', 'leaveBtn',
       'time', 'money', 'combo', 'board', 'rank', 'carry', 'prompt', 'toasts',
       'stick', 'stickKnob', 'dropBtn', 'actionBtn', 'roomControls', 'roomHudCode',
@@ -154,6 +160,12 @@ export class UI {
 
     // ---------- 首頁 ----------
     try { this.el.nameInput.value = localStorage.getItem(NAME_KEY) || ''; } catch { /* 無法使用 localStorage 就算了 */ }
+    const linkedRoom = new URLSearchParams(location.search).get('room') || '';
+    if (/^\d{4}$/.test(linkedRoom)) {
+      this.el.codeInput.value = linkedRoom;
+      this.el.roomLinkHint.hidden = false;
+      this.el.roomLinkHint.textContent = `已帶入房號 ${linkedRoom}，輸入姓名後按「加入」即可進房。`;
+    }
     const readName = () => {
       const name = cleanName(this.el.nameInput.value);
       if (!name) { this.showError('請先輸入你的名字'); this.el.nameInput.focus(); return null; }
@@ -275,6 +287,7 @@ export class UI {
   hideAll() {
     ['loading', 'home', 'lobby', 'hud', 'countdown', 'checkout', 'results'].forEach(k => { this.el[k].hidden = true; });
     this.el.roomAdmin.hidden = true;
+    this.el.roomQr.hidden = true;
     this.checkoutState = null;
     clearInterval(this.countdownTimer);
   }
@@ -331,6 +344,7 @@ export class UI {
 
     this.el.startGameBtn.hidden = !isHost;
     this.el.waitHint.textContent = isHost ? (s.hostPlays === false ? '你將以房主身分旁觀管理，不會佔用玩家位置。' : '人到齊了就按開始（1 個人也能玩）') : '等房主設定難度並按開始…';
+    this.updateRoomControls(room);
   }
 
   // ---------- HUD ----------
@@ -351,6 +365,19 @@ export class UI {
     this.el.roomHudCode.textContent = room.code;
     this.el.manageRoomBtn.hidden = !room.isHost();
     this.el.adminRoomCode.textContent = `房號 ${room.code}`;
+    this.el.roomQrCode.textContent = room.code;
+    this.el.roomQr.hidden = this.el.lobby.hidden && this.el.hud.hidden;
+    const roomUrl = new URL('https://ai9550.github.io/teacher/night-market/index.html');
+    roomUrl.searchParams.set('room', room.code);
+    if (this.roomQrUrl !== roomUrl.href && globalThis.QRCode) {
+      this.el.roomQrcode.innerHTML = '';
+      new QRCode(this.el.roomQrcode, {
+        text: roomUrl.href,
+        width: 104, height: 104, colorDark: '#241a12', colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+      this.roomQrUrl = roomUrl.href;
+    }
     if (this.el.roomAdmin.hidden) return;
     const members = room.members();
     this.el.gamePlayerList.innerHTML = members.map(m => {
