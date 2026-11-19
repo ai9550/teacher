@@ -43,6 +43,9 @@ export class UI {
       <section id="loading" class="screen"><div class="panel"><h1>🏮 夜市跑腿王</h1><p class="sub" id="loadingText">連線中…</p></div></section>
 
       <section id="home" class="screen" hidden>
+        <aside class="home-qr" aria-label="學生掃碼加入遊戲">
+          <div id="qrcode"></div><b>學生掃碼加入</b><small>掃描後輸入房號</small>
+        </aside>
         <div class="panel">
           <h1>🏮 夜市跑腿王</h1>
           <p class="sub">接單、取餐、送餐、算找零，看誰賺最多！</p>
@@ -76,6 +79,10 @@ export class UI {
           <span id="time">⏱ 0:00</span>
           <span id="money">💰 $0</span>
           <span id="combo"></span>
+          <div id="roomControls" class="room-controls" hidden>
+            <span>房號 <b id="roomHudCode"></b></span>
+            <button id="manageRoomBtn" type="button">房間管理</button>
+          </div>
         </div>
         <div id="board"></div>
         <ol id="rank"></ol>
@@ -114,16 +121,36 @@ export class UI {
           <div id="resultActions"></div>
         </div>
       </section>
+
+      <section id="roomAdmin" class="room-admin" hidden>
+        <div class="room-admin-card">
+          <h2>房間管理</h2><p id="adminRoomCode" class="sub"></p>
+          <ul id="gamePlayerList" class="player-list"></ul>
+          <button id="closeRoomAdmin" class="link" type="button">關閉</button>
+        </div>
+      </section>
     `;
 
     this.el = {};
     ['loading', 'loadingText', 'home', 'lobby', 'hud', 'countdown', 'checkout', 'results',
-      'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError',
+      'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError', 'qrcode',
       'roomCode', 'charPicker', 'playerCount', 'playerList', 'settingsBox', 'startGameBtn', 'waitHint', 'leaveBtn',
       'time', 'money', 'combo', 'board', 'rank', 'carry', 'prompt', 'toasts',
-      'stick', 'stickKnob', 'dropBtn', 'actionBtn',
+      'stick', 'stickKnob', 'dropBtn', 'actionBtn', 'roomControls', 'roomHudCode',
+      'manageRoomBtn', 'roomAdmin', 'adminRoomCode', 'gamePlayerList', 'closeRoomAdmin',
       'bill', 'paid', 'answer', 'feedback', 'keypad', 'revealOk', 'podium', 'resultActions']
       .forEach(id => { this.el[id] = $(root, '#' + id); });
+
+    // 教師可在第一個畫面讓學生掃描後直接開啟遊戲。
+    if (globalThis.QRCode) {
+      new QRCode(this.el.qrcode, {
+        text: 'https://ai9550.github.io/teacher/night-market/index.html',
+        width: 136, height: 136, colorDark: '#241a12', colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    } else {
+      this.el.qrcode.textContent = 'QR 載入中…';
+    }
 
     // ---------- 首頁 ----------
     try { this.el.nameInput.value = localStorage.getItem(NAME_KEY) || ''; } catch { /* 無法使用 localStorage 就算了 */ }
@@ -159,6 +186,23 @@ export class UI {
       const key = btn.dataset.key;
       this.onSettings?.({ [key]: key === 'difficulty' ? btn.dataset.value : Number(btn.dataset.value) });
     });
+    this.el.settingsBox.addEventListener('change', e => {
+      const toggle = e.target.closest('[data-host-plays]');
+      if (toggle) this.onHostPlayChange?.(toggle.checked);
+    });
+    this.el.playerList.addEventListener('click', e => {
+      const button = e.target.closest('button[data-kick]');
+      if (button) this.onKick?.(button.dataset.kick);
+    });
+    this.el.gamePlayerList.addEventListener('click', e => {
+      const button = e.target.closest('button[data-kick]');
+      if (button) this.onKick?.(button.dataset.kick);
+    });
+    this.el.manageRoomBtn.addEventListener('click', () => {
+      this.el.roomAdmin.hidden = false;
+      this.updateRoomControls(this.currentRoom);
+    });
+    this.el.closeRoomAdmin.addEventListener('click', () => { this.el.roomAdmin.hidden = true; });
     this.el.startGameBtn.addEventListener('click', () => this.onStartGame?.());
     this.el.leaveBtn.addEventListener('click', () => this.onLeave?.());
 
@@ -230,6 +274,7 @@ export class UI {
 
   hideAll() {
     ['loading', 'home', 'lobby', 'hud', 'countdown', 'checkout', 'results'].forEach(k => { this.el[k].hidden = true; });
+    this.el.roomAdmin.hidden = true;
     this.checkoutState = null;
     clearInterval(this.countdownTimer);
   }
@@ -262,11 +307,12 @@ export class UI {
         <span class="swatch"></span>${c.name}${taken ? `<small>${esc(room.state.players[owner]?.name ?? '')}</small>` : ''}</button>`;
     }).join('');
 
-    this.el.playerCount.textContent = `${members.length} / ${CHARACTERS.length}`;
+    this.el.playerCount.textContent = `${members.filter(m => m.char >= 0).length} / ${CHARACTERS.length}`;
     this.el.playerList.innerHTML = members.map(m => {
       const c = CHARACTERS[m.char];
       return `<li class="${m.online ? '' : 'offline'}"><span class="swatch" style="--c:${c ? hex(c.color) : '#555'}"></span>
-        ${esc(m.name)}${m.uid === room.uid ? '（你）' : ''}${m.uid === meta.host ? '<em>房主</em>' : ''}${m.online ? '' : '<small>離線</small>'}</li>`;
+        ${esc(m.name)}${m.uid === room.uid ? '（你）' : ''}${m.uid === meta.host ? `<em>房主${m.char < 0 ? '旁觀' : ''}</em>` : ''}${m.online ? '' : '<small>離線</small>'}
+        ${isHost && m.uid !== room.uid ? `<button class="kick-player" type="button" data-kick="${esc(m.uid)}">踢出</button>` : ''}</li>`;
     }).join('');
 
     const s = meta.settings;
@@ -276,20 +322,41 @@ export class UI {
       <div class="field"><span>找零難度</span><div class="choices">
         ${Object.entries(DIFFICULTY).map(([k, d]) => choice('difficulty', k, d.label)).join('')}</div></div>
       <div class="field"><span>遊戲時間</span><div class="choices">
-        ${BALANCE.durationOptionsMin.map(m => choice('durationMin', m, `${m} 分鐘`)).join('')}</div></div>`;
+        ${BALANCE.durationOptionsMin.map(m => choice('durationMin', m, `${m} 分鐘`)).join('')}</div></div>
+      <div class="host-play-setting">${isHost
+        ? `<label><input type="checkbox" data-host-plays ${s.hostPlays === false ? '' : 'checked'}> 房主也加入遊戲（取消勾選可只管理房間）</label>`
+        : `<span>房主${s.hostPlays === false ? '旁觀管理' : '也會一起遊戲'}</span>`}</div>`;
 
     this.el.startGameBtn.hidden = !isHost;
-    this.el.waitHint.textContent = isHost ? '人到齊了就按開始（1 個人也能玩）' : '等房主按開始…';
+    this.el.waitHint.textContent = isHost ? (s.hostPlays === false ? '你將以房主身分旁觀管理，不會佔用玩家位置。' : '人到齊了就按開始（1 個人也能玩）') : '等房主設定難度並按開始…';
   }
 
   // ---------- HUD ----------
-  showHud() {
+  showHud(room) {
     this.hideAll();
     this.el.hud.hidden = false;
     this.el.toasts.innerHTML = '';
     this.lastPrompt = null;
     this.lastAction = null;
     this.resetStick();
+    this.updateRoomControls(room);
+  }
+
+  updateRoomControls(room) {
+    if (!room) return;
+    this.currentRoom = room;
+    this.el.roomControls.hidden = !['playing', 'ended'].includes(room.meta?.status);
+    this.el.roomHudCode.textContent = room.code;
+    this.el.manageRoomBtn.hidden = !room.isHost();
+    this.el.adminRoomCode.textContent = `房號 ${room.code}`;
+    if (this.el.roomAdmin.hidden) return;
+    const members = room.members();
+    this.el.gamePlayerList.innerHTML = members.map(m => {
+      const c = CHARACTERS[m.char];
+      return `<li class="${m.online ? '' : 'offline'}"><span class="swatch" style="--c:${c ? hex(c.color) : '#555'}"></span>
+        ${esc(m.name)}${m.uid === room.uid ? '（你）' : ''}${m.uid === room.meta.host ? '<em>房主</em>' : ''}${m.char < 0 ? '<small>旁觀</small>' : ''}
+        ${room.isHost() && m.uid !== room.uid ? `<button class="kick-player" type="button" data-kick="${esc(m.uid)}">踢出</button>` : ''}</li>`;
+    }).join('');
   }
 
   startCountdown(startAt, now) {

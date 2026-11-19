@@ -33,6 +33,7 @@ export class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, this.worldW, this.worldH);
     this.round = this.meta.round;
     this.settings = this.meta.settings;
+    this.spectator = this.room.isHost() && this.room.myChar() < 0;
     this.character = CHARACTERS[Math.max(0, this.room.myChar())];
 
     this.mainOnlyObjs = [];
@@ -42,9 +43,9 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.solids);
     this.physics.add.collider(this.player, this.npcs);
 
-    this.cameras.main.setBounds(0, 0, this.worldW, this.worldH)
-      .startFollow(this.player, true, 0.15, 0.15)
-      .setBackgroundColor('#1a1414');
+    this.cameras.main.setBounds(0, 0, this.worldW, this.worldH).setBackgroundColor('#1a1414');
+    if (this.spectator) this.cameras.main.centerOn(this.worldW / 2, this.worldH / 2);
+    else this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
     this.createMinimap();
 
     this.keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT,SPACE,Q');
@@ -76,14 +77,14 @@ export class GameScene extends Phaser.Scene {
     delete this.stats.round;
     this.carrying = [];
     const pos = this.room.state.pos[this.me];
-    if (saved?.round === this.round && pos) {
+    if (!this.spectator && saved?.round === this.round && pos) {
       this.player.setPosition(pos.x, pos.y);
       this.carrying = parseCarry(pos.c);
     }
-    this.room.writeStats(this.stats);
+    if (!this.spectator) this.room.writeStats(this.stats);
 
     this.cookBar = this.mainOnly(this.add.graphics().setDepth(5000));
-    this.ui.showHud();
+    this.ui.showHud(this.room);
     this.pushHud(serverNow());
     if (serverNow() < this.meta.startAt) this.ui.startCountdown(this.meta.startAt, serverNow);
   }
@@ -124,8 +125,10 @@ export class GameScene extends Phaser.Scene {
     this.player = this.physics.add.sprite((start.x + 0.5) * T, (start.y + 0.5) * T - 24, this.character.id).setScale(SCALE);
     this.player.body.setSize(10, 8).setOffset(3, 16);
     this.player.setCollideWorldBounds(true);
+    if (this.spectator) { this.player.setVisible(false); this.player.body.enable = false; }
     this.nameTag = this.mainOnly(this.makeNameTag('你', this.character.color));
     this.carryText = this.mainOnly(this.add.text(0, 0, '', { fontFamily: FONT, fontSize: '22px' }).setOrigin(0.5, 1));
+    if (this.spectator) { this.nameTag.setVisible(false); this.carryText.setVisible(false); }
   }
 
   makeNameTag(text, color) {
@@ -203,6 +206,7 @@ export class GameScene extends Phaser.Scene {
     this.minimap = this.cameras.add(0, 0, 10, 10).setBackgroundColor('#000').setBounds(0, 0, this.worldW, this.worldH);
     this.minimap.ignore(this.mainOnlyObjs);
     this.playerMarker = this.miniOnly(this.add.circle(0, 0, T * 0.9, this.character.color).setStrokeStyle(12, 0xffffff).setDepth(9999));
+    if (this.spectator) this.playerMarker.setVisible(false);
     this.layoutMinimap();
     this.scale.on('resize', this.layoutMinimap, this);
     this.events.once('shutdown', () => this.scale.off('resize', this.layoutMinimap, this));
@@ -395,7 +399,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   async interact() {
-    if (!this.running || this.modalOpen) return;
+    if (!this.running || this.modalOpen || this.spectator) return;
     const target = this.findTarget();
     if (!target) return;
     if (target.type === 'customer') {
@@ -430,7 +434,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   discard() {
-    if (!this.running || this.modalOpen || !this.carrying.length) return;
+    if (!this.running || this.modalOpen || this.spectator || !this.carrying.length) return;
     const id = this.carrying.pop();
     this.ui.toast(`丟掉了 ${stallById(id).emoji}`);
   }
@@ -521,6 +525,14 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.room.isHost() && now - this.hostAt > HOST_TICK_MS) { this.hostAt = now; this.hostTick(now); }
+
+    if (this.spectator) {
+      this.player.setVelocity(0);
+      this.ui.setPrompt('房主旁觀中：可從右上角管理房間');
+      this.ui.setAction('');
+      if (now - this.hudAt > 100) { this.hudAt = now; this.pushHud(now); }
+      return;
+    }
 
     this.movePlayer();
     this.updateCooking();

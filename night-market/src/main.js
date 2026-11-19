@@ -43,6 +43,7 @@ function onRoomChange() {
     leaveRoom('你已經離開房間');
     return;
   }
+  ui.updateRoomControls(room);
   room.checkHost();
   if (meta.status === 'waiting') {
     stopScene();
@@ -87,6 +88,14 @@ ui.onPickChar = async i => {
   if (!(await room.pickChar(i))) ui.showLobby(room);
 };
 ui.onSettings = s => room.setSettings(s);
+ui.onHostPlayChange = async plays => {
+  try { await room.setHostPlays(plays); }
+  catch (err) { ui.toast(err.message || String(err)); ui.showLobby(room); }
+};
+ui.onKick = async targetUid => {
+  try { await room.kickPlayer(targetUid); }
+  catch (err) { ui.toast(err.message || String(err)); }
+};
 ui.onStartGame = () => room.startGame();
 ui.onLeave = () => leaveRoom();
 

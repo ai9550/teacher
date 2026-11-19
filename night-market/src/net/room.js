@@ -34,7 +34,7 @@ export class Room {
         await set(room.root, {
           meta: {
             host: uid, status: 'waiting', round: 0, createdAt: serverTimestamp(),
-            settings: { difficulty: 'easy', durationMin: BALANCE.durationOptionsMin[0] },
+            settings: { difficulty: 'easy', durationMin: BALANCE.durationOptionsMin[0], hostPlays: true },
           },
           players: { [uid]: { name, joinedAt: serverTimestamp(), online: true } },
           chars: { 0: uid },
@@ -57,7 +57,7 @@ export class Room {
     if (!data?.meta) throw new RoomError('找不到這個房間，請確認房號');
     const already = data.players?.[uid];
     if (!already) {
-      if (data.meta.status !== 'waiting') throw new RoomError('這個房間已經開始遊戲了');
+      if (!['waiting', 'playing'].includes(data.meta.status)) throw new RoomError('這個房間目前不能加入');
       const charIndex = await room.claimFreeChar(data.chars || {});
       if (charIndex < 0) throw new RoomError(`房間已滿（最多 ${CHARACTERS.length} 人）`);
       await set(child(room.root, `players/${uid}`), { name, joinedAt: serverTimestamp(), online: true });
@@ -153,7 +153,7 @@ export class Room {
   // 本局排行（只算這一局的分數）
   ranking() {
     const round = this.state.meta?.round;
-    return this.members()
+    return this.members().filter(m => m.char >= 0)
       .map(m => {
         const s = this.state.stats[m.uid];
         const cur = s?.round === round ? s : {};
@@ -187,10 +187,29 @@ export class Room {
   }
 
   setSettings(settings) {
+    if (!this.isHost()) throw new RoomError('只有房主可以調整遊戲設定');
     return update(child(this.root, 'meta/settings'), settings);
   }
 
+  async setHostPlays(hostPlays) {
+    if (!this.isHost()) throw new RoomError('只有房主可以調整房間設定');
+    if (this.meta?.status !== 'waiting') throw new RoomError('遊戲開始後不能更改房主參與方式');
+    const char = this.myChar();
+    if (hostPlays && char < 0) {
+      const claimed = await this.claimFreeChar(this.state.chars);
+      if (claimed < 0) throw new RoomError('玩家位置已滿，房主無法加入遊戲');
+    } else if (!hostPlays && char >= 0) {
+      await Promise.all([
+        remove(child(this.root, `chars/${char}`)),
+        remove(child(this.root, `pos/${this.uid}`)),
+        remove(child(this.root, `stats/${this.uid}`)),
+      ]);
+    }
+    return update(child(this.root, 'meta/settings'), { hostPlays: !!hostPlays });
+  }
+
   async startGame() {
+    if (!this.isHost()) throw new RoomError('只有房主可以開始遊戲');
     const startAt = serverNow() + 4000;
     await remove(child(this.root, 'orders'));
     await update(child(this.root, 'meta'), {
@@ -203,6 +222,22 @@ export class Room {
 
   endGame() {
     return update(child(this.root, 'meta'), { status: 'ended' });
+  }
+
+  async kickPlayer(uid) {
+    if (!this.isHost()) throw new RoomError('只有房主可以移除玩家');
+    if (uid === this.uid) throw new RoomError('房主不能移除自己');
+    if (!['waiting', 'playing'].includes(this.meta?.status)) throw new RoomError('目前不能移除玩家');
+    if (!this.state.players[uid]) return;
+    const char = this.charOf(uid);
+    const orders = Object.entries(this.state.orders || {}).filter(([, order]) => order.owner === uid);
+    await Promise.all([
+      remove(child(this.root, `players/${uid}`)),
+      remove(child(this.root, `pos/${uid}`)),
+      remove(child(this.root, `stats/${uid}`)),
+      ...(char >= 0 ? [remove(child(this.root, `chars/${char}`))] : []),
+      ...orders.map(([id]) => update(child(this.root, `orders/${id}`), { owner: null, pausedAt: null })),
+    ]);
   }
 
   backToLobby() {
