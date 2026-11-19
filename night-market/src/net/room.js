@@ -34,10 +34,10 @@ export class Room {
         await set(room.root, {
           meta: {
             host: uid, status: 'waiting', round: 0, createdAt: serverTimestamp(),
-            settings: { difficulty: 'easy', durationMin: BALANCE.durationOptionsMin[0], hostPlays: true },
+            settings: { difficulty: 'easy', durationMin: BALANCE.durationOptionsMin[0], hostPlays: false },
           },
           players: { [uid]: { name, joinedAt: serverTimestamp(), online: true } },
-          chars: { 0: uid },
+          chars: {},
         });
         await room.connect();
         return room;
@@ -58,9 +58,21 @@ export class Room {
     const already = data.players?.[uid];
     if (!already) {
       if (!['waiting', 'playing'].includes(data.meta.status)) throw new RoomError('這個房間目前不能加入');
-      const charIndex = await room.claimFreeChar(data.chars || {});
-      if (charIndex < 0) throw new RoomError(`房間已滿（最多 ${CHARACTERS.length} 人）`);
       await set(child(room.root, `players/${uid}`), { name, joinedAt: serverTimestamp(), online: true });
+      let charIndex = -1;
+      try {
+        // 先加入成員清單，再領取角色，避免限制為「只有房間成員能選角色」的資料庫規則拒絕中途加入。
+        charIndex = await room.claimFreeChar(data.chars || {});
+        if (charIndex < 0) throw new RoomError(`房間已滿（最多 ${CHARACTERS.length} 人）`);
+        const latestMeta = (await get(child(room.root, 'meta'))).val();
+        if (!['waiting', 'playing'].includes(latestMeta?.status)) throw new RoomError('遊戲已結束，無法加入');
+      } catch (err) {
+        await Promise.allSettled([
+          remove(child(room.root, `players/${uid}`)),
+          ...(charIndex >= 0 ? [remove(child(room.root, `chars/${charIndex}`))] : []),
+        ]);
+        throw err;
+      }
     }
     await room.connect();
     return room;
@@ -178,6 +190,7 @@ export class Room {
 
   // ---------- 等候室 ----------
   async pickChar(i) {
+    if (this.isHost() && this.meta?.settings?.hostPlays === false) return false;
     const old = this.myChar();
     if (old === i) return true;
     const res = await runTransaction(child(this.root, `chars/${i}`), cur => (cur ? undefined : this.uid));

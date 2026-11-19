@@ -65,7 +65,7 @@ export class UI {
         <div class="panel wide">
           <div class="room-code">房號 <b id="roomCode"></b></div>
           <p class="sub">把房號告訴同學，最多 ${CHARACTERS.length} 人</p>
-          <div class="field"><span>選角色</span><div id="charPicker" class="chars-grid"></div></div>
+          <div id="charPickerField" class="field"><span>選角色</span><div id="charPicker" class="chars-grid"></div></div>
           <div class="field"><span>玩家（<i id="playerCount"></i>）</span><ul id="playerList" class="player-list"></ul></div>
           <div id="settingsBox"></div>
           <button id="startGameBtn" class="big">開始遊戲</button>
@@ -134,7 +134,7 @@ export class UI {
     this.el = {};
     ['loading', 'loadingText', 'home', 'lobby', 'hud', 'countdown', 'checkout', 'results',
       'nameInput', 'createBtn', 'codeInput', 'joinBtn', 'homeError', 'qrcode',
-      'roomCode', 'charPicker', 'playerCount', 'playerList', 'settingsBox', 'startGameBtn', 'waitHint', 'leaveBtn',
+      'roomCode', 'charPickerField', 'charPicker', 'playerCount', 'playerList', 'settingsBox', 'startGameBtn', 'waitHint', 'leaveBtn',
       'time', 'money', 'combo', 'board', 'rank', 'carry', 'prompt', 'toasts',
       'stick', 'stickKnob', 'dropBtn', 'actionBtn', 'roomControls', 'roomHudCode',
       'manageRoomBtn', 'roomAdmin', 'adminRoomCode', 'gamePlayerList', 'closeRoomAdmin',
@@ -298,8 +298,10 @@ export class UI {
     const members = room.members();
     const mine = room.myChar();
     const isHost = room.isHost();
+    const hostSpectating = isHost && meta.settings.hostPlays === false;
 
     this.el.roomCode.textContent = room.code;
+    this.el.charPickerField.hidden = hostSpectating;
     this.el.charPicker.innerHTML = CHARACTERS.map((c, i) => {
       const owner = room.state.chars[i];
       const taken = owner && owner !== room.uid;
@@ -324,7 +326,7 @@ export class UI {
       <div class="field"><span>遊戲時間</span><div class="choices">
         ${BALANCE.durationOptionsMin.map(m => choice('durationMin', m, `${m} 分鐘`)).join('')}</div></div>
       <div class="host-play-setting">${isHost
-        ? `<label><input type="checkbox" data-host-plays ${s.hostPlays === false ? '' : 'checked'}> 房主也加入遊戲（取消勾選可只管理房間）</label>`
+        ? `<label><input type="checkbox" data-host-plays ${s.hostPlays === false ? '' : 'checked'}> 房主參與遊戲（不勾選即可旁觀管理）</label>`
         : `<span>房主${s.hostPlays === false ? '旁觀管理' : '也會一起遊戲'}</span>`}</div>`;
 
     this.el.startGameBtn.hidden = !isHost;
