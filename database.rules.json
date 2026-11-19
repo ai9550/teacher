@@ -1,0 +1,74 @@
+{
+  "rules": {
+    "nightMarket": {
+      "rooms": {
+        "$code": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || data.child('meta/createdAt').val() < now - 21600000)",
+          ".validate": "$code.matches(/^[0-9]{4}$/)",
+          "meta": {
+            ".write": "auth != null && (data.child('host').val() === auth.uid || data.parent().child('players').child(auth.uid).exists())"
+          },
+          "players": {
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || data.parent().parent().child('meta/host').val() === auth.uid)"
+            }
+          },
+          "chars": {
+            "$i": {
+              ".validate": "$i.matches(/^[0-5]$/)",
+              ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()) || data.parent().parent().child('meta/host').val() === auth.uid)"
+            }
+          },
+          "pos": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "stats": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid"
+            }
+          },
+          "orders": {
+            ".write": "auth != null && data.parent().child('meta/host').val() === auth.uid",
+            "$id": {
+              ".write": "auth != null && (data.child('owner').val() === auth.uid || (data.exists() && !data.child('owner').exists() && newData.child('owner').val() === auth.uid))"
+            }
+          }
+        }
+      }
+    },
+    "dafeng3d": {
+      "rooms": {
+        "$code": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || data.child('meta/createdAt').val() < now - 21600000)",
+          ".validate": "$code.matches(/^[0-9]{4}$/)",
+          "meta": {
+            ".write": "auth != null && data.child('hostUid').val() === auth.uid"
+          },
+          "players": {
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || data.parent().parent().child('meta/hostUid').val() === auth.uid)",
+              "name": {
+                ".validate": "newData.isString() && newData.val().length <= 8"
+              }
+            }
+          },
+          "pos": {
+            "$uid": {
+              ".write": "auth != null && (auth.uid === $uid || data.parent().parent().child('meta/hostUid').val() === auth.uid)"
+            }
+          },
+          "slots": {
+            "$i": {
+              ".validate": "$i.matches(/^[0-5]$/)",
+              ".write": "auth != null && ((!data.exists() && newData.val() === auth.uid) || (data.val() === auth.uid && !newData.exists()) || data.parent().parent().child('meta/hostUid').val() === auth.uid)"
+            }
+          }
+        }
+      }
+    }
+  }
+}

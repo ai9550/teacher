@@ -132,6 +132,61 @@ button { font: inherit; cursor: pointer; }
 .qr small { font-size: .72rem; line-height: 1.3; text-align: center; color: #2f4a3c; }
 .qr.empty { background: rgba(243,240,228,.08); color: var(--chalk-dim); border: 1.5px dashed rgba(243,240,228,.35); }
 .qr.empty small { color: var(--chalk-dim); }
+/* 多人連線 */
+.panel, .form-grid input, .form-grid select, .hv-side { box-sizing: border-box; } /* 寬度含內距與邊框，窄螢幕不會超出畫面 */
+.overlay > .panel.wide { width: min(760px, 100%); }
+.lead { margin: 0; line-height: 1.7; }
+.form-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 14px; align-items: center; }
+.form-grid label { font-family: var(--display); color: var(--chalk-dim); }
+.form-grid input, .form-grid select { font: inherit; font-size: 1.05rem; padding: 9px 12px; border-radius: 8px; border: 2px solid rgba(243,240,228,.35); background: var(--board-2); color: var(--chalk); min-width: 0; width: 100%; }
+.form-grid input:focus-visible, .form-grid select:focus-visible { outline: 3px solid var(--gold); outline-offset: 1px; }
+#mp-code, #join-code { font-family: var(--display); letter-spacing: .3em; font-size: 1.4rem; max-width: 9em; }
+.row.tight { gap: 8px; flex-wrap: nowrap; }
+.btn.small { font-size: .95rem; padding: .45em .9em; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.mp-status { min-height: 1.3em; font-size: .95rem; line-height: 1.5; }
+.hint-s { margin: 0; font-size: .88rem; line-height: 1.6; color: var(--chalk-dim); }
+details#mp-qlist summary { cursor: pointer; font-family: var(--display); color: var(--gold); }
+details#mp-qlist ol { margin: 8px 0 0; padding-left: 1.6em; max-height: 220px; overflow: auto; line-height: 1.6; font-size: .92rem; }
+details#mp-qlist li small { display: block; color: var(--chalk-dim); font-size: .8rem; }
+.roster-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); }
+.roster, .board { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.roster { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.roster li, .board li { display: flex; align-items: center; gap: 8px; background: var(--board-2); border-radius: 8px; padding: 7px 10px; min-width: 0; }
+.roster li.off, .board li.off { opacity: .5; }
+.roster li.empty, .board li.empty { color: var(--chalk-dim); grid-column: 1 / -1; }
+.roster .nm, .board .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roster small, .board small { color: var(--chalk-dim); font-size: .78rem; white-space: nowrap; }
+.avdot { width: 16px; height: 16px; border-radius: 50%; flex: none; border: 2px solid rgba(255,255,255,.75); }
+.kick { border: 0; background: transparent; color: #ff8a6b; font-size: 1rem; padding: 0 2px; }
+.avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.av { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--board-2); color: var(--chalk); border: 3px solid transparent; border-radius: 10px; padding: 6px 4px; font-size: .78rem; }
+.av canvas { width: 60px; height: 70px; }
+.av.on { border-color: var(--gold); background: #33604c; }
+.av:focus-visible { outline: 3px solid var(--chalk); }
+#mptime b { font-variant-numeric: tabular-nums; }
+#mptime.hurry, .hv-time b.hurry { color: #ff8a6b; }
+.qr canvas { width: 128px; height: 128px; }
+.qr { width: 146px; }
+#hostview { position: fixed; inset: 0; z-index: 12; display: grid; grid-template-columns: minmax(0, 1fr) min(340px, 38vw); background: var(--ink); gap: 10px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
+#hostview .hv-map { position: relative; min-width: 0; min-height: 0; background: #2a3a30; border-radius: 10px; overflow: hidden; }
+#hostview .hv-map canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hv-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; overflow: auto; background: var(--board); border: 5px solid var(--wood); border-radius: 10px; padding: 12px; }
+.hv-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.hv-room { display: flex; flex-direction: column; gap: 2px; font-family: var(--display); }
+.hv-room b { font-size: 2.4rem; letter-spacing: .12em; color: var(--gold); line-height: 1.1; }
+.hv-room small, .hv-time small { color: var(--chalk-dim); }
+.hv-time { display: flex; align-items: baseline; justify-content: space-between; font-family: var(--display); }
+.hv-time b { font-size: 2.2rem; font-variant-numeric: tabular-nums; }
+.board .rk { width: 1.6em; text-align: center; font-family: var(--display); color: var(--gold); flex: none; }
+.board .pt { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; }
+.board.big li { padding: 9px 12px; flex-wrap: wrap; }
+.board.big li.me { outline: 3px solid var(--gold); }
+.board.big small { width: 100%; padding-left: calc(1.6em + 24px); }
+.res-me { text-align: center; font-family: var(--display); font-size: 1.25rem; color: var(--gold); min-height: 1.4em; }
+.hv-link { color: var(--chalk-dim); word-break: break-all; font-size: .75rem; }
+@media (max-width: 720px) { #hostview { grid-template-columns: 1fr; grid-template-rows: minmax(260px, 55vh) auto; overflow: auto; } }
 @media (prefers-reduced-motion: reduce) { .btn:active { transform: none; } }
 </style>
 </head>
@@ -142,6 +197,8 @@ button { font: inherit; cursor: pointer; }
 
 <div id="hud" hidden>
   <div class="chip"><span class="stamp">章</span><span>印章 <b id="count">0</b> / <span id="total">0</span></span></div>
+  <div class="chip" id="mptime" hidden>⏱ 剩下 <b id="mptime-v">--:--</b></div>
+  <div class="chip" id="mpscore" hidden>得分 <b id="mpscore-v">0</b></div>
   <div class="chip" id="where" hidden></div>
   <div class="chip" id="goal" hidden></div>
 </div>
@@ -158,11 +215,34 @@ button { font: inherit; cursor: pointer; }
 <button id="jump" type="button" hidden>跳</button>
 
 <div class="overlay" id="start">
-  <div class="panel">
+  <div class="panel wide">
     <div class="start-head">
-      <h1 class="chalk-title"><small>新北市新店區大豐國民小學</small>大豐國小 3D 校園探險</h1>
-      <div class="qr" id="qr"><canvas id="qrcanvas" width="116" height="116" aria-label="遊戲連結 QR Code"></canvas><small id="qrtext">手機、平板掃描<br>就能開始玩</small></div>
+      <h1 class="chalk-title"><small>新北市新店區大豐國民小學・多人連線版</small>大豐國小 3D 校園安全探險</h1>
+      <div class="qr empty" id="qr"><canvas id="qrcanvas" width="148" height="148" aria-label="加入遊戲的 QR Code" hidden></canvas><small id="qrtext">建立房間後，這裡會出現加入遊戲的 QR Code</small></div>
     </div>
+    <div id="host-setup">
+      <p class="lead">老師（房主）先設定房間，學生用平板掃右上角的 QR Code 加入，最多 6 人一起玩；遊戲開始後也能隨時加入。房主不參加遊戲，可以在平面圖上看到所有玩家的位置和分數。</p>
+      <div class="form-grid">
+        <label for="mp-code">房間號碼</label>
+        <div class="row tight"><input id="mp-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off" aria-describedby="mp-status"><button class="btn ghost small" id="mp-random" type="button">換一組</button></div>
+        <label for="mp-time">遊戲時間</label>
+        <select id="mp-time"><option value="3">3 分鐘</option><option value="5">5 分鐘</option><option value="8">8 分鐘</option><option value="10" selected>10 分鐘</option><option value="15">15 分鐘</option><option value="20">20 分鐘</option></select>
+        <label for="mp-theme">任務內容</label>
+        <select id="mp-theme"><option value="safety">校園安全・四選一選擇題（40 題）</option></select>
+      </div>
+      <details id="mp-qlist"><summary>查看任務題目</summary><p class="hint-s">走到校園裡發光的地點回答問題。第一次就答對得 10 分，第二次 5 分，第三次 2 分，第四次 1 分。</p><ol></ol></details>
+      <div class="row">
+        <button class="btn" id="mp-create" type="button">建立房間</button>
+        <button class="btn" id="mp-start" type="button" hidden disabled>開始遊戲</button>
+      </div>
+      <div class="mp-status" id="mp-status" role="status"></div>
+      <div id="mp-lobby" hidden>
+        <div class="roster-head"><b>已加入的玩家</b><span id="mp-count">0 / 6 人</span></div>
+        <ul class="roster" id="mp-roster"></ul>
+      </div>
+      <p class="src"><a href="#" id="solo-link">改玩單人練習（不需要連線）</a></p>
+    </div>
+    <div id="solo-panel" hidden>
     <p>從 1 路校門出發，認識校園裡哪些地方是安全的、哪些角落要特別小心。找到發光的地點（紅色名牌是要小心的角落），讀完安全守則、答對問題，就能蓋到一個印章。走樓梯可以到二樓以上，每間教室門口都有班級牌；打開地圖還能找到任何一個班級。全部集滿，就是大豐校園小達人！</p>
     <div class="keys" id="keys-desktop">
       <span><b>W A S D</b>走路</span>
@@ -188,6 +268,65 @@ button { font: inherit; cursor: pointer; }
     <p class="src">校園配置依據大豐國小官網〈115學年度教室編配圖〉，建築年代取自學校〈校史〉。3D 模型為示意，比例與外觀和真實校園會有差異。
       <br><a href="https://www.dfes.ntpc.edu.tw/p/412-1000-726.php" target="_blank" rel="noopener">校園平面圖</a> ·
       <a href="https://www.dfes.ntpc.edu.tw/p/412-1000-718.php" target="_blank" rel="noopener">校史</a></p>
+      <p class="src"><a href="#" id="host-link">回到多人連線設定</a></p>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="join" hidden>
+  <div class="panel">
+    <h1 class="chalk-title" style="margin:0;font-size:1.9rem"><small style="display:block;font-size:.5em;color:var(--chalk-dim)">大豐國小 3D 校園安全探險</small>加入遊戲</h1>
+    <div class="form-grid">
+      <label for="join-code">房間號碼</label><input id="join-code" type="text" inputmode="numeric" maxlength="4" autocomplete="off">
+      <label for="join-name">你的名字</label><input id="join-name" type="text" maxlength="8" placeholder="最多 8 個字" autocomplete="off">
+    </div>
+    <div class="tag" style="color:var(--chalk-dim)">選一個人像（其他玩家會看到你的樣子和名字）</div>
+    <div class="avatars" id="avatars"></div>
+    <div class="row"><button class="btn" id="join-go" type="button">加入遊戲</button></div>
+    <div class="mp-status" id="join-status" role="status"></div>
+    <p class="hint-s">平板：右下角搖桿走路、手指滑動畫面看四周。電腦：WASD 走路、滑鼠看四周、E 回答問題。</p>
+  </div>
+</div>
+
+<div class="overlay" id="mplobby" hidden>
+  <div class="panel">
+    <div class="tag">房間 <b id="lobby-code"></b></div>
+    <h2 class="chalk-title" style="margin:0">等待老師開始遊戲…</h2>
+    <p class="hint-s">開始後，走到校園裡發光的地點回答校園安全問題，答對越快分數越高。時間到會結算總成績。</p>
+    <ul class="roster" id="lobby-roster"></ul>
+  </div>
+</div>
+
+<div class="overlay" id="mpmenu" hidden>
+  <div class="panel">
+    <h2 class="chalk-title" style="margin:0">遊戲選單</h2>
+    <div class="row"><button class="btn" id="mm-resume" type="button">繼續遊戲</button><button class="btn ghost" id="mm-home" type="button">回到校門口</button><button class="btn ghost" id="mm-leave" type="button">離開房間</button></div>
+  </div>
+</div>
+
+<div id="hostview" hidden>
+  <div class="hv-map"><canvas id="hv-map" aria-label="校園平面圖與玩家位置"></canvas></div>
+  <aside class="hv-side">
+    <div class="hv-top">
+      <div class="hv-room"><small>房間號碼</small><b id="hv-code"></b><small id="hv-status">等待開始</small></div>
+      <div class="qr"><canvas id="hv-qr" width="148" height="148" aria-label="加入遊戲的 QR Code"></canvas><small>掃描加入遊戲</small></div>
+    </div>
+    <div class="hv-time"><small>剩餘時間</small><b id="hv-time">--:--</b></div>
+    <div class="roster-head"><b>即時排行</b></div>
+    <ol class="board" id="hv-board"></ol>
+    <div class="row"><button class="btn ghost" id="hv-end" type="button" hidden>提前結束</button><button class="btn" id="hv-again" type="button" hidden>再玩一局</button></div>
+    <small class="hv-link" id="hv-link"></small>
+  </aside>
+</div>
+
+<div class="overlay" id="results" hidden>
+  <div class="panel">
+    <div class="bigstamp" style="width:80px;height:80px;font-size:.95rem;align-self:center">時間到</div>
+    <h2 class="chalk-title" style="margin:0;text-align:center">總成績</h2>
+    <div class="res-me" id="res-me"></div>
+    <ol class="board big" id="res-list"></ol>
+    <p class="hint-s" id="res-wait">等老師開始下一局，或關閉這個頁面。</p>
+    <div class="row" id="res-host" hidden><button class="btn" id="res-again" type="button">再玩一局</button><button class="btn ghost" id="res-setup" type="button">回到設定</button></div>
   </div>
 </div>
 
@@ -257,163 +396,163 @@ const STATIONS = [
   { id: 'gate1', name: '1路校門', px: 548, py: 1482, safe: true, tag: '上學放學',
     info: '1路校門旁有警衛室，上下學時間還有導護老師和志工在門口照顧大家，是校園裡很安全的地方。放學時如果家長還沒來，就在校門內等，不要自己到校外亂走。',
     facts: ['過馬路走斑馬線，看清楚左右來車', '不跟陌生人走，也不拿陌生人給的東西', '家長還沒來，就在警衛室附近等'],
-    q: '放學時家長還沒來接，應該在哪裡等？', a: ['校門內、警衛室附近', '校外沒人的巷子裡', '先一個人走回家'] },
+    q: '放學時家長還沒來接，應該在哪裡等？', a: ['校門內、警衛室附近', '校外沒人的巷子裡', '先一個人走回家', '學校對面的便利商店外面'] },
   { id: 'xinyi', name: '信義樓', px: 549, py: 1300, safe: true, tag: '求助地點',
     info: '信義樓一樓有學務處和健康中心，二樓有校長室。受傷、身體不舒服，或遇到害怕的事情，都可以來這裡找大人幫忙。',
     facts: ['受傷時馬上告訴老師，到健康中心處理', '傷口不要用髒手摸', '遇到困難可以到學務處求助'],
-    q: '在校園裡受傷了，第一時間應該怎麼做？', a: ['告訴老師，到健康中心處理', '忍著不說，等傷口自己好', '用手去摸傷口看看'] },
+    q: '在校園裡受傷了，第一時間應該怎麼做？', a: ['告訴老師，到健康中心處理', '忍著不說，等傷口自己好', '用手去摸傷口看看', '用飲料沖一沖傷口就好'] },
   { id: 'track', name: '操場跑道', px: 565, py: 860, safe: true, tag: '運動場地',
     info: '操場很空曠，老師從各個方向都看得到，是安全的活動場地，地震時也是全校的避難集合地點。在跑道上跑步要遵守規則，才不會撞到別人。',
     facts: ['大家朝同一個方向跑', '不在跑道上停下來聊天或玩耍', '打雷閃電時馬上離開操場，到室內'],
-    q: '在跑道上跑步，應該怎麼做？', a: ['大家朝同一個方向跑', '突然停下來聊天', '逆著方向衝刺'] },
+    q: '在跑道上跑步，應該怎麼做？', a: ['大家朝同一個方向跑', '突然停下來聊天', '逆著方向衝刺', '在跑道上倒著走'] },
   { id: 'stage', name: '司令台', px: 456, py: 830, safe: false, tag: '要注意的死角',
     info: '司令台前面很開闊，但是司令台後面和旁邊的角落被牆擋住，老師看不到，是校園裡的「視線死角」。司令台的高台邊緣也可能讓人跌倒。',
     facts: ['不要一個人躲在司令台後面', '不在司令台邊緣推擠或往下跳', '看到有人在死角被欺負，馬上告訴老師'],
-    q: '司令台後面的角落，為什麼要小心？', a: ['被擋住，老師看不到', '那裡有很多老師', '那裡最熱鬧安全'] },
+    q: '司令台後面的角落，為什麼要小心？', a: ['被擋住，老師看不到', '那裡有很多老師', '那裡最熱鬧安全', '那裡最適合一個人午休'] },
   { id: 'flag', name: '升旗台', px: 456, py: 700, safe: false, tag: '要注意的設施',
     info: '升旗台上有高高的旗桿和升旗繩。旗桿很高，攀爬或拉扯升旗繩都可能讓人受傷，旗子也可能掉下來。',
     facts: ['不攀爬旗桿', '不拉扯或玩升旗繩', '升旗時聽從指揮，不在台上嬉戲'],
-    q: '可以爬旗桿或拉升旗繩玩嗎？', a: ['不可以，可能會受傷', '可以，比賽誰爬得高', '下課沒人時就可以'] },
+    q: '可以爬旗桿或拉升旗繩玩嗎？', a: ['不可以，可能會受傷', '可以，比賽誰爬得高', '下課沒人時就可以', '有同學在旁邊就可以'] },
   { id: 'hall', name: '活動中心', px: 366, py: 765, safe: true, tag: '集會場地',
     info: '活動中心在二樓，是集會和表演的地方。很多人在同一個空間時，要先知道緊急出口在哪裡，進出都要排隊，不推擠。',
     facts: ['先找到綠色的緊急出口標示', '上下樓梯排隊，不推擠', '聽從老師指揮疏散'],
-    q: '在活動中心集會時，應該先注意什麼？', a: ['緊急出口在哪裡', '哪裡可以躲起來不被找到', '哪個座位最舒服'] },
+    q: '在活動中心集會時，應該先注意什麼？', a: ['緊急出口在哪裡', '哪裡可以躲起來不被找到', '哪個座位最舒服', '哪裡可以先離開不被發現'] },
   { id: 'library', name: '圖書室', px: 366, py: 905, safe: true, tag: '安靜的地方',
     info: '圖書室安靜又明亮，是安全的閱讀空間。要注意的是高高的書架：不要攀爬，地震時也要遠離書架，以免書本或書架倒下來。',
     facts: ['不攀爬書架', '地震時遠離書架和窗戶', '在圖書室裡慢慢走，不奔跑'],
-    q: '在圖書室遇到地震，應該怎麼做？', a: ['遠離書架，躲在桌下保護頭部', '跑去扶住書架', '站在書架旁邊等'] },
+    q: '在圖書室遇到地震，應該怎麼做？', a: ['遠離書架，躲在桌下保護頭部', '跑去扶住書架', '站在書架旁邊等', '跑到走廊上看熱鬧'] },
   { id: 'pond', name: '生態池', px: 192, py: 705, safe: false, tag: '水邊危險',
     info: '生態池很適合觀察動植物，但水邊的石頭濕滑，不小心可能滑倒落水。這裡位置比較偏，一定要和老師、同學一起來。',
     facts: ['不單獨到水邊', '不站在石頭上，也不伸手撈東西', '看到有人落水，大聲呼救並找大人'],
-    q: '在生態池觀察時，哪個做法最安全？', a: ['和老師同學一起，站在池邊外圍', '伸手到水裡撈魚', '站在濕滑的石頭上看'] },
+    q: '在生態池觀察時，哪個做法最安全？', a: ['和老師同學一起，站在池邊外圍', '伸手到水裡撈魚', '站在濕滑的石頭上看', '一個人到池邊抓青蛙'] },
   { id: 'renai', name: '仁愛樓', px: 336, py: 560, safe: true, tag: '專科教室',
     info: '仁愛樓有自然教室和美勞教室。做實驗時有酒精燈、玻璃器材和各種藥品；上美勞課會用到剪刀和美工刀，都要依照老師的指示使用。',
     facts: ['不亂碰實驗藥品和器材', '剪刀、美工刀用完收好，不拿來玩', '玻璃器材破了不要用手撿'],
-    q: '在自然教室做實驗時，應該怎麼做？', a: ['聽老師指示，不亂碰藥品和器材', '自己把藥品混在一起看看', '拿酒精燈追著同學玩'] },
+    q: '在自然教室做實驗時，應該怎麼做？', a: ['聽老師指示，不亂碰藥品和器材', '自己把藥品混在一起看看', '拿酒精燈追著同學玩', '把實驗器材帶回家玩'] },
   { id: 'zhongxiao', name: '忠孝樓', px: 600, py: 446, safe: true, tag: '走廊安全',
     info: '忠孝樓的樓上走廊旁邊是欄杆，外面就是很高的地方。在走廊上要慢慢走，絕對不能趴在欄杆上、攀爬欄杆或往下丟東西。',
     facts: ['走廊上不奔跑、不追逐', '不攀爬、不趴在欄杆上', '不從樓上往下丟東西'],
-    q: '在樓上走廊，哪一個行為很危險？', a: ['趴在欄杆上或攀爬欄杆', '靠右慢慢走', '排隊走路'] },
+    q: '在樓上走廊，哪一個行為很危險？', a: ['趴在欄杆上或攀爬欄杆', '靠右慢慢走', '排隊走路', '輕聲說話'] },
   { id: 'twins', name: '雙子星大樓', px: 980, py: 470, safe: false, tag: '禁止進入的區域',
     info: '雙子星大樓有五層樓高。學校的頂樓和沒有開放的空教室都是禁止進入的區域，那裡沒有大人看顧，萬一發生危險沒有人知道。',
     facts: ['頂樓禁止進入', '不進入沒有開放的教室或儲藏室', '不在樓梯間或空教室逗留'],
-    q: '學校大樓的頂樓，可以自己上去嗎？', a: ['不可以，那是禁止進入的區域', '可以，上去看風景', '下課時間可以去玩'] },
+    q: '學校大樓的頂樓，可以自己上去嗎？', a: ['不可以，那是禁止進入的區域', '可以，上去看風景', '下課時間可以去玩', '下雨天就可以上去'] },
   { id: 'dafeng', name: '大豐樓', px: 772, py: 680, safe: true, tag: '樓梯安全',
     info: '大豐樓有四層樓，每天都有很多同學上下樓梯。上下樓梯是最容易跌倒的時候，要靠右走、一階一階慢慢走。',
     facts: ['上下樓梯靠右走', '一階一階走，不跳階', '不坐在扶手上溜下去，不在樓梯間推擠'],
-    q: '上下樓梯時，正確的做法是？', a: ['靠右走，一階一階慢慢走', '坐在扶手上溜下去', '兩三階一起跳'] },
+    q: '上下樓梯時，正確的做法是？', a: ['靠右走，一階一階慢慢走', '坐在扶手上溜下去', '兩三階一起跳', '一邊走一邊低頭看書'] },
   { id: 'redbldg', name: '紅樓', px: 772, py: 940, safe: true, tag: '地震演練',
     info: '在紅樓的教室裡上課時如果發生地震，要記得口訣「趴下、掩護、穩住」，躲在桌子下保護頭部。等搖晃停了，再聽老師指揮到操場集合。',
     facts: ['地震時：趴下、掩護、穩住', '遠離窗戶和會掉落的東西', '搖晃停止後，聽指揮到操場集合'],
-    q: '在教室裡遇到地震，第一個動作是？', a: ['趴下、掩護、穩住', '馬上衝出教室', '跑到窗戶旁邊看'] },
+    q: '在教室裡遇到地震，第一個動作是？', a: ['趴下、掩護、穩住', '馬上衝出教室', '跑到窗戶旁邊看', '躲進樓梯間'] },
   { id: 'heping', name: '和平樓', px: 772, py: 1130, safe: false, tag: '廁所安全',
     info: '和平樓的廁所在走廊的一端。廁所地板常常是濕的，容易滑倒；廁所也比較隱密，最好結伴同行，不在裡面嬉戲或逗留。',
     facts: ['下課結伴去廁所', '廁所地板濕滑，不奔跑', '有人在廁所欺負人，馬上告訴老師'],
-    q: '下課去廁所，哪個做法比較安全？', a: ['結伴同行，在廁所不奔跑嬉戲', '在濕地板上滑來滑去', '躲在廁所裡不回教室'] },
+    q: '下課去廁所，哪個做法比較安全？', a: ['結伴同行，在廁所不奔跑嬉戲', '在濕地板上滑來滑去', '躲在廁所裡不回教室', '一個人在廁所玩手機'] },
   { id: 'gate2', name: '2路校門', px: 1045, py: 455, safe: true, tag: '上學放學',
     info: '2路校門只在上下學時間開放，旁邊是幼兒園。想要離開學校，一定要從開放的校門經過大人同意，絕對不能翻越圍牆。',
     facts: ['不翻越圍牆', '上課時間不自己離開學校', '從校門進出時注意車輛'],
-    q: '想到校外去，可以爬圍牆出去嗎？', a: ['不可以，要從開放的校門經過大人同意', '可以，比較快', '沒人看到就可以'] },
+    q: '想到校外去，可以爬圍牆出去嗎？', a: ['不可以，要從開放的校門經過大人同意', '可以，比較快', '沒人看到就可以', '請同學幫忙推上去就可以'] },
   { id: 'court', name: '綜合球場', px: 727, py: 630, safe: true, tag: '運動場地',
     info: '在綜合球場打球很開心，但要注意周圍有沒有人。如果球滾到圍牆外或馬路上，不要自己衝出去撿，請老師幫忙。',
     facts: ['打球前看看四周有沒有人', '球滾到校外，請老師幫忙', '不在籃框上吊掛'],
-    q: '球滾到校外的馬路上，應該怎麼做？', a: ['請老師幫忙，不要自己衝出去', '馬上衝出去撿', '翻牆出去撿'] },
+    q: '球滾到校外的馬路上，應該怎麼做？', a: ['請老師幫忙，不要自己衝出去', '馬上衝出去撿', '翻牆出去撿', '請路過的陌生人丟進來'] },
   { id: 'play', name: '遊樂器材區', px: 727, py: 1058, safe: true, tag: '下課時間',
     info: '溜滑梯、盪鞦韆和攀爬架都在這裡。只要遵守使用規則、排隊輪流，就是安全又好玩的地方。旁邊的沙坑跳遠時也要等前面的人離開。',
     facts: ['溜滑梯坐著、腳朝前溜下來', '盪鞦韆時不站在前後方', '排隊輪流，不推擠'],
-    q: '玩溜滑梯的正確方式是？', a: ['坐著、腳朝前溜下來', '頭朝下趴著溜', '從滑道底下往上爬'] },
+    q: '玩溜滑梯的正確方式是？', a: ['坐著、腳朝前溜下來', '頭朝下趴著溜', '從滑道底下往上爬', '好幾個人擠在一起溜'] },
   { id: 'dodge', name: '躲避球場', px: 727, py: 1162, safe: true, tag: '運動場地',
     info: '躲避球比賽很刺激，但球打到頭或臉會受傷。丟球時要瞄準肩膀以下，戴眼鏡的同學也要小心。',
     facts: ['只能打肩膀以下', '不用力砸近距離的人', '比賽前先做暖身'],
-    q: '躲避球比賽時，球應該丟向哪裡？', a: ['肩膀以下', '頭部', '臉'] },
+    q: '躲避球比賽時，球應該丟向哪裡？', a: ['肩膀以下', '頭部', '臉', '脖子'] },
   { id: 'farm', name: '開心農場', px: 966, py: 1288, safe: true, tag: '自然觀察',
     info: '在開心農場種菜時會用到鏟子、澆水器等工具，用完要放回原位。花草多的地方常有蜜蜂，看到牠們不要驚慌。',
     facts: ['工具用完放回原位', '看到蜜蜂保持冷靜，慢慢離開', '摸過泥土要洗手'],
-    q: '在農場看到蜜蜂飛過來，應該怎麼做？', a: ['保持冷靜，慢慢離開', '用手拍牠', '拿樹枝去打蜂窩'] },
+    q: '在農場看到蜜蜂飛過來，應該怎麼做？', a: ['保持冷靜，慢慢離開', '用手拍牠', '拿樹枝去打蜂窩', '大聲尖叫揮手趕走'] },
   { id: 'tower', name: '水塔', px: 216, py: 362, safe: false, tag: '偏僻角落',
     info: '水塔又高又在校園的角落，附近人很少，老師不容易看到，是要小心的偏僻角落。水塔的鐵架絕對不能攀爬。',
     facts: ['不攀爬水塔鐵架', '不一個人到偏僻角落', '遇到陌生人在角落逗留，告訴老師'],
-    q: '水塔附近為什麼是要小心的角落？', a: ['又高又偏僻，老師不容易看到', '那裡適合玩躲貓貓', '那裡最適合一個人待著'] },
+    q: '水塔附近為什麼是要小心的角落？', a: ['又高又偏僻，老師不容易看到', '那裡適合玩躲貓貓', '那裡最適合一個人待著', '那裡風景最好，可以常去'] },
   { id: 'ball', name: '籃球場與打擊場', px: 612, py: 240, safe: false, tag: '要注意的設施',
     info: '棒球打擊場有人在揮棒時，球棒和飛出來的球都可能打到人。旁觀的同學一定要站在網子外面。',
     facts: ['有人揮棒時，站在網子外', '不靠近揮棒的人', '撿球前先確認沒有人在打擊'],
-    q: '有人在打擊場揮棒時，應該怎麼做？', a: ['站在網子外面，不靠近', '走到打擊的人旁邊看', '直接進去撿地上的球'] },
+    q: '有人在打擊場揮棒時，應該怎麼做？', a: ['站在網子外面，不靠近', '走到打擊的人旁邊看', '直接進去撿地上的球', '站在打擊者正後方'] },
   { id: 'history', name: '校史室', px: 182, py: 1030, safe: true, tag: '火災逃生',
     info: '校史室在三樓。如果在樓上遇到火災，要用濕毛巾或衣服掩住口鼻，壓低身體，沿著逃生指示走樓梯離開，千萬不能搭電梯。',
     facts: ['用濕毛巾掩住口鼻', '低姿勢沿著牆邊和逃生指示走', '走樓梯，不搭電梯'],
-    q: '在樓上遇到火災，應該怎麼離開？', a: ['掩住口鼻，低姿勢走樓梯離開', '搭電梯下樓', '躲在廁所裡'] },
+    q: '在樓上遇到火災，應該怎麼離開？', a: ['掩住口鼻，低姿勢走樓梯離開', '搭電梯下樓', '躲在廁所裡', '打開窗戶跳下去'] },
   { id: 'flowerbed', name: '圓花圃', px: 548, py: 1240, safe: true, tag: '校園景觀',
     info: '圓花圃在操場南邊，位置開闊，大家都看得到，是安全的休息地點。花圃裡的行星球和花草要好好愛護，不攀爬也不踩進去。',
     facts: ['不攀爬行星球', '不踩進花圃，不摘花', '花多的地方小心蜜蜂'],
-    q: '在圓花圃旁邊，可以做什麼？', a: ['欣賞花草，不攀爬也不踩進去', '爬到行星球上面', '摘花來玩'] },
+    q: '在圓花圃旁邊，可以做什麼？', a: ['欣賞花草，不攀爬也不踩進去', '爬到行星球上面', '摘花來玩', '在花圃裡跑來跑去'] },
   { id: 'air', name: '空污監測站', px: 409, py: 1474, safe: true, tag: '空氣品質',
     info: '信義樓頂有空氣品質監測站。空氣品質不好的日子，學校會提醒大家減少戶外的劇烈運動，必要時戴上口罩。',
     facts: ['注意學校的空氣品質提醒', '空氣不好時減少戶外劇烈運動', '有氣喘的同學要特別小心'],
-    q: '空氣品質不好的日子，應該怎麼做？', a: ['減少戶外劇烈運動，必要時戴口罩', '照樣在操場跑步比賽', '把窗戶全部打開'] },
+    q: '空氣品質不好的日子，應該怎麼做？', a: ['減少戶外劇烈運動，必要時戴口罩', '照樣在操場跑步比賽', '把窗戶全部打開', '多喝飲料就沒關係'] },
   { id: 'reading', name: '鳳凰樹下閱讀區', px: 240, py: 1352, safe: true, tag: '樹下休息',
     info: '鳳凰樹下的閱讀區很涼爽，是安全的休息地點。但是颱風或大雨過後，樹枝可能斷裂掉落，要先請老師確認安全再過來。',
     facts: ['颱風過後先確認沒有斷枝', '不爬樹', '打雷時不要躲在大樹下'],
-    q: '颱風過後，在大樹下要注意什麼？', a: ['小心斷掉的樹枝，先請老師確認安全', '爬上樹去撿樹枝', '在樹下跳來跳去'] },
+    q: '颱風過後，在大樹下要注意什麼？', a: ['小心斷掉的樹枝，先請老師確認安全', '爬上樹去撿樹枝', '在樹下跳來跳去', '拉著樹枝盪來盪去'] },
   { id: 'leaves', name: '落葉集中區', px: 160, py: 1330, safe: false, tag: '偏僻角落',
     info: '落葉集中區在校園西南邊的角落，平常人不多。打掃時要好好使用掃把和畚箕，打掃完就回教室，不在角落逗留。',
     facts: ['掃把、畚箕不拿來打鬧', '打掃完直接回教室', '不一個人留在偏僻角落'],
-    q: '打掃時拿著掃把和畚箕，應該怎麼做？', a: ['好好打掃，不拿來打鬧', '當成劍和同學打仗', '丟給同學接'] },
+    q: '打掃時拿著掃把和畚箕，應該怎麼做？', a: ['好好打掃，不拿來打鬧', '當成劍和同學打仗', '丟給同學接', '拿畚箕當盾牌玩'] },
   { id: 'intl', name: '國際文教中心', px: 336, py: 1300, safe: true, tag: '參觀禮儀',
     info: '國際文教中心展示世界各國的服裝和文物。參觀時用眼睛看，不任意觸碰展示品，也不在室內奔跑，才不會撞倒展示櫃。',
     facts: ['用眼睛看，不任意觸碰', '室內不奔跑', '跟著老師參觀'],
-    q: '參觀展覽時，哪個做法正確？', a: ['用眼睛看，不任意觸碰', '把展示品拿起來玩', '在展示櫃之間追逐'] },
+    q: '參觀展覽時，哪個做法正確？', a: ['用眼睛看，不任意觸碰', '把展示品拿起來玩', '在展示櫃之間追逐', '躲進展示櫃裡'] },
   { id: 'beasts', name: '彩繪四獸', px: 182, py: 905, safe: false, tag: '不可攀爬',
     info: '活動中心旁的彩繪四獸是同學們一起彩繪的作品。雕像表面光滑又有高度，爬上去很容易摔下來，只能欣賞，不能攀爬。',
     facts: ['不攀爬雕像', '不在雕像旁推擠', '愛護同學的彩繪作品'],
-    q: '可以爬到動物雕像上面玩嗎？', a: ['不可以，可能會摔下來受傷', '可以，看誰爬最高', '沒人看到就可以'] },
+    q: '可以爬到動物雕像上面玩嗎？', a: ['不可以，可能會摔下來受傷', '可以，看誰爬最高', '沒人看到就可以', '下課時間就可以'] },
   { id: 'cherry', name: '櫻花椰林大道', px: 437, py: 965, safe: false, tag: '頭頂要注意',
     info: '大王椰子樹又高又直，但它的葉子又大又重，枯黃後會整片掉下來。颳大風時不要在椰子樹下逗留玩耍。',
     facts: ['颳風時不在椰子樹下逗留', '看到掉落的大葉子請老師處理', '不搖晃或攀爬樹木'],
-    q: '在大王椰子樹下要注意什麼？', a: ['葉子又大又重可能掉下來', '可以爬上去摘椰子', '在樹下睡午覺最安全'] },
+    q: '在大王椰子樹下要注意什麼？', a: ['葉子又大又重可能掉下來', '可以爬上去摘椰子', '在樹下睡午覺最安全', '用力搖樹讓葉子掉下來'] },
   { id: 'oldtree', name: '老樹巡禮', px: 466, py: 492, safe: true, tag: '愛護樹木',
     info: '忠孝樓前的老樹陪伴大豐一百多年。樹蔭下是很好的休息地方，但不能爬樹，也不要在樹上綁繩子盪來盪去。',
     facts: ['不爬樹', '不在樹上綁繩子', '打雷時不躲在大樹下'],
-    q: '下雨打雷的時候，可以躲在大樹下嗎？', a: ['不可以，大樹容易被雷打到', '可以，樹下不會淋濕', '可以，越高的樹越安全'] },
+    q: '下雨打雷的時候，可以躲在大樹下嗎？', a: ['不可以，大樹容易被雷打到', '可以，樹下不會淋濕', '可以，越高的樹越安全', '可以，只要撐傘就好'] },
   { id: 'story', name: '故事屋', px: 932, py: 400, safe: true, tag: '求助與保護',
     info: '故事屋是溫暖安全的地方。不論在哪裡，如果有人欺負你、讓你不舒服，或碰觸你的身體讓你覺得怪怪的，都要勇敢說「不」，並告訴老師或信任的大人。',
     facts: ['不舒服的碰觸要勇敢說「不」', '被欺負要告訴老師或家人', '看到同學被欺負，也要告訴大人'],
-    q: '有人欺負你或讓你覺得不舒服，應該怎麼做？', a: ['勇敢告訴老師或信任的大人', '自己默默忍耐', '找機會打回去'] },
+    q: '有人欺負你或讓你覺得不舒服，應該怎麼做？', a: ['勇敢告訴老師或信任的大人', '自己默默忍耐', '找機會打回去', '在網路上罵對方'] },
   { id: 'rain', name: '斜屋頂雨撲滿', px: 918, py: 760, safe: false, tag: '雨天濕滑',
     info: '大豐樓的斜屋頂會收集雨水。下雨天時，走廊、樓梯和穿堂的地板都會變得濕滑，最容易滑倒受傷。',
     facts: ['下雨天慢慢走，不奔跑', '鞋子濕了先在地墊上擦乾', '看到積水告訴老師或繞過去'],
-    q: '下雨天在走廊和樓梯，要注意什麼？', a: ['地板濕滑，慢慢走不奔跑', '穿著濕鞋快跑', '在積水上滑行'] },
+    q: '下雨天在走廊和樓梯，要注意什麼？', a: ['地板濕滑，慢慢走不奔跑', '穿著濕鞋快跑', '在積水上滑行', '跑快一點早點到教室'] },
   { id: 'confucius', name: '孔子像', px: 990, py: 930, safe: true, tag: '求助對象',
     info: '孔子是偉大的老師。在學校裡，老師、警衛和學校職員都是可以信任的大人。迷路、找不到教室或需要幫忙時，就去找他們。',
     facts: ['需要幫忙時找老師、警衛或職員', '不跟陌生人離開', '記住自己的班級和老師名字'],
-    q: '在校園裡迷路或需要幫忙時，可以找誰？', a: ['老師、警衛或學校職員', '校外的陌生人', '不求助，自己亂走'] },
+    q: '在校園裡迷路或需要幫忙時，可以找誰？', a: ['老師、警衛或學校職員', '校外的陌生人', '不求助，自己亂走', '網路上認識的朋友'] },
   { id: 'paving', name: '透水鋪面遊樂區', px: 645, py: 1237, safe: true, tag: '地面遊戲',
     info: '彩色的透水鋪面下雨也不容易積水，比較不會滑倒。在這裡玩跳格子要注意周圍的同學，輪流玩、不推擠。',
     facts: ['輪流玩，不推擠', '注意周圍的同學', '鞋帶綁好再跳'],
-    q: '在地面遊戲區玩跳格子，應該怎麼做？', a: ['注意周圍同學，輪流玩', '閉著眼睛亂跳', '推前面的同學快一點'] },
+    q: '在地面遊戲區玩跳格子，應該怎麼做？', a: ['注意周圍同學，輪流玩', '閉著眼睛亂跳', '推前面的同學快一點', '很多人一起跳同一格'] },
   { id: 'recycle', name: '資源回收室', px: 822, py: 1400, safe: false, tag: '尖銳物品',
     info: '資源回收室在校園的角落，裡面的鐵罐和玻璃瓶可能有尖銳的邊緣。回收時要小心，看到破掉的玻璃不要用手撿。',
     facts: ['破玻璃不要用手撿，請老師處理', '鐵罐開口很利，小心拿', '回收完洗手'],
-    q: '回收時看到破掉的玻璃，應該怎麼做？', a: ['不要用手撿，請老師處理', '用手撿起來', '丟給同學'] },
+    q: '回收時看到破掉的玻璃，應該怎麼做？', a: ['不要用手撿，請老師處理', '用手撿起來', '丟給同學', '用腳踩碎它'] },
   { id: 'fit', name: '樂活教室', px: 915, py: 1416, safe: true, tag: '運動安全',
     info: '樂活教室有攀岩牆和健身器材。器材要在老師指導下使用，攀岩前先做好保護，一次只讓一個人爬。',
     facts: ['在老師指導下使用器材', '運動前先暖身', '攀岩一次一個人'],
-    q: '攀岩牆要怎麼玩才安全？', a: ['在老師指導下，做好保護再爬', '自己爬到最高處往下跳', '好幾個人同時一起爬'] },
+    q: '攀岩牆要怎麼玩才安全？', a: ['在老師指導下，做好保護再爬', '自己爬到最高處往下跳', '好幾個人同時一起爬', '不用暖身直接爬'] },
   { id: 'solar', name: '太陽能光電板', px: 690, py: 1474, safe: false, tag: '用電安全',
     info: '信義樓頂的太陽能光電板會發電，屋頂和電器設備都是學生不能進入或觸碰的地方。在校園看到電線掉落或配電箱打開，要馬上告訴老師。',
     facts: ['不碰電線和配電箱', '濕手不碰插頭', '看到電器冒煙馬上告訴老師'],
-    q: '看到電線掉落或配電箱打開，應該怎麼做？', a: ['不要碰，馬上告訴老師', '用手去摸摸看', '用水去澆'] },
+    q: '看到電線掉落或配電箱打開，應該怎麼做？', a: ['不要碰，馬上告訴老師', '用手去摸摸看', '用水去澆', '拿剪刀剪斷'] },
   { id: 'parking', name: '汽車停放區', px: 200, py: 1150, safe: false, tag: '車輛進出',
     info: '這裡停放老師和來賓的汽車，車子隨時可能倒車或開出來。駕駛從車裡很難看到矮小的小朋友，所以不能在停車場裡或車子後面玩。',
     facts: ['不在停車場玩耍', '不躲在車子後面或旁邊', '經過車道時先停、看、聽'],
-    q: '為什麼不能在汽車後面玩？', a: ['駕駛看不到小朋友，倒車會撞到', '車子後面比較涼', '車子不會移動'] },
+    q: '為什麼不能在汽車後面玩？', a: ['駕駛看不到小朋友，倒車會撞到', '車子後面比較涼', '車子不會移動', '駕駛一定會先按喇叭'] },
   { id: 'scooter', name: '機車停車棚', px: 820, py: 1468, safe: false, tag: '偏僻角落',
     info: '機車停車棚在校園南邊的角落，平常人少，機車的排氣管剛停好時很燙，碰到會燙傷。這裡不是遊戲的地方。',
     facts: ['不碰機車排氣管', '不在停車棚裡追逐、躲藏', '不一個人到偏僻角落'],
-    q: '剛停好的機車，哪個部位碰到會燙傷？', a: ['排氣管', '座墊', '後照鏡'] },
+    q: '剛停好的機車，哪個部位碰到會燙傷？', a: ['排氣管', '座墊', '後照鏡', '車牌'] },
   { id: 'container', name: '貨櫃屋後方', px: 362, py: 1000, safe: false, tag: '要注意的死角',
     info: '司令台南邊的貨櫃屋擋住了視線，貨櫃屋和大樓之間的窄縫是老師看不到的死角。不要在這裡躲藏或逗留，也不要攀爬貨櫃屋。',
     facts: ['不在貨櫃屋後面躲藏', '不攀爬貨櫃屋', '死角裡發生事情要立刻告訴老師'],
-    q: '貨櫃屋和大樓之間的窄縫，屬於哪一種地方？', a: ['老師看不到的死角，要小心', '最安全的避難所', '最適合玩躲貓貓的地方'] },
+    q: '貨櫃屋和大樓之間的窄縫，屬於哪一種地方？', a: ['老師看不到的死角，要小心', '最安全的避難所', '最適合玩躲貓貓的地方', '最涼快的休息區'] },
 ];
 
 // ---------- 地圖資料（教室編配圖像素座標） ----------
@@ -1872,6 +2011,11 @@ function drawDynamic(ctx, base, k) {
     ctx.fillStyle = '#4fd1ff'; ctx.strokeStyle = '#0d3b4f'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(tx(target.cx / S + CX), ty(target.cz / S + CY), Math.max(5, 16 * k), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
+  if (MP.role === 'player') MP.remotes.forEach((r, uid) => {
+    const pl = MP.players[uid]; if (!pl) return;
+    ctx.fillStyle = hexCss(AVATARS[pl.avatar || 0].shirt); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(tx(r.x / S + CX), ty(r.z / S + CY), Math.max(4, 13 * k), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  });
   const px = player.x / S + CX, py = player.z / S + CY, a = Math.atan2(-Math.cos(player.yaw), -Math.sin(player.yaw));
   const x = tx(px), y = ty(py), L = Math.max(9, 34 * k);
   ctx.save(); ctx.translate(x, y); ctx.rotate(a);
@@ -1943,7 +2087,7 @@ const player = { x: X(550), z: Z(1565), foot: 0, vy: 0, yaw: 0, pitch: 0, onGrou
 const keys = new Set();
 let stamps = new Set();
 try { const s = JSON.parse(localStorage.getItem('dafeng3d-stamps') || '[]'); if (Array.isArray(s)) stamps = new Set(s.filter(id => STATIONS.some(t => t.id === id))); } catch (e) {}
-const save = () => { try { localStorage.setItem('dafeng3d-stamps', JSON.stringify([...stamps])); } catch (e) {} };
+const save = () => { if (MP.role) return; try { localStorage.setItem('dafeng3d-stamps', JSON.stringify([...stamps])); } catch (e) {} };
 
 const BOUNDS = { minX: X(92), maxX: X(1098), minZ: Z(182), maxZ: Z(1610) };
 const RAD = 0.28;
@@ -1995,22 +2139,7 @@ function applyTouchUI() {
 }
 applyTouchUI();
 addEventListener('touchstart', () => { if (!touchMode) { touchMode = true; unlock(); applyTouchUI(); } }, { passive: true, capture: true });
-// 開始畫面的 QR Code：放在 GitHub Pages 等網站上時，用目前的網址產生
-{
-  const url = GAME_URL || (/^https?:$/.test(location.protocol) && !/claude|localhost|127\.0\.0\.1/.test(location.hostname) ? location.href.split('#')[0] : '');
-  const box = $('qr'), cv = $('qrcanvas');
-  if (url && window.qrcode) {
-    const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
-    const n = qr.getModuleCount(), g = cv.getContext('2d'), m = 2, cell = Math.floor(cv.width / (n + m * 2)), off = Math.floor((cv.width - cell * n) / 2);
-    g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.fillStyle = '#14201a';
-    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) g.fillRect(off + c * cell, off + r * cell, cell, cell);
-  } else {
-    box.classList.add('empty'); cv.hidden = true;
-    $('qrtext').innerHTML = '放上 GitHub Pages 後，這裡會顯示遊戲的 QR Code';
-  }
-}
-
-const modalOpen = () => !ui.card.hidden || !ui.bigmap.hidden || !ui.finish.hidden || !ui.start.hidden;
+const modalOpen = () => !ui.card.hidden || !ui.bigmap.hidden || !ui.finish.hidden || !ui.start.hidden || !$('join').hidden || !$('mplobby').hidden || !$('mpmenu').hidden || !$('results').hidden || !$('hostview').hidden;
 const locked = () => document.pointerLockElement === renderer.domElement;
 function lock() { if (!touchMode && renderer.domElement.requestPointerLock) { try { const p = renderer.domElement.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (e) {} } }
 function unlock() { if (document.exitPointerLock && locked()) document.exitPointerLock(); }
@@ -2023,6 +2152,7 @@ $('go').addEventListener('click', () => {
 // 遊戲中回到設定頁（開始畫面）：暫停遊戲，可以看說明、掃 QR Code、重新開始
 function openMenu() {
   unlock(); keys.clear(); touchMove.x = touchMove.y = 0;
+  if (MP.role === 'player') { ui.card.hidden = true; ui.bigmap.hidden = true; ui.prompt.hidden = true; $('joy').hidden = true; $('jump').hidden = true; $('mpmenu').hidden = false; return; }
   ui.card.hidden = true; ui.bigmap.hidden = true; ui.finish.hidden = true;
   $('go').textContent = '繼續探險'; $('home').hidden = false;
   ui.start.hidden = false; ui.prompt.hidden = true;
@@ -2050,11 +2180,12 @@ function openCard(st) {
       if (o.ok) {
         b.classList.add('right');
         wrap.querySelectorAll('.choice').forEach(x => x.disabled = true);
-        const first = !stamps.has(st.id);
+        const first = !stamps.has(st.id), pts = first ? mpAnswer(st, true) : 0;
         stamps.add(st.id); save(); updateCount(); refreshMarkers();
-        fb.innerHTML = first ? '<span class="got"><span class="bigstamp">大豐<br>' + st.name.slice(0, 3) + '</span>答對了！蓋到一個印章</span>' : '答對了！';
+        if (first) SFX.stamp(); else SFX.ok();
+        fb.innerHTML = first ? '<span class="got"><span class="bigstamp">大豐<br>' + st.name.slice(0, 3) + '</span>答對了！蓋到一個印章' + (pts ? `，得到 ${pts} 分` : '') + '</span>' : '答對了！';
         if (first && stamps.size === STATIONS.length) pendingFinish = true;
-      } else { b.classList.add('wrong'); b.disabled = true; fb.textContent = '再想想看，答案就藏在上面的介紹裡。'; }
+      } else { b.classList.add('wrong'); b.disabled = true; SFX.bad(); if (!stamps.has(st.id)) mpAnswer(st, false); fb.textContent = '再想想看，答案就藏在上面的介紹裡。' + (MP.role === 'player' && !stamps.has(st.id) ? '（再答對分數會比較少）' : ''); }
     });
     return b;
   }));
@@ -2184,6 +2315,8 @@ fit();
 const clock = new THREE.Clock(); let t = 0, mapTick = 0, peopleTick = 0;
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05); t += dt;
+  mpTick(dt);
+  if (MP.role === 'host' && !$('hostview').hidden) { if ((mapTick += dt) > 0.1) { mapTick = 0; drawHostMap(); } requestAnimationFrame(frame); return; }
   if (started && !modalOpen()) {
     let f = 0, s = 0;
     if (keys.has('KeyW') || keys.has('ArrowUp')) f += 1;
@@ -2255,6 +2388,401 @@ function frame() {
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
+
+// ---------- 音效（只有短音效，沒有背景音樂） ----------
+const SFX = (() => {
+  let ctx = null;
+  const ac = () => { if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } } return ctx; };
+  addEventListener('pointerdown', () => { const c = ac(); if (c && c.state === 'suspended') c.resume(); }, { capture: true });
+  function tone(freq, dur, type = 'sine', vol = 0.14, when = 0, to) {
+    const c = ac(); if (!c) return;
+    const t0 = c.currentTime + when, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  return {
+    ok() { tone(660, 0.12, 'triangle'); tone(990, 0.2, 'triangle', 0.14, 0.1); },
+    bad() { tone(220, 0.28, 'sawtooth', 0.07, 0, 130); },
+    stamp() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.16, 'triangle', 0.11, i * 0.07)); },
+    join() { tone(880, 0.08, 'sine', 0.1); tone(1320, 0.12, 'sine', 0.08, 0.07); },
+    leave() { tone(660, 0.1, 'sine', 0.08); tone(440, 0.14, 'sine', 0.07, 0.08); },
+    tick() { tone(1050, 0.05, 'square', 0.04); },
+    start() { tone(523, 0.12, 'square', 0.06); tone(659, 0.12, 'square', 0.06, 0.13); tone(784, 0.3, 'square', 0.07, 0.26); },
+    end() { [784, 659, 523, 659, 1047].forEach((f, i) => tone(f, 0.24, 'triangle', 0.12, i * 0.16)); },
+    click() { tone(700, 0.035, 'sine', 0.05); },
+  };
+})();
+
+// ---------- 多人連線：Firebase Realtime Database，最多 6 位玩家，房主只觀戰 ----------
+const MAX_PLAYERS = 6, POS_MS = 125, ROOMS = 'dafeng3d/rooms';
+const AVATARS = [
+  { name: '藍衣男孩', shirt: 0x4f8fd6, pants: 0x26324d, hair: 'short' },
+  { name: '粉衣女孩', shirt: 0xf2a7bd, pants: 0x26324d, hair: 'long' },
+  { name: '黃衣男孩', shirt: 0xeab84a, pants: 0x3a3a48, hair: 'short' },
+  { name: '綠衣女孩', shirt: 0x5fb05a, pants: 0x26324d, hair: 'long' },
+  { name: '紅衣男孩', shirt: 0xd9483b, pants: 0x222222, hair: 'short' },
+  { name: '紫衣女孩', shirt: 0x9a6fd0, pants: 0x3a3a48, hair: 'long' },
+];
+const FIREBASE_CONFIG = { // 與夜市、坦克大戰共用的公開 Web 設定（不是伺服器金鑰）
+  apiKey: 'AIzaSyBFzKZyy3sUSfh0GkMcYOtC1e7NyqEfyOM',
+  authDomain: 'mygame-1af09.firebaseapp.com',
+  databaseURL: 'https://mygame-1af09-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'mygame-1af09',
+  storageBucket: 'mygame-1af09.firebasestorage.app',
+  messagingSenderId: '388340775447',
+  appId: '1:388340775447:web:0769fb994834e68939ba52',
+};
+const POINTS = [10, 5, 2, 1]; // 第幾次答對得幾分
+const MP = { role: null, code: null, uid: null, fb: null, meta: null, players: {}, pos: {}, remotes: new Map(), tries: {}, score: 0, correct: 0, wrong: 0, lastPos: 0, lastPosKey: '', round: 0, unsubs: [], lastTick: -1, resultsShown: false };
+const hexCss = n => '#' + n.toString(16).padStart(6, '0');
+const fmtTime = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+const joinUrl = code => { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', code); return u.toString(); };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function drawQR(canvas, url) {
+  if (!window.qrcode || !url) return false;
+  const qr = qrcode(0, 'M'); qr.addData(url); qr.make();
+  const n = qr.getModuleCount(), g = canvas.getContext('2d'), cell = Math.floor(canvas.width / (n + 4)), off = Math.floor((canvas.width - cell * n) / 2);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, canvas.width, canvas.height); g.fillStyle = '#14201a';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) g.fillRect(off + c * cell, off + r * cell, cell, cell);
+  return true;
+}
+
+async function fbInit() {
+  if (MP.fb) return MP.fb;
+  const base = 'https://www.gstatic.com/firebasejs/11.0.2/';
+  const [F, A, D] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-database.js')]);
+  const app = F.initializeApp(FIREBASE_CONFIG, 'dafeng3d');
+  const auth = A.getAuth(app);
+  // 每個分頁各自一個匿名身分：重新整理還是同一人，可以回到原本的房間
+  await A.setPersistence(auth, A.browserSessionPersistence); await auth.authStateReady();
+  const user = auth.currentUser || (await A.signInAnonymously(auth)).user;
+  const db = D.getDatabase(app);
+  let offset = 0; D.onValue(D.ref(db, '.info/serverTimeOffset'), s => { offset = s.val() || 0; });
+  MP.uid = user.uid; MP.fb = { D, db, now: () => Date.now() + offset };
+  return MP.fb;
+}
+const rref = path => MP.fb.D.ref(MP.fb.db, `${ROOMS}/${MP.code}${path ? '/' + path : ''}`);
+const srvNow = () => (MP.fb ? MP.fb.now() : Date.now());
+const say = (id, text, bad) => { const el = $(id); el.textContent = text; el.style.color = bad ? '#ff8a6b' : 'var(--chalk-dim)'; };
+const netError = e => String(e && e.message || e).includes('Failed to fetch') || /import|module|Content Security/i.test(String(e)) ? '無法連線。多人遊戲要用 GitHub 上的遊戲網址開啟，並確認網路正常。' : String(e && e.message || e).includes('PERMISSION_DENIED') ? '沒有權限使用這個房間，請換一個房號。' : '連線發生問題：' + (e && e.message || e);
+
+function listen() {
+  const { D } = MP.fb;
+  MP.unsubs.forEach(u => u()); MP.unsubs = [];
+  MP.unsubs.push(D.onValue(rref('meta'), s => { MP.meta = s.val(); onMeta(); }));
+  MP.unsubs.push(D.onValue(rref('players'), s => { const prev = MP.players; MP.players = s.val() || {}; onPlayers(prev); }));
+  MP.unsubs.push(D.onValue(rref('pos'), s => { MP.pos = s.val() || {}; }));
+}
+const members = () => Object.entries(MP.players).map(([uid, p]) => ({ uid, ...p })).sort((a, b) => (a.slot ?? 9) - (b.slot ?? 9));
+const ranking = () => members().map(m => ({ ...m, score: m.score || 0, stampN: Object.keys(m.stamps || {}).length })).sort((a, b) => b.score - a.score || b.stampN - a.stampN);
+
+function onPlayers(prev) {
+  const now = Object.keys(MP.players).filter(u => MP.players[u].online), before = Object.keys(prev).filter(u => prev[u].online);
+  if (MP.role && now.length > before.length) SFX.join(); else if (MP.role === 'host' && now.length < before.length) SFX.leave();
+  if (MP.role === 'player' && MP.joined && !MP.players[MP.uid]) { sessionStorage.removeItem('dafeng3d.player'); location.reload(); return; }
+  if (MP.role === 'player' && MP.players[MP.uid]) MP.joined = true;
+  renderRoster();
+  if (!$('results').hidden) renderResults();
+}
+function avatarDot(av) { return `<span class="avdot" style="background:${hexCss(AVATARS[av || 0].shirt)}"></span>`; }
+function renderRoster() {
+  const list = members();
+  const html = list.length ? list.map(m => `<li class="${m.online ? '' : 'off'}">${avatarDot(m.avatar)}<span class="nm">${esc(m.name || '玩家')}</span>${m.online ? '' : '<small>離線</small>'}${MP.role === 'host' ? `<button class="kick" type="button" data-uid="${m.uid}" aria-label="請 ${esc(m.name || '玩家')} 離開">✕</button>` : ''}</li>`).join('') : '<li class="empty">還沒有玩家加入，請學生掃 QR Code</li>';
+  ['mp-roster', 'lobby-roster'].forEach(id => { const el = $(id); if (el) el.innerHTML = html; });
+  $('mp-count').textContent = `${list.filter(m => m.online).length} / ${MAX_PLAYERS} 人`;
+  $('mp-start').disabled = !list.some(m => m.online);
+  if (MP.role === 'host') renderBoard();
+}
+
+// ---------- 房主：建立房間、開始、結束 ----------
+function randomCode() { return String(1000 + Math.floor(Math.random() * 9000)); }
+async function hostCreate() {
+  const code = $('mp-code').value.trim();
+  if (!/^\d{4}$/.test(code)) return say('mp-status', '房間號碼請輸入 4 位數字。', true);
+  $('mp-create').disabled = true; say('mp-status', '連線中…');
+  try {
+    await fbInit(); const { D } = MP.fb;
+    MP.code = code;
+    const cur = (await D.get(rref(''))).val();
+    const mine = cur && cur.meta && cur.meta.hostUid === MP.uid;
+    if (cur && cur.meta && !mine && srvNow() - (cur.meta.createdAt || 0) < 6 * 3600e3) throw new Error('這個房號正在使用中，請按「換一組」換一個號碼。');
+    const settings = { durationMin: +$('mp-time').value, theme: $('mp-theme').value };
+    if (mine) await D.update(rref('meta'), settings);
+    else await D.set(rref(''), { meta: { hostUid: MP.uid, status: 'waiting', round: 1, createdAt: D.serverTimestamp(), ...settings } });
+    MP.role = 'host'; sessionStorage.setItem('dafeng3d.host', code);
+    listen(); hostReady();
+  } catch (e) { say('mp-status', e.message && !/PERMISSION|fetch|import/i.test(e.message) ? e.message : netError(e), true); $('mp-create').disabled = false; MP.code = null; }
+}
+function hostReady() {
+  ['mp-code', 'mp-random', 'mp-create'].forEach(id => { $(id).disabled = true; });
+  $('mp-create').hidden = true; $('mp-start').hidden = false; $('mp-lobby').hidden = false;
+  const url = joinUrl(MP.code);
+  $('qr').classList.remove('empty'); $('qrcanvas').hidden = false; drawQR($('qrcanvas'), url); drawQR($('hv-qr'), url);
+  $('qrtext').innerHTML = `房號 <b>${MP.code}</b><br>平板掃描加入遊戲`;
+  $('hv-code').textContent = MP.code; $('hv-link').textContent = url.replace(/^https?:\/\//, '');
+  say('mp-status', `房間 ${MP.code} 已建立。學生掃 QR Code 加入後，按「開始遊戲」。`);
+}
+async function hostStart() {
+  SFX.click();
+  const { D } = MP.fb, now = srvNow(), min = +$('mp-time').value;
+  const round = (MP.meta && MP.meta.status === 'ended') ? (MP.meta.round || 1) + 1 : (MP.meta && MP.meta.round) || 1;
+  // 新的一局：清空每位玩家的成績
+  const reset = {}; Object.keys(MP.players).forEach(u => { reset[`players/${u}/score`] = 0; reset[`players/${u}/stamps`] = null; reset[`players/${u}/correct`] = 0; reset[`players/${u}/wrong`] = 0; });
+  if (Object.keys(reset).length) await D.update(rref(''), reset);
+  await D.update(rref('meta'), { status: 'playing', round, durationMin: min, theme: $('mp-theme').value, startAt: now, endAt: now + min * 60000 });
+}
+async function hostEnd() { if (MP.role !== 'host' || !MP.meta || MP.meta.status !== 'playing') return; await MP.fb.D.update(rref('meta'), { status: 'ended', endAt: Math.min(MP.meta.endAt || srvNow(), srvNow()) }); }
+async function hostAgain() { SFX.click(); await MP.fb.D.update(rref('meta'), { status: 'waiting', round: (MP.meta.round || 1) + 1 }); }
+async function kick(uid) {
+  const { D } = MP.fb, upd = { [`players/${uid}`]: null, [`pos/${uid}`]: null };
+  const slots = (await D.get(rref('slots'))).val() || {};
+  Object.entries(slots).forEach(([i, u]) => { if (u === uid) upd[`slots/${i}`] = null; });
+  await D.update(rref(''), upd);
+}
+
+// ---------- 玩家：加入房間、等待、遊戲 ----------
+let pickedAvatar = 0;
+function buildAvatarPicker() {
+  const box = $('avatars');
+  AVATARS.forEach((av, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'av' + (i === 0 ? ' on' : ''); b.setAttribute('aria-label', av.name);
+    const c = document.createElement('canvas'); c.width = 72; c.height = 84; drawPortrait(c, av); b.append(c, Object.assign(document.createElement('span'), { textContent: av.name }));
+    b.addEventListener('click', () => { pickedAvatar = i; SFX.click(); box.querySelectorAll('.av').forEach((x, k) => x.classList.toggle('on', k === i)); });
+    box.append(b);
+  });
+}
+function drawPortrait(c, av) { // 2D 人像：頭髮、臉、制服
+  const g = c.getContext('2d'), w = c.width;
+  g.fillStyle = hexCss(av.shirt); g.beginPath(); g.ellipse(w / 2, 84, 30, 30, 0, Math.PI, 0); g.fill();
+  g.fillStyle = '#1d1a18'; if (av.hair === 'long') g.fillRect(w / 2 - 19, 22, 38, 34);
+  g.fillStyle = '#f0c8a0'; g.beginPath(); g.arc(w / 2, 32, 17, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#1d1a18'; g.beginPath(); g.arc(w / 2, 28, 18, Math.PI * 1.05, Math.PI * 1.95); g.fill();
+  g.fillStyle = '#2b2b2b'; g.fillRect(w / 2 - 7, 32, 3, 3); g.fillRect(w / 2 + 4, 32, 3, 3);
+  g.strokeStyle = '#a0522d'; g.lineWidth = 2; g.beginPath(); g.arc(w / 2, 37, 5, 0.2, Math.PI - 0.2); g.stroke();
+}
+async function playerJoin() {
+  const code = $('join-code').value.trim(), name = $('join-name').value.trim().slice(0, 8);
+  if (!/^\d{4}$/.test(code)) return say('join-status', '房間號碼是 4 位數字。', true);
+  if (!name) return say('join-status', '請輸入你的名字。', true);
+  $('join-go').disabled = true; say('join-status', '連線中…');
+  try {
+    await fbInit(); const { D } = MP.fb; MP.code = code;
+    const room = (await D.get(rref(''))).val();
+    if (!room || !room.meta) throw new Error('找不到這個房間，請確認房號。');
+    const mine = room.players && room.players[MP.uid];
+    let slot = mine ? mine.slot : -1;
+    if (slot < 0 || slot === undefined) {
+      slot = -1;
+      for (let i = 0; i < MAX_PLAYERS; i++) {
+        if (room.slots && room.slots[i]) continue;
+        const res = await D.runTransaction(rref('slots/' + i), cur => (cur ? undefined : MP.uid));
+        if (res.committed) { slot = i; break; }
+      }
+      if (slot < 0) throw new Error(`房間已滿（最多 ${MAX_PLAYERS} 人）。`);
+    }
+    const me = rref('players/' + MP.uid);
+    await D.update(me, { name, avatar: pickedAvatar, slot, online: true, joinedAt: (mine && mine.joinedAt) || D.serverTimestamp(), ...(mine ? {} : { score: 0, correct: 0, wrong: 0 }) });
+    D.onDisconnect(me).update({ online: false });
+    MP.unsubs.push(D.onValue(D.ref(MP.fb.db, '.info/connected'), s => { if (s.val()) { D.onDisconnect(me).update({ online: false }); D.update(me, { online: true }); } }));
+    MP.role = 'player'; MP.name = name; MP.avatar = pickedAvatar;
+    sessionStorage.setItem('dafeng3d.player', JSON.stringify({ code, name, avatar: pickedAvatar }));
+    $('join').hidden = true; SFX.join();
+    listen();
+  } catch (e) { say('join-status', e.message && !/PERMISSION|fetch|import/i.test(e.message) ? e.message : netError(e), true); $('join-go').disabled = false; MP.code = null; }
+}
+function resetRound() { // 新的一局：清空自己的印章、回到校門口
+  stamps = new Set(); MP.tries = {}; MP.score = 0; MP.correct = 0; MP.wrong = 0; MP.resultsShown = false;
+  updateCount(); refreshMarkers(); updateMpHud();
+  Object.assign(player, { x: X(550) + (Math.random() - 0.5) * 4, z: Z(1565), foot: 0, vy: 0, yaw: 0, pitch: 0 });
+}
+function onMeta() {
+  const m = MP.meta; if (!m) return;
+  if (MP.role === 'host') {
+    $('hv-status').textContent = m.status === 'playing' ? '遊戲進行中' : m.status === 'ended' ? '遊戲結束' : '等待開始';
+    $('hv-end').hidden = m.status !== 'playing'; $('hv-again').hidden = m.status !== 'ended';
+    if (m.status === 'playing') { ui.start.hidden = true; $('results').hidden = true; $('hostview').hidden = false; if (MP.lastStatus !== 'playing') SFX.start(); }
+    if (m.status === 'waiting') { $('results').hidden = true; $('hostview').hidden = true; ui.start.hidden = false; $('mp-start').disabled = !members().some(x => x.online); $('mp-start').textContent = '開始遊戲'; say('mp-status', `房間 ${MP.code}：學生加入後，按「開始遊戲」。`); }
+    if (m.status === 'ended') { $('hostview').hidden = false; showResults(); }
+    MP.lastStatus = m.status;
+    return;
+  }
+  if (MP.role !== 'player') return;
+  if ((m.round || 1) !== MP.round) { MP.round = m.round || 1; resetRound(); }
+  $('lobby-code').textContent = MP.code;
+  if (m.status === 'waiting') { $('results').hidden = true; showLobby(true); }
+  if (m.status === 'playing') {
+    showLobby(false); $('results').hidden = true;
+    if (!started || MP.lastStatus !== 'playing') { if (MP.lastStatus === 'waiting') SFX.start(); startPlaying(); }
+  }
+  if (m.status === 'ended') showResults();
+  MP.lastStatus = m.status;
+}
+function showLobby(on) {
+  $('mplobby').hidden = !on;
+  if (on) { unlock(); keys.clear(); $('joy').hidden = true; $('jump').hidden = true; }
+}
+function startPlaying() {
+  ui.start.hidden = true; $('join').hidden = true; started = true; ui.hud.hidden = false; ui.mapwrap.hidden = false;
+  $('mptime').hidden = false; $('mpscore').hidden = false; updateMpHud();
+  applyTouchUI(); lock();
+}
+function updateMpHud() {
+  $('mpscore-v').textContent = MP.score;
+  if (MP.meta && MP.meta.endAt) $('mptime-v').textContent = fmtTime(MP.meta.endAt - srvNow());
+}
+// 答題結果寫回房間
+function mpAnswer(st, ok) {
+  if (MP.role !== 'player' || !MP.meta || MP.meta.status !== 'playing' || srvNow() > MP.meta.endAt) return 0;
+  const { D } = MP.fb, me = rref('players/' + MP.uid);
+  if (!ok) { MP.tries[st.id] = (MP.tries[st.id] || 0) + 1; MP.wrong++; D.update(me, { wrong: MP.wrong }); return 0; }
+  const pts = POINTS[Math.min(MP.tries[st.id] || 0, POINTS.length - 1)];
+  MP.score += pts; MP.correct++;
+  D.update(me, { score: MP.score, correct: MP.correct, ['stamps/' + st.id]: pts });
+  updateMpHud(); return pts;
+}
+async function playerLeave() {
+  const { D } = MP.fb, upd = { [`players/${MP.uid}`]: null, [`pos/${MP.uid}`]: null };
+  const slots = (await D.get(rref('slots'))).val() || {};
+  Object.entries(slots).forEach(([i, u]) => { if (u === MP.uid) upd[`slots/${i}`] = null; });
+  await D.onDisconnect(rref('players/' + MP.uid)).cancel();
+  await D.update(rref(''), upd);
+  sessionStorage.removeItem('dafeng3d.player'); location.reload();
+}
+
+// ---------- 其他玩家的 3D 角色與頭上的名字 ----------
+const AV_GEO = { leg: new THREE.BoxGeometry(0.12, 0.6, 0.14).translate(0, -0.3, 0), arm: new THREE.BoxGeometry(0.09, 0.42, 0.1).translate(0, -0.2, 0), torso: new THREE.BoxGeometry(0.36, 0.46, 0.2), head: new THREE.SphereGeometry(0.12, 14, 10), hair: new THREE.SphereGeometry(0.13, 14, 8), long: new THREE.BoxGeometry(0.26, 0.32, 0.08) };
+function makeAvatar(av, name) {
+  const shirt = mat(av.shirt), pants = mat(av.pants), skin = mat(0xf0c8a0), hairM = mat(0x1d1a18), g = new THREE.Group();
+  const legL = new THREE.Mesh(AV_GEO.leg, pants), legR = new THREE.Mesh(AV_GEO.leg, pants); legL.position.set(-0.08, 0.62, 0); legR.position.set(0.08, 0.62, 0);
+  const armL = new THREE.Mesh(AV_GEO.arm, shirt), armR = new THREE.Mesh(AV_GEO.arm, shirt); armL.position.set(-0.23, 1.06, 0); armR.position.set(0.23, 1.06, 0);
+  const torso = new THREE.Mesh(AV_GEO.torso, shirt); torso.position.y = 0.85;
+  const head = new THREE.Mesh(AV_GEO.head, skin); head.position.y = 1.2;
+  const hair = new THREE.Mesh(AV_GEO.hair, hairM); hair.position.set(0, 1.235, -0.02); hair.scale.y = 0.8;
+  g.add(legL, legR, armL, armR, torso, head, hair);
+  if (av.hair === 'long') { const lh = new THREE.Mesh(AV_GEO.long, hairM); lh.position.set(0, 1.1, -0.1); g.add(lh); }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  const tag = makeLabel(name, 0.36); tag.position.y = 1.72; tag.material.depthTest = false; tag.renderOrder = 5; g.add(tag);
+  g.userData = { legL, legR, armL, armR, phase: 0, tag, name };
+  scene.add(g); return g;
+}
+function updateRemotes(dt) {
+  const seen = new Set();
+  Object.entries(MP.players).forEach(([uid, p]) => {
+    if (uid === MP.uid || !p.online) return;
+    const ps = MP.pos[uid]; if (!ps) return;
+    seen.add(uid);
+    let r = MP.remotes.get(uid);
+    const av = AVATARS[p.avatar || 0];
+    if (!r || r.name !== p.name || r.avatar !== p.avatar) {
+      if (r) scene.remove(r.g);
+      r = { g: makeAvatar(av, p.name || '玩家'), name: p.name, avatar: p.avatar, x: ps.x, z: ps.z, f: ps.f || 0, yaw: ps.y || 0 };
+      MP.remotes.set(uid, r);
+    }
+    const k = Math.min(1, dt * 10), ox = r.x, oz = r.z;
+    r.x += (ps.x - r.x) * k; r.z += (ps.z - r.z) * k; r.f += ((ps.f || 0) - r.f) * k;
+    let dy = (ps.y || 0) - r.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); r.yaw += dy * k;
+    if (Math.hypot(ps.x - r.x, ps.z - r.z) > 12) { r.x = ps.x; r.z = ps.z; r.f = ps.f || 0; }
+    const speed = Math.hypot(r.x - ox, r.z - oz) / Math.max(dt, 1e-3), u = r.g.userData;
+    r.g.position.set(r.x, r.f, r.z); r.g.rotation.y = r.yaw + Math.PI; // 視線方向是 -z，角色正面是 +z
+    u.phase += dt * Math.min(speed, 6) * 4.2;
+    const sw = speed > 0.3 ? Math.sin(u.phase) * Math.min(0.9, speed * 0.2) : 0;
+    u.legL.rotation.x = sw; u.legR.rotation.x = -sw; u.armL.rotation.x = -sw * 0.8; u.armR.rotation.x = sw * 0.8;
+  });
+  MP.remotes.forEach((r, uid) => { if (!seen.has(uid)) { scene.remove(r.g); MP.remotes.delete(uid); } });
+}
+function sendPos(now) {
+  if (MP.role !== 'player' || !MP.meta || MP.meta.status !== 'playing' || now - MP.lastPos < POS_MS) return;
+  const d = { x: Math.round(player.x * 100) / 100, z: Math.round(player.z * 100) / 100, f: Math.round(player.foot * 100) / 100, y: Math.round(player.yaw * 100) / 100 };
+  const key = `${d.x},${d.z},${d.f},${d.y}`; if (key === MP.lastPosKey) return;
+  MP.lastPos = now; MP.lastPosKey = key; MP.fb.D.set(rref('pos/' + MP.uid), d).catch(() => {});
+}
+// 每格畫面：計時、送出位置、更新其他玩家
+function mpTick(dt) {
+  if (!MP.role || !MP.meta) return;
+  const left = MP.meta.endAt ? MP.meta.endAt - srvNow() : 0;
+  if (MP.meta.status === 'playing') {
+    const sec = Math.ceil(left / 1000);
+    if (sec <= 10 && sec > 0 && sec !== MP.lastTick) { MP.lastTick = sec; SFX.tick(); }
+    if (MP.role === 'player') { updateMpHud(); $('mptime').classList.toggle('hurry', sec <= 30); if (left <= 0 && !MP.resultsShown) showResults(); }
+    if (MP.role === 'host') { $('hv-time').textContent = fmtTime(left); $('hv-time').classList.toggle('hurry', sec <= 30); if (left <= 0) hostEnd(); }
+  }
+  if (MP.role === 'player') { sendPos(performance.now()); updateRemotes(dt); }
+}
+
+// ---------- 結算 ----------
+function showResults() {
+  if (MP.role === 'player') { unlock(); keys.clear(); ui.card.hidden = true; ui.bigmap.hidden = true; $('mpmenu').hidden = true; $('joy').hidden = true; $('jump').hidden = true; }
+  if (!MP.resultsShown) { MP.resultsShown = true; SFX.end(); }
+  renderResults(); $('results').hidden = false;
+}
+function renderResults() {
+  const list = ranking();
+  $('res-list').innerHTML = list.map((m, i) => `<li class="${m.uid === MP.uid ? 'me' : ''}"><span class="rk">${i + 1}</span>${avatarDot(m.avatar)}<span class="nm">${esc(m.name || '玩家')}</span><span class="pt">${m.score} 分</span><small>印章 ${m.stampN}・答對 ${m.correct || 0}・答錯 ${m.wrong || 0}</small></li>`).join('') || '<li class="empty">這一局沒有玩家</li>';
+  const me = list.findIndex(m => m.uid === MP.uid);
+  $('res-me').textContent = MP.role === 'player' && me >= 0 ? `你是第 ${me + 1} 名，得到 ${list[me].score} 分！` : '';
+  $('res-wait').hidden = MP.role !== 'player'; $('res-host').hidden = MP.role !== 'host';
+}
+
+// ---------- 房主觀戰：平面圖上看所有玩家 ----------
+function renderBoard() {
+  $('hv-board').innerHTML = ranking().map((m, i) => `<li class="${m.online ? '' : 'off'}"><span class="rk">${i + 1}</span>${avatarDot(m.avatar)}<span class="nm">${esc(m.name || '玩家')}</span><span class="pt">${m.score}</span><small>${m.stampN} 章${m.online ? '' : '・離線'}</small></li>`).join('') || '<li class="empty">等待玩家加入</li>';
+}
+function drawHostMap() {
+  const cv = $('hv-map'), box = cv.parentElement, dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = box.clientWidth, H = box.clientHeight; if (!W || !H || !bigStatic) return;
+  const k = Math.min(W / MAPW, H / MAPH);
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const ox = (W - MAPW * k) / 2, oy = (H - MAPH * k) / 2;
+  g.drawImage(bigStatic, ox, oy, MAPW * k, MAPH * k);
+  const tx = px => ox + (px - MX0) * k, ty = py => oy + (py - MY0) * k;
+  STATIONS.forEach(s => { g.fillStyle = s.safe ? 'rgba(234,184,74,.85)' : 'rgba(255,107,69,.85)'; g.beginPath(); g.arc(tx(s.px), ty(s.py), Math.max(2.5, 7 * k), 0, Math.PI * 2); g.fill(); });
+  g.font = `700 ${Math.max(12, Math.round(30 * k))}px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'bottom';
+  members().forEach(m => {
+    const ps = MP.pos[m.uid]; if (!ps) return;
+    const x = tx(ps.x / S + CX), y = ty(ps.z / S + CY), r = Math.max(7, 16 * k), av = AVATARS[m.avatar || 0];
+    g.globalAlpha = m.online ? 1 : 0.4;
+    g.fillStyle = hexCss(av.shirt); g.strokeStyle = '#fff'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.stroke();
+    const a = (ps.y || 0); g.fillStyle = '#14201a'; g.beginPath(); g.moveTo(x - Math.sin(a) * r * 1.6, y - Math.cos(a) * r * 1.6); g.lineTo(x - Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5); g.lineTo(x + Math.cos(a) * r * 0.5, y - Math.sin(a) * r * 0.5); g.closePath(); g.fill();
+    const fl = Math.max(0, Math.round((ps.f || 0) / FH)) + 1, label = `${m.name || '玩家'}${fl > 1 ? `（${fl}F）` : ''}`;
+    g.lineWidth = 4; g.strokeStyle = 'rgba(20,32,26,.85)'; g.strokeText(label, x, y - r - 3); g.fillStyle = '#fff'; g.fillText(label, x, y - r - 3);
+    g.globalAlpha = 1;
+  });
+}
+
+// ---------- 畫面切換與按鈕 ----------
+function initMultiplayer() {
+  buildAvatarPicker();
+  $('mp-code').value = randomCode();
+  $('mp-random').addEventListener('click', () => { $('mp-code').value = randomCode(); SFX.click(); });
+  $('mp-create').addEventListener('click', hostCreate);
+  $('mp-start').addEventListener('click', hostStart);
+  $('hv-end').addEventListener('click', () => { SFX.click(); hostEnd(); });
+  $('hv-again').addEventListener('click', hostAgain);
+  $('res-again').addEventListener('click', hostAgain);
+  $('res-setup').addEventListener('click', () => { SFX.click(); $('results').hidden = true; $('hostview').hidden = true; ui.start.hidden = false; $('mp-time').disabled = false; });
+  document.addEventListener('click', e => { const b = e.target.closest('.kick'); if (b && MP.role === 'host') kick(b.dataset.uid); });
+  $('solo-link').addEventListener('click', e => { e.preventDefault(); $('host-setup').hidden = true; $('solo-panel').hidden = false; $('qr').hidden = true; });
+  $('host-link').addEventListener('click', e => { e.preventDefault(); $('host-setup').hidden = false; $('solo-panel').hidden = true; $('qr').hidden = false; });
+  $('join-go').addEventListener('click', playerJoin);
+  $('join-name').addEventListener('keydown', e => { if (e.key === 'Enter') playerJoin(); });
+  $('mm-resume').addEventListener('click', () => { $('mpmenu').hidden = true; if (touchMode) { $('joy').hidden = false; $('jump').hidden = false; } lock(); });
+  $('mm-home').addEventListener('click', () => { Object.assign(player, { x: X(550), z: Z(1565), foot: 0, vy: 0, yaw: 0, pitch: 0 }); $('mm-resume').click(); });
+  $('mm-leave').addEventListener('click', playerLeave);
+  // 題目清單（房主設定頁）
+  $('mp-qlist').querySelector('ol').innerHTML = STATIONS.map(s => `<li>${esc(s.q)}<small>${esc(s.name)}・${s.safe ? '安全地點' : '要小心的角落'}</small></li>`).join('');
+  const room = new URLSearchParams(location.search).get('room');
+  if (room) { // 學生掃 QR Code 進來：加入遊戲頁
+    ui.start.hidden = true; $('join').hidden = false; $('join-code').value = room.replace(/\D/g, '').slice(0, 4);
+    try { const saved = JSON.parse(sessionStorage.getItem('dafeng3d.player') || 'null'); if (saved && saved.code === $('join-code').value) { $('join-name').value = saved.name; pickedAvatar = saved.avatar || 0; $('avatars').querySelectorAll('.av').forEach((x, k) => x.classList.toggle('on', k === pickedAvatar)); playerJoin(); } } catch (e) {}
+  } else {
+    try { const code = sessionStorage.getItem('dafeng3d.host'); if (code) { $('mp-code').value = code; hostCreate(); } } catch (e) {}
+  }
+}
+
+initMultiplayer();
 
 // 字型載入後再畫文字標籤
 const allText = LABELS.map(l => l.text).join('') + STATIONS.map(s => s.name).join('') + SIGNS.map(s => s.title + (s.sub || '')).join('') + '操場司令台生態池農場遊樂機車棚校史水塔五年級路校門P';
