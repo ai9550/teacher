@@ -550,6 +550,7 @@
                 fileListNames = STATIC_FILES;
             }
 
+            if (!fileListNames.includes("2019閱讀理解測驗.html")) fileListNames.push("2019閱讀理解測驗.html");
             allFiles = fileListNames
                 .map(name => ({ name: name, categoryId: categorize(name) }))
                 .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
