@@ -448,7 +448,7 @@
         }
 
         function categorize(filename) {
-            if (filename === '大富遊戲數學四上單元公里.html') return 'puzzle';
+            if (filename === '大富遊戲數學四上單元公里.html' || filename === '大富翁遊戲翰林三上數學5-10單元.html') return 'puzzle';
             for (const cat of CATEGORIES) {
                 if (cat.id === 'other') continue;
                 if (cat.keywords.some(kw => filename.includes(kw))) return cat.id;
@@ -458,6 +458,7 @@
 
         const STATIC_FILES = [
             "大富遊戲數學四上單元公里.html",
+            "大富翁遊戲翰林三上數學5-10單元.html",
             "一位數加法小朋友下樓梯.html",
             "三位數直式減法計算練習.html",
             "三位數除以一位數直式除法.html",
@@ -613,7 +614,7 @@
                 a.style.setProperty('--tilt', `${tilts[index % tilts.length]}deg`);
                 a.style.animationDelay = `${index * 0.03}s`;
 
-                const displayName = file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name.replace(/\.html$/i, '');
+                const displayName = file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name === '大富翁遊戲翰林三上數學5-10單元.html' ? '大富翁遊戲翰林三上數學5-10單元' : file.name.replace(/\.html$/i, '');
 
                 a.innerHTML = `
                     <span class="card-tag">${cat.icon} ${cat.name}</span>
