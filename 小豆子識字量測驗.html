@@ -208,7 +208,7 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
     </div>
     <div class="board" id="testBoard"></div>
     <h3>上傳錄音檔</h3>
-    <p class="hint" style="margin:0">錄音前後老師的說明語音會自動忽略，只判讀學生的回答。</p>
+    <p class="hint" style="margin:0">錄音開頭、中間與結尾老師說話的語音會自動忽略，只判讀學生的回答；學生說「不知道」「不會」或沒回答，視為未作答、不計分。</p>
     <div class="drop" id="drop">把錄音檔拖曳到這裡，或 <button class="btn sm" onclick="document.getElementById('fileIn').click()">選擇檔案</button><br><span class="hint">支援 mp3、m4a、wav、webm、ogg、aac 等；可上傳多個檔案（會依清單順序串接）。</span></div>
     <input type="file" id="fileIn" accept="audio/*,video/*,.m4a,.mp3,.wav,.webm,.ogg,.aac,.amr,.3gp" multiple style="display:none">
     <ul class="filelist" id="fileList"></ul>
@@ -570,7 +570,13 @@ function buildPrompt(strict){
 
 【請忽略老師的語音】
 - 錄音「開頭」通常有老師（主試者）的說明，例如介紹測驗、示範「大家的大」、叫學生開始；錄音「結尾」通常有老師的結語，例如「好，結束了」「謝謝」。這些都不是學生的回答，請完全忽略，不要把老師示範或說出的語詞當成學生的作答。
-- 施測中間老師的提示、鼓勵、催促（例如「下一個」「慢慢想」「這個呢？」）也一律忽略，只依「學生」的回答判斷。
+- 錄音「中間」老師也可能說話，請一律忽略，例如：
+  ・提示或催促：「下一個」「慢慢想」「這個呢？」「看這一行」「換這裡」
+  ・鼓勵或回饋：「很好」「對」「嗯」「沒關係」
+  ・念出目標字、指著字問、重複學生的話，或說明規則（例如「要說出是什麼的什麼」）
+  ・和其他人說話、處理設備等與作答無關的話
+  老師說出的任何語詞都不是學生的作答，絕對不能拿來判學生正確。
+- 只依「學生」自己說出的回答判斷。若某題只有老師說話、學生沒有回答，該題為 "no_answer"。若學生只是重複老師剛說過的語詞，仍依學生的回答判分，但 confidence 請設低（0.4 以下），讓老師重聽確認。
 - 可以從音色（大人／小孩）、說話內容與位置來分辨老師和學生。
 
 【60 個目標字（依施測順序）】
@@ -684,7 +690,7 @@ function applyAI(obj){
     let st = ['correct','incorrect','no_answer'].includes(it.status) ? it.status : 'no_answer';
     let word = String(it.word||'').trim();
     // "不知道 / 不會" → treat as no answer (not scored)
-    if(/^(我)?(不知道|不會|不曉得|不認識|跳過|下一個|忘記了?)$/.test(word.replace(/[，。！？、\s]/g,''))){ st='no_answer'; word=''; }
+    if(/^(嗯|呃)?(我)?(不知道|不會|不曉得|不認識|不記得|想不起來|跳過|下一個|忘記了?|沒有)(耶|欸|啦|了|呢)?$/.test(word.replace(/[，。！？、…\s]/g,''))){ st='no_answer'; word=''; }
     // sanity: a "correct" word must contain the target char
     let reason = String(it.reason||'').trim();
     let status = st;
