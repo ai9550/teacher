@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小豆子識字量測驗</title>
+<style>
+:root{
+  --bg:#fbf7ef; --panel:#ffffff; --ink:#3b2f22; --muted:#857560; --line:#e8dcc6;
+  --bean:#7a9a3a; --bean-d:#5c7728; --bean-l:#eef4df;
+  --accent:#e08a2c; --accent-l:#fdf0df;
+  --ok:#2f8f4e; --ok-l:#e2f4e8; --bad:#c94a3d; --bad-l:#fbe6e3; --na:#9a8f80; --na-l:#f1ede6;
+  --O:#2f7fc1; --T:#c9831a; --S:#8a4fb5;
+  --radius:14px; --shadow:0 2px 10px rgba(80,60,30,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;line-height:1.55}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:15px}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header.top{background:linear-gradient(135deg,#8fb04a,#5c7728);color:#fff;padding:18px 16px 14px}
+header.top .wrap{padding:0 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-size:40px;line-height:1}
+header h1{margin:0;font-size:26px;letter-spacing:2px}
+header p{margin:2px 0 0;opacity:.9;font-size:14px}
+.top-actions{margin-left:auto;display:flex;gap:8px}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:15px;font-weight:600;background:var(--bean);color:#fff;transition:.15s}
+.btn:hover{background:var(--bean-d)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--bean-d);border:1.5px solid var(--bean)}
+.btn.ghost:hover{background:var(--bean-l)}
+.btn.warn{background:var(--accent)}
+.btn.red{background:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn.light{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.5)}
+.steps{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
+.step{flex:1;min-width:120px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;color:var(--muted);font-size:14px}
+.step b{display:block;font-size:16px;color:var(--ink)}
+.step.active{border-color:var(--bean);background:var(--bean-l);color:var(--bean-d)}
+.step.done b::after{content:" ✓";color:var(--ok)}
+.panel{background:var(--panel);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.panel h2{margin:0 0 12px;font-size:20px;display:flex;align-items:center;gap:8px}
+.panel h3{margin:16px 0 8px;font-size:16px}
+.grid-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px}
+.grid-form label{display:flex;flex-direction:column;font-size:13px;color:var(--muted);gap:4px}
+.grid-form input,.grid-form select{padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;color:var(--ink)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-size:15px;color:var(--ink)}
+.chip.on{background:var(--bean);border-color:var(--bean);color:#fff}
+.hint{font-size:13px;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+/* question board */
+.board{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.board .q{aspect-ratio:1;display:flex;align-items:center;justify-content:center;background:#fffdf8;border:1.5px solid var(--line);border-radius:10px;font-size:clamp(20px,4.2vw,40px);font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC",serif;user-select:none}
+.board .q.cur{border-color:var(--accent);background:var(--accent-l);box-shadow:0 0 0 3px rgba(224,138,44,.25)}
+.instr{font-size:16px;margin:0 0 10px;color:var(--ink)}
+/* recorder */
+.filelist{margin:10px 0 0;padding:0;list-style:none}
+.filelist li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;background:#fff;flex-wrap:wrap}
+.filelist audio{height:34px;max-width:100%}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--muted);margin-top:10px}
+.drop.over{border-color:var(--bean);background:var(--bean-l)}
+/* record sheet */
+.sheet{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.cell{border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:5px 3px 6px;text-align:center;cursor:pointer;position:relative;min-width:0;transition:.12s}
+.cell:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.cell .ch{font-size:clamp(18px,3vw,28px);font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC",serif;line-height:1.2}
+.cell .sym{font-size:13px;font-weight:700}
+.cell .w{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:16px}
+.cell .mk{position:absolute;top:2px;right:5px;font-size:13px;font-weight:800}
+.cell.correct{background:var(--ok-l);border-color:#9fd4b0}
+.cell.correct .mk{color:var(--ok)}
+.cell.incorrect{background:var(--bad-l);border-color:#eab3ac}
+.cell.incorrect .mk{color:var(--bad)}
+.cell.no_answer{background:var(--na-l)}
+.cell.no_answer .mk{color:var(--na)}
+.cell.lowconf::before{content:"?";position:absolute;top:2px;left:5px;font-size:12px;color:var(--accent);font-weight:800}
+.sO{color:var(--O)}.sT{color:var(--T)}.sS{color:var(--S)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:8px 0}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+/* detail table */
+table.detail{width:100%;border-collapse:collapse;font-size:14px}
+table.detail th,table.detail td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:middle}
+table.detail th{background:#faf5ea;font-weight:600;position:sticky;top:0}
+table.detail td.c{text-align:center}
+table.detail .tch{font-size:22px;font-family:"BiauKai","DFKai-SB","標楷體",serif}
+table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid var(--line);border-radius:7px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:none;background:#fff;padding:4px 9px;font-size:13px;color:var(--muted)}
+.seg button.on.correct{background:var(--ok);color:#fff}
+.seg button.on.incorrect{background:var(--bad);color:#fff}
+.seg button.on.no_answer{background:var(--na);color:#fff}
+.ref{font-size:12px;color:var(--muted)}
+.tablebox{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+/* results */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.stat{border-radius:14px;padding:14px 16px;background:#faf6ee;border:1px solid var(--line)}
+.stat .lab{font-size:14px;color:var(--muted)}
+.stat .val{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .sub{font-size:13px;color:var(--muted)}
+.bar{height:8px;border-radius:5px;background:#eee3cf;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%}
+.big{background:linear-gradient(135deg,#fff6e6,#eef4df);border:2px solid var(--bean);text-align:center;border-radius:18px;padding:18px}
+.big .val{font-size:54px;font-weight:900;color:var(--bean-d);line-height:1.1}
+.big .lab{font-size:16px;color:var(--ink)}
+.formula{font-family:Consolas,monospace;font-size:13px;background:#faf6ee;border-radius:8px;padding:8px 10px;color:var(--muted);overflow-x:auto;white-space:nowrap}
+.hist table{width:100%;border-collapse:collapse;font-size:14px}
+.hist th,.hist td{border-bottom:1px solid var(--line);padding:6px;text-align:left}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(40,30,15,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;padding:20px;max-height:90vh;overflow:auto}
+.modal h3{margin-top:0}
+.modal label{display:block;font-size:14px;margin:10px 0 4px;color:var(--muted)}
+.modal input,.modal select,.modal textarea{width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px}
+.progress{margin-top:12px;background:#f5efe2;border-radius:10px;padding:12px;font-size:14px;display:none}
+.progress.show{display:block}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--bean-l);border-top-color:var(--bean);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.alert{background:var(--bad-l);color:var(--bad);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px;white-space:pre-wrap}
+.note{background:var(--accent-l);border-radius:10px;padding:10px 12px;font-size:14px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#3b2f22;color:#fff;padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#askModal{z-index:90}
+/* fullscreen test display */
+#stage{position:fixed;inset:0;background:#fffdf6;z-index:60;display:none;flex-direction:column;padding:16px}
+#stage.show{display:flex}
+#stage .board{flex:1;grid-template-rows:repeat(6,1fr);align-content:stretch}
+#stage .board .q{aspect-ratio:auto;font-size:min(7vw,10vh)}
+#stage .one{flex:1;display:none;align-items:center;justify-content:center;font-size:min(50vw,60vh);font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC",serif}
+#stage.single .one{display:flex}
+#stage.single .board{display:none}
+.stagebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+@media (max-width:640px){
+  .board,.sheet{gap:3px}
+  .cell .w{display:none}
+  header h1{font-size:22px}
+  .panel{padding:14px}
+  .top-actions{margin-left:0}
+}
+/* print */
+#printSheet{display:none}
+@media print{
+  body{background:#fff}
+  body > *:not(#printSheet){display:none !important}
+  #printSheet{display:block;font-family:"標楷體","DFKai-SB",serif;color:#000}
+  #printSheet h2{text-align:center;margin:0 0 6px;font-size:20px}
+  #printSheet .info{font-size:14px;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px 18px}
+  #printSheet table{width:100%;border-collapse:collapse;margin-bottom:6px}
+  #printSheet td,#printSheet th{border:1px solid #000;text-align:center;padding:3px;font-size:16px}
+  #printSheet th{width:70px;font-size:13px;font-weight:normal}
+  #printSheet .wd{font-size:10px;height:30px}
+  #printSheet .sum{font-size:15px;margin-top:8px;line-height:1.8}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="logo">🫘</div>
+    <div>
+      <h1>小豆子識字量測驗</h1>
+      <p>自編識字量估計測驗－天下2012｜錄音上傳 · AI 語音判讀造詞 · 自動計分</p>
+    </div>
+    <div class="top-actions">
+      <button class="btn light sm" onclick="openSettings()">⚙️ AI 設定</button>
+      <button class="btn light sm" onclick="showStep(4)">📊 結果與紀錄</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="steps" id="steps">
+    <button class="step" data-s="1" onclick="showStep(1)"><b>① 基本資料</b>學生與版本</button>
+    <button class="step" data-s="2" onclick="showStep(2)"><b>② 施測錄音</b>顯示題目、上傳錄音檔</button>
+    <button class="step" data-s="3" onclick="showStep(3)"><b>③ AI 分析校正</b>判讀每題造詞</button>
+    <button class="step" data-s="4" onclick="showStep(4)"><b>④ 計分結果</b>識字量與紀錄</button>
+  </div>
+
+  <!-- STEP 1 -->
+  <section class="panel" id="s1">
+    <h2>📝 學生基本資料</h2>
+    <div class="grid-form">
+      <label>學校<input id="f_school" placeholder="○○國小"></label>
+      <label>年級<select id="f_grade"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+      <label>測驗日期<input id="f_date" type="date"></label>
+      <label style="grid-column:1/-1">備註<input id="f_note" placeholder="可填學生代號或其他說明，可留空"></label>
+    </div>
+    <h3>測驗版本</h3>
+    <div class="chips" id="levelChips"></div>
+    <p class="hint" id="levelHint"></p>
+    <h3>題本（第幾套）</h3>
+    <div class="chips" id="setChips"></div>
+    <h3>題目預覽</h3>
+    <div class="board" id="previewBoard"></div>
+    <div class="row" style="margin-top:14px"><span class="spacer"></span><button class="btn" onclick="showStep(2)">下一步：施測錄音 →</button></div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="panel" id="s2" style="display:none">
+    <h2>🎙️ 施測與上傳錄音檔 <span class="hint" id="s2title"></span></h2>
+    <p class="instr">請按照順序造詞，例如：大，要能說出「<b>大家的大</b>」。</p>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn warn" onclick="openStage(false)">🖥️ 全螢幕題目卡（給學生看）</button>
+      <button class="btn ghost" onclick="openStage(true)">🔍 逐字顯示模式</button>
+    </div>
+    <div class="board" id="testBoard"></div>
+    <h3>上傳錄音檔</h3>
+    <p class="hint" style="margin:0">錄音前後老師的說明語音會自動忽略，只判讀學生的回答。</p>
+    <div class="drop" id="drop">把錄音檔拖曳到這裡，或 <button class="btn sm" onclick="document.getElementById('fileIn').click()">選擇檔案</button><br><span class="hint">支援 mp3、m4a、wav、webm、ogg、aac 等；可上傳多個檔案（會依清單順序串接）。</span></div>
+    <input type="file" id="fileIn" accept="audio/*,video/*,.m4a,.mp3,.wav,.webm,.ogg,.aac,.amr,.3gp" multiple style="display:none">
+    <ul class="filelist" id="fileList"></ul>
+    <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="showStep(1)">← 上一步</button><span class="spacer"></span><button class="btn" onclick="showStep(3)">下一步：AI 分析 →</button></div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="panel" id="s3" style="display:none">
+    <h2>🤖 AI 語音分析與校正 <span class="hint" id="s3title"></span></h2>
+    <div class="note">AI 會聽取整段錄音，依序比對 60 個目標字，判斷學生是否「造詞正確」。判讀完成後，請老師逐題快速檢視；<b>點一下格子即可切換 正確 / 錯誤 / 未作答</b>，下方表格也能修改造詞內容。</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn warn" id="btnAnalyze" onclick="analyze()">🎧 開始 AI 分析錄音</button>
+      <button class="btn ghost" onclick="markAll('no_answer')">全部清為未作答</button>
+      <button class="btn ghost" onclick="markAll('correct')">全部設為正確</button>
+      <span class="spacer"></span>
+      <span class="hint" id="audioInfo"></span>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div id="anaErr"></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--ok-l)"></i>✓ 造詞正確</span>
+      <span><i class="sw" style="background:var(--bad-l)"></i>✗ 錯誤</span>
+      <span><i class="sw" style="background:var(--na-l)"></i>— 未作答（不知道／不會／沒回答，不計分）</span>
+      <span style="color:var(--accent)"><b>?</b> AI 不確定，建議重聽</span>
+      <span><b class="sO">○</b> <b class="sT">△</b> <b class="sS">□</b> 依紀錄紙分類</span>
+    </div>
+    <div class="sheet" id="sheet"></div>
+    <div class="row" style="margin:12px 0 6px"><h3 style="margin:0">逐題明細</h3><span class="spacer"></span><span class="hint" id="liveCount"></span></div>
+    <div class="tablebox"><table class="detail"><thead><tr><th>#</th><th>目標字</th><th>類別</th><th>學生造詞</th><th>AI 聽到 / 說明</th><th>判定</th><th>參考詞（識字量1200）</th></tr></thead><tbody id="detailBody"></tbody></table></div>
+    <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="showStep(2)">← 上一步</button><span class="spacer"></span><button class="btn" onclick="showStep(4)">查看計分結果 →</button></div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="panel" id="s4" style="display:none">
+    <h2>📊 計分結果 <span class="hint" id="s4title"></span></h2>
+    <div class="big" id="bigResult"></div>
+    <h3>○△□ 造詞正確題數紀錄</h3>
+    <div class="stats" id="symStats"></div>
+    <h3>計分公式（計分模板）</h3>
+    <div class="formula" id="formula"></div>
+    <h3>識字量 1200 常用字分析</h3>
+    <div class="stats" id="bankStats"></div>
+    <p class="hint">「識字量1200」為 1200 個高頻常用字詞庫；此處統計本套題目中屬於 1200 常用字的題目表現，可輔助判斷學生在常用字與較難字的差異。</p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" onclick="saveRecord()">💾 儲存這次紀錄</button>
+      <button class="btn ghost" onclick="printSheet()">🖨️ 列印紀錄紙</button>
+      <button class="btn ghost" onclick="exportOne()">⬇️ 匯出本次明細 CSV</button>
+      <span class="spacer"></span>
+      <button class="btn warn" onclick="newStudent()">➕ 下一位學生</button>
+    </div>
+    <div class="hist">
+      <h3>歷次施測紀錄（儲存在本機瀏覽器）</h3>
+      <div id="histBox"></div>
+      <div class="row" style="margin-top:8px"><button class="btn ghost sm" onclick="exportHist()">⬇️ 匯出全部紀錄 CSV</button><button class="btn ghost sm" onclick="clearHist()">🗑️ 清除全部紀錄</button></div>
+    </div>
+  </section>
+  <p class="hint" style="text-align:center">題目資料來源：自編識字量估計測驗－天下2012（初級／中等／高階各 10 套）、計分模板、識字量1200v6。</p>
+</div>
+
+<!-- settings modal -->
+<div class="modal-bg" id="setModal">
+  <div class="modal">
+    <h3>⚙️ AI 語音分析設定</h3>
+    <p class="hint">本工具使用 Google Gemini 聽取錄音並判讀造詞。請到 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> 免費申請 API 金鑰。錄音會直接傳送給 Google 進行分析。</p>
+    <p class="hint" style="background:var(--accent-l);border-radius:8px;padding:8px 10px">🔒 每位老師請使用自己的金鑰。網頁不會把金鑰存進網站或傳給別人；預設只在這個分頁暫時使用，<b>關閉分頁後就會清除</b>，別人打開網頁時也看不到。</p>
+    <label>Gemini API 金鑰</label>
+    <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off">
+    <label style="display:flex;align-items:center;gap:6px;color:var(--ink)"><input type="checkbox" id="rememberKey" style="width:auto"> 在這台電腦記住金鑰（只限個人電腦勾選；公用電腦請勿勾選）</label>
+    <button class="btn ghost sm" type="button" onclick="forgetKey()" style="margin-top:4px">🗑️ 清除這台電腦上的金鑰</button>
+    <label>模型</label>
+    <select id="model">
+      <option value="gemini-3.5-flash">Gemini 3.5 Flash（建議）</option>
+      <option value="gemini-flash-latest">Gemini Flash 最新版</option>
+      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+      <option value="gemini-pro-latest">Gemini Pro 最新版（較精準，需付費額度）</option>
+      <option value="custom">自訂模型名稱…</option>
+    </select>
+    <input id="modelCustom" placeholder="自訂模型名稱，例如 gemini-3-flash" style="margin-top:6px;display:none">
+    <p class="hint">若所選模型停用、太忙或額度用完，會自動改用其他可用模型。</p>
+    <label>判分寬嚴</label>
+    <select id="strict">
+      <option value="normal">一般：合理、常見的語詞即算正確</option>
+      <option value="strict">嚴格：需為常用語詞，且清楚指出該字</option>
+    </select>
+    <div class="row" style="margin-top:16px"><span class="spacer"></span><button class="btn ghost" onclick="closeSettings()">取消</button><button class="btn" onclick="saveSettings()">儲存</button></div>
+  </div>
+</div>
+
+<!-- full screen stage -->
+<div id="stage">
+  <div class="stagebar">
+    <b id="stageTitle"></b><span class="spacer"></span>
+    <button class="btn ghost sm" onclick="stagePrev()">◀ 上一字</button>
+    <button class="btn ghost sm" onclick="stageNext()">下一字 ▶</button>
+    <button class="btn ghost sm" onclick="toggleSingle()">切換 全部/逐字</button>
+    <button class="btn sm" onclick="closeStage()">✕ 關閉</button>
+  </div>
+  <p class="instr" style="font-size:20px">請按照順序造詞，例如：大，要能說出「大家的大」。</p>
+  <div class="board" id="stageBoard"></div>
+  <div class="one" id="stageOne"></div>
+</div>
+
+<div class="modal-bg" id="askModal">
+  <div class="modal" style="max-width:420px">
+    <p id="askMsg" style="font-size:17px;margin:4px 0 18px"></p>
+    <div class="row"><span class="spacer"></span><button class="btn ghost" id="askNo">取消</button><button class="btn" id="askYes">確定</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<div id="printSheet"></div>
+
+<script>
+const XDZ_DATA = {"levels":{"初級":[{"set":1,"chars":"及夠吩瑣價茫怯聲泣憎怎衰雪哲篆定匍烊馬箍扞襯擅斗羲炎痿聚往猖血仲蟑綺鞏廚邀遇兄輔牽趁姓緩熊衡屆降僵餅甜敦欄佐盈衫災灰貓奉","syms":"OOSTOTSOTSOTOOSOSSOSSTTTSOSOOSOTSTTOOOOOTTTOTOOOTTOOTTTTTTTT"},{"set":2,"chars":"慣糖如渡供獗眥夷緻盃縫澀尼姿瀲中朐婦憂被嗝去可斬芻哆侏懈矣奧薔碇乞澴莓螄雛訊此逝帽求瓜籌等卷文或鬧裸鄰蒜淇架浩遜速嶄瀉鞋","syms":"OOOTOSSTOTTTOOSOSOOOSOOTSSTTTOSSSSSTTOOTTOTTOTOOOTTTTOTOOTTT"},{"set":3,"chars":"污蒿病誌痤拐莖晶枚鎗加聾冼靼悅府詳餘篆趿儼駝羅躊瞳癢狄忤羸炫展碗巒洩凹衷增比吐禱格繞暫瞧桃摸辜顯歸秘欖近萎桿夏息兒講廿今","syms":"TSOOSSTOTSOTSSTOOOSSTTOSSTTSSTOTTTTTOOTTOTOTOTTOOOTOTTOOOOOO"},{"set":4,"chars":"虛軸矛鬃屁梓破檯倣漏恔逢淦貽豆貓咀撰詠昆范蕾莞佐盼畸什鬩舵笛胼儘寢閏銜唸隸延律註霸朵札饋廊楚參難抗辦短鋼支默款將陶準木品","syms":"OOTSTSOTSTSTSSOTSTTTTTSTTSOSSTSOTTTTTOOTTTTTOOOOOOOOOOOOOOOO"},{"set":5,"chars":"受桑醫搣痱蒔芡誌奧凋猿忱鎢饋狷傑種盔嗑嗥蚵捉機枺婿速晶巒功奮疾肢寸挫臣遮拾縛卸瑤璃狗未墊偽頸竭瑰急屢體先小高椅斷粉輯乳盛","syms":"OTOSSSSOOSTSSTSOOTSSTTOSSOOTOOOTTTTTTTTTTTOTTTTTOTOOOOOOOOOO"},{"set":6,"chars":"癥卉含老艙畔爬底札感煩乙又坷慵誦佈棵尚哄俊府箏素踞窮章訊王璟肯噁梠辛盂龜惘坐總熊乃門瑤銳栗屋歿倚謀誤蕭收徐芋畏污允繫艘桿","syms":"STOOTTTOTOOTOSSSOTOTOOSOSTOOOSOSSOSTSOOTOOTTTOSTTOOOTTTTTTTT"},{"set":7,"chars":"丕雷區酵蹙禱臃斑襟澎旗釷砍陪腕簿曰豹稻給三嘌庵九臣丫慾繳螫壺斷溪培深麗僑癇金漓濱振謐礦穩雨許摩俏骨湖隙菲亮元梁靂削撒限反","syms":"SOOSSTSTSSOSSTTTTTTOOSSOTSOTSTOTOOOTTOTTOTTOOOOTOOTOOOTTTTOO"},{"set":8,"chars":"緣祖菇侃菱惱蠅窅轄飯砌撬墳齲鈕拄碰魘內嚎露衝藥揣眉泣筵謾欠蟀櫃搓肉聰斗籃唇跟囉方輔順乘肌凡罕竟眶挑禮靡療膀咖輪車釉綁遵蔽","syms":"OOTTTTSSSOTSTSTSOSOSOOOTTTSSTSTSOTTOTOTOOOOOOTOTOOTOTOOOTTTT"},{"set":9,"chars":"辦榜衙嘻癱遍芳蹺搧紙攔釷蹂囡噱履欹旬穌窅虎茲啤媽趨嫩育茶爺斗信魚曠期箭溫證儒射軀帥悔婉悶凰燭度奎照拖碧乖黯暴障丁慮憐逆竹","syms":"OOSSSOOSSOTSSSSTSTSSOOTOOTOOTTOOTOTOOTOTTTTTTTOTOTTTTOOOOTTO"},{"set":10,"chars":"辦榜衙嘻癱遍芳蹺搧紙攔釷蹂囡噱履欹旬穌窅虎茲啤媽趨嫩育茶爺斗信魚曠期箭溫證儒射軀帥悔婉悶凰燭度奎照拖碧乖黯暴障丁慮憐逆竹","syms":"OOSSSOOSSOTSSSSTSTSSOOTOOTOOTTOOTOTOOTOTTTTTTTOTOTTTTOOOOTTO"}],"中等":[{"set":1,"chars":"及夠吩瑣價茫怯聲泣憎怎衰雪哲篆定匍烊馬箍扞襯擅斗羲炎痿聚往猖仲蟑忝綺嘈鞏甕鱉芮雌牽趁姓伔稜熊僵餅欄庄忿亥淅佐盈衫災灰貓奉","syms":"OOSTOTSOTSOTOOSOSSOSSTTTSOSOOSTSSTSTSSSSTTTSSTTTTSSSSTTTTTTT"},{"set":2,"chars":"慣糖如渡供獗眥夷緻盃縫澀尼姿瀲中朐婦憂被嗝去斬芻哆侏懈矣薔碇乞澴莓吆靦螄惴縑惘雛睥臼琅捺焙姪畝逝帽瓜籌卷裸鄰蒜淇浩嶄瀉鞋","syms":"OOOTOSSTOTTTOOSOSOOOSOTSSTTTSSSSSSSTSSSTSSSSSSSTTTTTTTTTTTTT"},{"set":3,"chars":"污蒿病誌痤拐莖晶枚鎗加聾冼靼悅府詳餘篆趿儼駝羅躊瞳癢狄忤羸炫展祿碗巒洩塯凹衷驊增比吐拮杰禱格繞瞧摸辜挲椏螂欖沼澱犁萎姣桿","syms":"TSOOSSTOTSOTSSTOOOSSTTOSSTTSSTOSTTTSTTSOOTSSTOTTTTSSSTSSSTST"},{"set":4,"chars":"虛軸矛鬃屁梓破檯倣漏恔逢淦貽豆貓咀撰詠昆范蕾莞佐盼畸什鬩舵笛胼儘箍寢銑嗔閏瘧伋蒲銜唸遽隸延蝠滂簇律矜註骸霸朵札饋廊楚參難","syms":"OOTSTSOTSTSTSSOTSTTTTTSTTSOSSTSOSTSSTSSSTTSTOSSSOSTSTTTTOOOO"},{"set":5,"chars":"絲憔蔬軒公疸嘗汆朱嗟芬鉀媚柱哇剽畫或唳熠庖它父畜聊武爭蟲邪滓蹓寤藉釗汞篤輻韃邏襯粧彷蓉汩卒云乙鐫緝牢狡瞄餾駐柳鹹韭遑滌詣","syms":"OSTTOSOSOSTSTTTSOOSSSOOTTOOOTSSSOSSTTSTTTTTSTTTSTTSSSTTTSSSS"},{"set":6,"chars":"癥卉含老艙畔爬底札感煩乙又坷慵誦佈棵尚哄俊府箏素踞窮章璟噁梠盂龜惘熊瑤銳栗歿倚孀淤磕謀閩徐摃蔘芋畏跋磐污胭煤莓允繫鏗艘桿","syms":"STOOTTTOTOOTOSSSOTOTOOSOSTOSSSSTSTTTTSTSSSTSTSSTTSSTSSSTTSTT"},{"set":7,"chars":"丕雷區酵蹙禱臃斑襟澎旗釷砍陪腕簿曰豹稻給三嘌庵九臣丫慾繳螫壺悖斷吝瘩溪培深麗窸簸僑癇金亢漓濱沼謐礦坯俏隙幟梁靂姍削撒睜倏","syms":"SOOSSTSTSSOSSTTTTTTOOSSOTSOTSTSOSSTOOOSSTTOSTTSTTSTTSTTSTTSS"},{"set":8,"chars":"緣祖菇侃菱惱蠅窅轄飯砌撬墳齲鈕拄碰魘內嚎露衝藥揣眉泣筵謾欠蟀櫃搓肉聰斗籃唇虱矇跟撓囉方臆歿葩鮪謕鷂謫罕眶縐靡膀釉綁遵籮蔽","syms":"OOTTTTSSSOTSTSTSOSOSOOOTTTSSTSTSOTTOTSSOSTOSSSSSSSTTSTTTTTST"},{"set":9,"chars":"辦榜衙嘻癱遍芳蹺搧紙攔釷蹂囡噱履欹旬穌窅扒虎茲啤媽趨攫嫩羯育茶爺唾斗信曠慵誨咸箭狐橙鐸儒縟醯軀帥悔婉悶凰燭奎拖碧乖黯憐逆","syms":"OOSSSOOSSOTSSSSTSTSSSOOTOOSTSOOTSTOTSSSTSSSTSSTTTTTTTTTTTTTT"},{"set":10,"chars":"辦榜衙嘻癱遍芳蹺搧紙攔釷蹂囡噱履欹旬穌窅扒虎茲啤媽趨攫嫩羯育茶爺唾斗信曠慵誨咸箭狐橙鐸儒縟醯軀帥悔婉悶凰燭奎拖碧乖黯憐逆","syms":"OOSSSOOSSOTSSSSTSTSSSOOTOOSTSOOTSTOTSSSTSSSTSSTTTTTTTTTTTTTT"}],"高階":[{"set":1,"chars":"胳獼魘冽囤疸追貨儒陣鄙鋼佛肉倪瞠黛忡撈檬託衍妒庖眨廝臥獗哉梆巢郁鯽嬌弓邂僑飼殷檻滴翢弗箋摹嚜薄饅拈駂謾葯喙歹圇漾謁舵羥圭","syms":"SSSSSSOOTOSOOOSSTSTSTTTSSSTSSSTTSTSTTTTSTSTSTSTSSSSSSSSSSSSS"},{"set":2,"chars":"碴范賈蕪攙脹秈煞幼柬贓齟徵殘矣肢賴免暉色冀綹百榴緹汆粿儻蜥譽偎跋橦聵謕忸綱咚泫蓊痤抒肓娶薨腌跛廖曉袍剿顱晝鋪綜膊艷幀犀舀","syms":"STTSSTSTOSSSOTTTOOSOSSOSSSSSSTSSSSSSTSSSSTSTSSSTTSSSTTTSTSTS"},{"set":3,"chars":"罰壯乘遏佼鉀鷺茵緡逃平刻飴恆歌箔腔啼鄂坪揄挖邇擢晌輾嫚勿棘賡窮垢姬彭鹽鱗耘媾烤稈簽崧伉兢奢蘄膝蒐豌噩肓恔嗩蟠萣苔泫錠胜猷","syms":"TOOSSSSTSOOOSTOSTTSTSTSSSSSTSSTSTTTSTSTSTSSSTSTTSSSSSSSSSSSS"},{"set":4,"chars":"綜惰凳馳另檁幀覆巧泣爸驦撿夜迅伴栓忝瑁厲鵟崙謊琺襁萵覷褡繭孰歿盃矜舍漩撾篤弭噁轆唾婷繹嵬皈濕憎屏踫潢怯詛愚琢奘窯冒駁跌瀑","syms":"TSSTOSSOOTOSTOTOSSSTSSSSSSSSSTSTSTSSTSSSSSSSSTSTSTSSTTSSTSTT"},{"set":5,"chars":"瑪朧閥韶酊塯褥菁騎梔鑫貽滯資尬縝蹤屹維糲悸廔彙傅嶷壁嵒嘰儡百陸折檁暱袂揩仿妺唧葵憎燜勸枚拖惑裳剩沈祗懟鷗瞰皚揆甕淖榫賁誅","syms":"OSSSSSSTTSSSTOTSTSOSTSTTSTSSSOOOSSSSTSSTSTTTTTSTTSSSSSSSSSSS"},{"set":6,"chars":"嘿米芽習燦願啾崔源淘盂彈鐶峭刑修勺沂蹄貸獗薈敵耽誣拴暍撬閹芾倭痲毅鎳踞閻紫妾韁飼蹺鎗勤攙躬惘璋咐恙寰窖嬌廢寵漓贖鵡昔拚齒","syms":"SOTOTOSTOTSOSSTOSSSTSSTSSSSSSSSSTSSSTSSTSSTSSSSSSSSTTTTSSTTT"},{"set":7,"chars":"嬉追幗遮巢嘯鼻鼓士奎裘馳隆發佘駁驊細斡郝緲佃吱箔汁笨鳳肖芾揀翡蹴抄諄煤昵蕤卑蓉涮絮賤氈瑛蘑痔蛟邰煎珀苫嫣斤鋸拮輾乞羲耽啻","syms":"TOSTTSTOOTSTOOSSSOSTSSSSTTTTSSTSTSSSSTTSSSSSSSSTTSSSTSSSSSSS"},{"set":8,"chars":"涎消痴宮歸媛豫貪謊咨鑼丁棒腰庚証燻嵩喇表窸剝鉛蜻擅弔壢娩嘈痤樵淌鵲喀囚趾戚籬鵟暹彰觴澄猛隋籠蹌濁莽鼾芸饅賃橙崖梧挎茱昆窿","syms":"SOTOOTTTSSTOOTSTSSTOSTTSTSSSSSSSSSSSSSSSTSTTSTSTSSSSSSSSSTTS"},{"set":9,"chars":"兒矇嬌慝懇蟲圈詛輝蘊庄汞指熱滴絃嘯咎啥麓攬裕詡窖乙傀嘆幄殖筐懼庸惱笥讎蘑匈猿泫稚毅杷頃苔鎌叱犁窿洵鎘錠藹燴蟋臠敖扛媧牒哉","syms":"OSTSTOOSOTSSOOTTSSTSTTSSTSTSTSTTTSSSTTSTTSSSSSSSSSSSSSSSSSSS"},{"set":10,"chars":"及夠吩瑣價茫怯聲泣憎怎衰雪篆匍烊箍扞襯擅斗羲痿猖仲蟑忝綺嘈鞏甕鱉芮雌牽趁姓伔稜熊僵餅欄庄忿亥淅壚佐釷駘荃憋閥咨尻幡捻刨穹","syms":"OOSTOTSOTSOTOSSSSSTTTSSSTSSTSTSSSSTTTSSTTTTSSSSSTSSSSSSSSSSS"}]},"bank":{"中":[11,["中國","其中","心目中","樂在其中","中心","國中","活動中心","中央","高中","古今中外","中共","金大中","台大計中椰林風情","敦煌藝術中心","台中","集中","文化中心"]],"可":[17,["可以","不可","可不可以","缺一不可","可能","不可能","由此可見","可是","不可以","密不可分","可口可樂","即可"]],"如":[49,["如果","例如","無論如何","恭敬不如從命","如何","譬如","藺相如","如此","假如","栩栩如生","不如","吳淡如"]],"發":[54,["發展","開發","閃閃發光","有感而發","發現","出發","借題發揮","一觸即發","發生","引發","意氣風發","研發"]],"方":[69,["方式","地方","另一方面","四面八方","方面","雙方","東西方","四四方方","方法","對方","東南方","瀲灩晴方","警方"]],"及":[71,["及時","以及","來不及","措手不及","普及","迫不及待","始料未及","埃及","古埃及人","後悔莫及","及早","涉及"]],"體":[72,["體會","軟體","長方體","體驗","團體","印刷體","體重","身體","殘疾體","體內","半導體","體現","媒體","多媒體","體魄","記憶體"]],"此":[76,["此外","因此","不虛此行","果真如此","此刻","如此","此後","彼此"]],"公":[85,["公司","辦公室","平方公尺","公園","辦公","老公公","公共","外公","有限公司","公共安全","航空公司","平鎮市公所","臺灣德積公司","公益活動","分公司","高速公路","國泰航空公司","公墓","鄉公所","百貨公司","台灣高鐵公司"]],"品":[86,["品質","產品","藝術品","手工藝品","品味","作品","農產品","品種","商品","紀念品","品牌","化妝品","保養品"]],"小":[87,["小朋友","國小","大大小小","小組","大小","大街小巷","老大不小","小孩","從小","芝麻小事","細細小小","小時","小姐","小小","推理小說"]],"車":[89,["車子","汽車","腳踏車","雲霄飛車","車輛","火車","遊覽車","車站","公車","救護車","車流","國產汽車","車迷","機車","計程車","夜間公車","車道","摩托車"]],"高":[91,["高興","提高","高雄","升高","高中","身高","臺灣高鐵","台灣高鐵公司"]],"種":[95,["種種","風情萬種","種子","品種","種類","耕種","各種","機種"]],"畫":[100,["畫面","計畫","山水畫","潑墨山水畫","畫家","漫畫","詩情畫意","畫作","繪畫","風景畫","水彩畫","動畫","抽象畫"]],"機":[102,["機會","危機","印表機","機構","飛機","電視機","機關","司機","照相機","金融危機","導風扇飛機","數據機","數位相機","針孔攝影機","相機","攝影機","錄放影機"]],"三":[108,["三十","第三","八十三年","接二連三","三月","十三","二十三日","一九０三年","三百","兩三","二十三","二零零三年","三合院","後三里","新光三越","三姑六婆","周三","星期三","三陽","第三者","一波三折"]],"文":[111,["文化","英文","讀者文摘","外國語文","安．蘇利文","文學","人文","達爾文","文字","語文","蘇利文","黃主文","文章","中文","中國文化大學","殷宗文"]],"或":[120,["或是","不可或缺","或者","或許","抑或"]],"表":[122,["表示","代表","調查表","表現","發表","畢業表","表達","印表機","履歷表","民意代表","時間表","國大代表","報名表"]],"加":[126,["加上","參加","風雨交加","加入","增加","加以","更加","馬達加斯加","塔塔加","哥斯大黎加","加強","新加坡"]],"定":[127,["定期","一定","不一定","定居","決定","說不定","定下","肯定","規定"]],"內":[129,["內容","國內","戴爾‧卡內基","內部","之內","內心","國內外","海內外"]],"將":[130,["將來","即將","將信將疑","將軍","名將","兵來將擋","將近","老將","將領","麻將","女將"]],"度":[135,["度過","制度","知名度","度假","態度","高難度","程度","準確度","解析度","速度","學年度"]],"展":[136,["展開","發展","發明展","愁眉不展","展示","擴展","展現","開展","拓展","畫展"]],"去":[141,["去年","過去","走過去","飛來飛去","去世","失去","帶回去","走來走去","去處","出去","看上去","跑來跑去"]],"等":[142,["等等","高人一等","等於","不等","等到","何等","平等"]],"資":[156,["資料","工資","天然資源","資訊","物資","資源","郵資","投資","轉投資","富達投資","投資人","外資"]],"感":[158,["感覺","情感","成就感","感到","美感","責任感","感情","靈感","新鮮感","流行性感冒","感受","安全感","敏感","使命感"]],"色":[179,["色彩","角色","粉紅色","五顏六色","色澤","特色","金黃色","形形色色","色塊","顏色","大驚失色","有聲有色","咖啡色","清一色"]],"期":[181,["期間","長期","青春期","期待","時期","繁殖期","期望","學期","更年期","超級星期天","台股指數期貨","星期","日期"]],"比":[188,["比較","無比","莎士比亞","天涯若比鄰","比賽","相比","演講比賽","密西西比河","比例","對比","本益比","車諾比爾"]],"金":[192,["金融","基金會","退休金","獎助學金","金錢","基金","固若金湯","點石成金","金牌","黃金","資金","共同基金","國際貨幣基金會","保險金","年終獎金","現金","獎學金"]],"受":[206,["受到","接受","挨餓受凍","受傷","享受","受不了","感受"]],"九":[229,["九月","十九","九十九","一九八九年","九日","十九日","一九九七年","一九五九年","九時","第九","一九九八年","一八四九年","馬英九","視窗九八"]],"又":[233,["又好氣又好笑","欲言又止"]],"被":[236,["被迫","棉被","被單","被子","被動","植被"]],"先":[252,["先生","首先","捷足先登","先後","事先","先行","原先","林蓋先","優先"]],"許":[259,["許多","也許","許許多多","或許","許久","允許","少許"]],"老":[262,["老師","古老","老人","年老","老闆","張老師","三峽老街","長老","許老有"]],"馬":[265,["馬上","人馬","車水馬龍","脫韁野馬","詹姆斯．馬修．貝瑞","馬路","老馬","古羅馬","牛頭不對馬嘴","馬來西亞","出馬","馬蒂","羅馬","羅馬尼亞"]],"平":[268,["平衡","公平","忿忿不平","平常","和平","平時","太平洋","平方米","鄧小平","平庸","熊天平","平衡點","水平","謝修平"]],"它":[269,["它們","其它"]],"信":[278,["信心","相信","蔡阿信","言而無信","信仰","通信","道歉信","信任","寫信","善男信女","信號流","電子信箱","中華電信","信貸","自信","李芳信","投信"]],"今":[282,["今天","如今","今年","至今","今日","現今"]],"總":[293,["總統","林林總總","總是","總之","副總統","榮民總醫院","花總","玩具總動員","總經理","副總經理"]],"格":[299,["格外","價格","布拉格","別具一格","格局","風格","格林","性格","格子","麥克道格拉斯","規格"]],"價":[304,["價值","評價","價格","身價","價錢","高價","售價","附加價值","股價","特價"]],"功":[313,["功能","成功","鄭成功","好大喜功","功課","用功","事半功倍","功夫","多功能"]],"百":[317,["百姓","一百","好幾百","正經八百","三萬六千五百","百萬","三百","千奇百怪","三千七百多","百分之七十","四百","千錘百鍊","四千五百多","百科","老百姓","百戰百勝","百分之百","彭百顯","百般"]],"門":[331,["門口","專門","出遠門","五花八門","門牙","大門","自掃門前雪","不二法門","門開","出門","得了門","蒙古包門","門戶","部門","五福臨門","熱門"]],"區":[337,["區隔","地區","保護區","區別","社區","風景區","市區","住宅區","區公所","不分區立委","科學園區","信義計劃區","區域性","信義區","山區","都會區"]],"未":[338,["未來","尚未","意猶未盡","未知","從未","始料未及","前所未見","前所未有","方興未艾"]],"近":[339,["近年","最近","近來","附近","近似","接近"]],"往":[343,["往往","來來往往","你來我往","往來","前往","往後","以往","人來人往","往常"]],"給":[349,["給予","交給","介紹給","目不暇給","給與","送給","奉獻給","給他","帶給","贈送給","供給"]],"元":[351,["元素","西元","小元元","行行出狀元","元朝","單元","元宵節","多元","元老","美元","曹哲元","異次元","多元化"]],"求":[356,["求學","要求","異中求同","夢寐以求","求助","需求","求生","追求","求取"]],"難":[361,["難以","困難","寸步難行","冒險犯難","難道","災難","坐立難安","難得","艱難","難分難解","不難"]],"聲":[363,["聲音","大聲","腳步聲","異口同聲","聲勢","歌聲","歡呼聲","鴉雀無聲","聲響","心聲","歡笑聲"]],"病":[364,["病人","疾病","傳染病","病患","生病","病情","毛病","病菌","愛滋病","腸病毒","心臟病","糖尿病"]],"訊":[365,["訊息","資訊","訊號","音訊","聞訊","通訊","視訊會議"]],"指":[369,["指出","手指","大拇指","指導","食指","瞭若指掌","指示","指指點點","台股指數期貨","首屈一指","戒指"]],"什":[379,["什麼","為什麼","沒什麼","幹什麼"]],"速":[382,["速度","快速","速食","迅速","高速","加速"]],"兒":[384,["兒童","女兒","一會兒","不一會兒","兒子","這兒","一點兒","一股腦兒","兒女","那兒","模特兒","小玩意兒","兒童公園","胎兒","嬰兒","嬰幼兒"]],"收":[385,["收入","吸收","一分收穫","美不勝收","收集","回收","收到","接收","收據","資源回收","收件","收割","營收"]],"另":[386,["另外","另一方面"]],"士":[388,["士兵","人士","助產士","華特．迪士尼","士氣","博士","大學士","女士","葛勞士山","士紙","煉金術士","昶恩大力士","消息人士","護士","空中巴士"]],"深":[389,["深入","深深","印象深刻","深刻","加深","更深","深圳","深信","資深"]],"反":[390,["反而","相反","易如反掌","反應","用反","反映","反潛","違反"]],"供":[402,["供給","提供","供水","提供者","供奉","供稱"]],"消":[419,["消費者","消息","消失","取消"]],"顯":[425,["顯示","明顯","顯然","凸顯","顯得","突顯","彭百顯","電漿顯示器","彰顯"]],"王":[426,["王子","國王","楚靈王","萬獸之王","王國","大王","楚宣王","王朝","老王","太陽王","王凌雲","女王","獅子王","閻羅王","天王"]],"參":[432,["參加","參與","參觀"]],"熱":[434,["熱鬧","炎熱","熱烈","亞熱帶","熱心","悶熱","熱中","加熱","登革熱","熱賣","狂熱","熱戀","散熱"]],"羅":[439,["羅丹","尼羅河","自投羅網","米開朗基羅","羅浮宮","開羅","馬可．波羅","羅亞爾河","包羅萬象","馬可‧波羅","羅時豐","俄羅斯","羅斯福路","網羅","侏羅紀"]],"細":[468,["細節","仔細","精雕細琢","仔仔細細","細菌","詳細","細心","細細","斜風細雨"]],"準":[484,["準備","水準","高水準","準備好","對準","準確","瞄準","標準","基準"]],"素":[510,["素材","元素","素有","樸素","素描","素養","因素","圖素"]],"辦":[511,["辦法","舉辦","怎麼辦","辦理","沒辦法","辦公室","創辦","移送法辦","主辦","偵辦"]],"維":[516,["維持","思維","麥克維","維護","纖維","玻利維亞","維生","王維","路德維希"]],"底":[520,["底下","到底","蘇格拉底","底色","徹底","盡收眼底","谷底","底特律","年底"]],"照":[521,["照顧","依照","照片","按照","照明","拍照","照相機","沙龍照"]],"爭":[527,["爭取","戰爭","據理力爭","爭執","競爭","與世無爭","爭奪","紛爭","鷸蚌相爭","爭論","競爭力"]],"醫":[530,["醫院","送醫","醫療","就醫","醫師","看醫生","中醫","主治醫師","榮民總醫院","馬偕醫院","牙醫","長庚醫院"]],"棒":[535,["棒球","打棒球","接力棒","棒子","接棒","第三棒","棒棒","二棒","仙女棒","職棒","中華職棒","好棒"]],"斷":[537,["斷崖","不斷","源源不斷","斷裂","判斷","斷掉","診斷"]],"增":[543,["增加","與日俱增","增進","增添","擴增","渦輪增壓器","大增","新增"]],"支":[546,["支持","不支","一支支","支援","支付","支支吾吾","開支","透支","收支"]],"習":[553,["習慣","學習","習性","練習","習俗","研習","實習"]],"歌":[554,["歌曲","唱歌","明日歌","歌聲","詩歌","今日歌","歌手","民歌","歌詞","歌謠","情歌","國歌"]],"源":[574,["源自","資源","桃花源","世外桃源","源頭","來源","天然資源","源遠流長","能源","電源"]],"免":[590,["免費","避免","免得","以免","免於","難免"]],"尼":[619,["尼羅河","威尼斯","哥白尼","華特．迪士尼","尼采","肯尼","迪士尼","尼克森","屈勞尼","印尼","鐵達尼號","鐵達尼"]],"陸":[623,["陸續","大陸","新大陸","歐亞大陸","陸地","登陸","陸陸續續","中國大陸","大陸政策"]],"息":[627,["息息相關","消息","生生不息","訊息","川流不息","休息","奄奄一息"]],"夠":[637,["夠多","能夠","足夠","不夠"]],"刻":[638,["刻意","立刻","時時刻刻","無時無刻","刻苦","深刻","刻劃","時刻","印象深刻"]],"限":[642,["限制","有限","限定","無限","侷限","限期","建實實業有限公司","限電","期限"]],"溫":[648,["溫暖","氣溫","馬克‧吐溫","溫馨","高溫","溫度","體溫","溫哥華","周溫敏"]],"血":[654,["血液","心血","茹毛飲血","血管","流血","血汗","出血","血液循環","高血壓","血統","血腥"]],"麗":[659,["麗文","美麗","瑪格麗特","風和日麗","華麗","亮麗"]],"夜":[670,["夜晚","深夜","日日夜夜","三更半夜","夜間","半夜","夜間部","午夜","敘寫夏夜","夜間公車","夜總會","夜景","黑夜"]],"款":[673,["款款","捐款","款項","貸款","存款"]],"證":[675,["證明","保證","借書證","證實","驗證","證書","印證","證件","有價證券","認股權證","證期會","認證","身份證","簽證","身分證"]],"破":[690,["破壞","突破","勢如破竹","破產","打破","破舊","劃破","破獲","破碎","拿破崙"]],"修":[701,["修正","整修","詹姆斯．馬修．貝瑞","修養","必修","修理","重修","修復","進修","郭博修","德蕾莎修女","修飾","維修","修補"]],"藥":[705,["藥物","農藥","特效藥","藥品","火藥","擦點藥","藥材","毒藥","藥劑師","醫藥","藥劑","醫藥分業"]],"療":[711,["療養","醫療","療傷","治療","診療站"]],"竟":[717,["竟然","究竟","一探究竟","竟敢","畢竟","看個究竟"]],"育":[719,["育幼院","教育","生兒育女","育文","教育部","保育","育樂","張京育","體育"]],"追":[726,["追求","緊追","追逐","追尋","追趕"]],"尚":[739,["尚未","和尚","一息尚存","高尚","時尚","尚祚恆"]],"父":[749,["父母","國父","父親","神父","父子","祖父","師父"]],"輪":[754,["輪流","三輪車","輪椅","美輪美奐","輪到","貨輪","渦輪","直排輪","渦輪增壓器","遊輪"]],"跟":[756,["跟隨","緊跟","跟上","跟從","高跟鞋"]],"肉":[761,["肉體","肌肉","皮笑肉","肉類","牛肉麵","涮羊肉片","肉質","牛肉","烤肉"]],"米":[768,["米飯","玉米","米開朗基羅","小米","米老鼠","魚米之鄉","米香","稻米","平方米","米糠","阿米提茲","米蘭"]],"願":[786,["願意","意願","願望","自願","心願","願景","不願","不願意"]],"府":[795,["府上","政府","市政府","趙府","總統府","地方政府","臺北市政府","省府","臺灣省政府","縣府","縣政府","台北市政府"]],"架":[800,["架設","吵架","架子","書架","架式","高架","打架","綁架"]],"陶":[802,["陶藝","捏陶","陶醉","製陶","陶俑"]],"露":[811,["露出","流露","餐風露宿","露天","流露出","露臉","展露","透露","暴露","披露"]],"魚":[817,["魚類","釣魚","美人魚","魚兒","鯨魚","小丑魚","魚群","飛魚","金線魚","魚池鄉","腔棘魚","捕魚","鯊魚"]],"禮":[827,["禮物","典禮","注目禮","畢業典禮","禮儀","洗禮","謙恭有禮","禮貌","葬禮","禮盒","婚禮","巡禮"]],"巧":[829,["巧妙","技巧","心靈手巧","巧克力","輕巧","巧合","正巧"]],"含":[830,["含有","包含","含意","隱含","含義","蘊含","內含"]],"短":[832,["短短","短暫","長短","短缺","簡短","短打","短期利率","縮短"]],"餘":[835,["餘暉","之餘","心有餘悸","遊刃有餘","餘悸猶存","多餘","六十餘萬","餘香","課餘","餘額","盈餘","不遺餘力","其餘","剩餘"]],"雪":[838,["雪梨","白雪","冰天雪地","自掃門前雪","雪地","滑雪","大風雪","雪白","下雪"]],"輯":[846,["編輯","邏輯","專輯","精選輯"]],"順":[849,["順利","孝順","一帆風順","順序","陳順明","順應","平順"]],"怎":[852,["怎麼","怎麼樣","怎麼辦"]],"婦":[854,["婦女","夫婦","婦人","主婦","婦產科","產婦","家庭主婦","孕婦","媳婦"]],"盛":[856,["盛況","旺盛","共襄盛舉","盛會","興盛","盛大","豐盛","華盛頓","李宗盛","林庭盛"]],"坐":[860,["坐下來","靜坐","坐下","乘坐","坐上","圍坐","打坐"]],"宮":[862,["宮殿","故宮","羅浮宮","凡爾賽宮","迷宮","天后宮","皇宮","永和宮","白宮","子宮"]],"誌":[874,["雜誌","標誌","雜誌社","天下雜誌","雜誌公會","時代雜誌"]],"彈":[875,["彈琴","子彈","彈奏","彈珠","彈劾","飛彈","原子彈","彈藥","炸彈","反彈"]],"講":[886,["講話","演講","講究","主講","講到","演講會","講述","講授","講習"]],"佛":[891,["佛教","拜佛","佛經","千佛","佛祖","大佛","哈佛","佛像","諾佛","佛羅瑞斯"]],"挑":[893,["挑戰","東挑西挑","挑選","挑剔","挑逗","挑戰性"]],"媽":[895,["媽媽","媽祖","阿媽","媽祖廟","爸媽","老媽"]],"木":[902,["木材","樹木","鳳凰木","一草一木","木頭","草木","木板","林木","木瓜","久木","原木"]],"紙":[913,["紙張","報紙","瓦楞紙","紙條","白紙","玻璃紙","紙箱","貼紙","圖畫紙","水貼紙","衛生紙","摺紙"]],"雷":[914,["雷達","如雷","暴跳如雷","雷雨","如雷貫耳","雷聲","布雷克","地雷股"]],"急":[915,["急救","緊急","急性","著急","急切","焦急","急診","急診室","戒急用忍"]],"射":[924,["射擊","發射","用亂箭射","射出","反射","射中","放射線","注射","雷射"]],"鋼":[930,["鋼琴","鋼筋","鋼筆","東鋼公司","威而鋼"]],"遇":[939,["遇到","遭遇","懷才不遇","遇見","相遇","遇上","遭遇到","待遇","外遇"]],"奧":[955,["奧妙","深奧","奧地利","奧祕","亞奧運"]],"飯":[964,["飯店","吃飯","飯菜","晚飯","飯盒","午飯","米飯"]],"降":[966,["降低","投降","從天而降","降落","降臨","下降","調降"]],"抗":[970,["抗議","對抗","不可抗力","抗拒","反抗","抵抗"]],"絲":[974,["絲毫","鐵絲","絲綢","螺絲釘","絲線","燈絲","絲巾","螺絲"]],"亮":[977,["亮麗","漂亮","諸葛亮","漂漂亮亮","亮光","月亮","油油亮亮","亮度","明亮","黃燈亮","晶晶亮亮"]],"肌":[978,["肌肉","心肌","胸肌","里肌","子宮肌瘤"]],"律":[980,["律動","法律","五言律詩","旋律","規律","底特律","菲律賓","一律"]],"藉":[983,["藉由","憑藉","藉著","慰藉","藉口","假藉"]],"貨":[988,["貨車","雜貨店","貨輪","進貨店","貨櫃船","貨品","期貨","國際貨幣基金會","台股指數期貨","貨運","百貨公司","出貨"]],"瑪":[990,["瑪格麗特","阿瑪迪斯","瑪麗亞","湯瑪斯"]],"伴":[991,["伴隨","同伴","呼朋引伴","伴奏","陪伴","伴我成長","伙伴","夥伴"]],"摩":[1010,["摩擦","揣摩","福爾摩沙","摩天大樓","字摩詰","福爾摩斯","摩天","按摩","觀摩"]],"衝":[1024,["衝突","俯衝","衝擊","前衝","衝刺","俯衝下來","衝撞","脈衝"]],"延":[1026,["延續","蔓延","延伸","綿延","延伸到","周延","延誤","拖延"]],"慮":[1029,["考慮","無憂無慮","焦慮","深思熟慮","憂慮","疑慮"]],"徵":[1033,["徵選","特徵","有獎徵答","象徵","應徵","徵兆","徵召"]],"凡":[1037,["凡事","平凡","凡爾賽宮","舉凡","凡間","不凡","劉凡禎"]],"穩":[1038,["穩固","平穩","穩穩","穩穩當當","沉穩","穩定","不穩","安穩"]],"章":[1039,["文章","林文章","雜亂無章","獎章","印章","章魚"]],"屋":[1049,["屋頂","房屋","咖啡屋","屋子","小屋","小木屋","屋簷","住屋","故事屋","木屋","購屋"]],"楚":[1051,["楚國","清楚","清清楚楚","楚王","楚楚動人","弄清楚","一清二楚","楚楚可憐","想清楚","不清不楚","宋楚瑜"]],"陣":[1052,["陣陣","一陣子","一陣陣","陣頭","布疑陣","陣雨","一陣","火牛陣","宋江陣","矩陣"]],"傑":[1053,["傑出","傑作","傑克","傑生","小傑"]],"粉":[1072,["粉紅色","麵粉","炒米粉","粉紅","金粉","粉刷","澱粉","太白粉","粉碎","奶粉"]],"歸":[1078,["歸來","回歸","完璧歸趙","無家可歸","歸還","晚歸","滿載而歸","歸屬感","城歸","早出晚歸","當歸"]],"肯":[1080,["肯定","不肯","肯尼","林肯","鄧肯"]],"骨":[1088,["骨頭","筋骨","骨骼","鋼骨","骨架","刺骨","骨敏捷錠","軟骨"]],"爸":[1089,["爸爸","爸媽","老爸"]],"振":[1097,["振作","振翅","振起","振興","曾振農","辜振甫","不振"]],"趨":[1102,["趨前"]],"朱":[1103,["朱元璋","朱銘","朱熹","朱衛茵"]],"誤":[1113,["誤解","錯誤","誤會","延誤","誤差","謬誤","失誤"]],"雨":[1117,["雨水","下雨","暴風雨","傾盆大雨","雨林","大雨","風吹雨打","滂沱大雨","雨天","風雨","無擎雨蓋","斜風細雨","雨勢","雨鞋","張雨生"]],"夏":[1127,["夏天","初夏","炎炎夏日","夏季","炎夏","冬暖夏涼","夏日","仲夏","敘寫夏夜","夏哈克","冬蟲夏草"]],"折":[1129,["折磨","挫折","盤旋曲折","折下","曲折","折枝","轉折","折疊","一波三折","骨折","打折"]],"乘":[1132,["乘客","搭乘","乘坐","騎乘","乘涼","撘乘"]],"廿":[1146,[]],"圈":[1153,["圈子","圈圈","甜甜圈","兜圈子","圈套","羊圈","商圈","演藝圈","鋁圈","光圈"]],"姿":[1154,["姿態","坐姿","多采多姿","姿勢","多姿","多彩多姿","舞姿"]],"籃":[1159,["籃球","搖籃","籃球隊","投籃","籃球場","搖籃曲","花籃"]],"隆":[1160,["隆重","乾隆","轟隆隆","興隆","基隆","基隆市"]],"慣":[1165,["慣例","習慣","司空見慣","習慣於","看慣"]],"秘":[1167,["秘書","神秘","秘密","奧秘","神秘感","副秘書長"]],"芳":[1169,["芳香","芬芳","芳侵","芳草","范芳魁","范文芳","佩芳","張清芳","李芳信"]],"緣":[1173,["緣故","邊緣","因緣","無緣無故","無緣"]],"武":[1177,["武器","威武","武力","玄武岩","武士","武林","核武","武俠","西武"]],"兄":[1183,["兄弟","好兄弟","親兄弟","堂兄弟","爆走兄弟"]],"疾":[1186,["疾病","瘧疾","疾駛","殘疾","疾言厲色","不疾不徐"]],"乃":[1189,["木乃伊","康乃馨","貴乃花"]],"佈":[1197,["佈滿","宣佈","公佈","佈告欄","電子佈告欄","佈景","分佈"]]}};
+
+const LEVELS = {
+  '初級': {key:'初級', label:'初級版', denom:{O:24,T:24,S:12}},
+  '中等': {key:'中等', label:'中等版', denom:{O:12,T:24,S:24}},
+  '高階': {key:'高階', label:'高階版', denom:{O:6,T:18,S:36}}
+};
+const SYMCH = {O:'○', T:'△', S:'□'};
+const WEIGHT = {O:1500, T:1500, S:2000};
+
+const state = {
+  level:'初級', set:1,
+  results: [],          // per item {status, word, heard, reason, time, conf}
+  audios: [],           // {name, blob, url, dur}
+  stageIdx:0
+};
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function ls(k, v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k, v);}catch(e){ return null; } }
+function curItem(){ return XDZ_DATA.levels[state.level].find(s => s.set === state.set); }
+function chars(){ return [...curItem().chars]; }
+function syms(){ return [...curItem().syms]; }
+function fmtTime(sec){ sec=Math.max(0,Math.round(sec)); return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
+function blankResults(){ return Array.from({length:60}, () => ({status:'no_answer', word:'', heard:'', reason:'', time:'', conf:1})); }
+
+// in-page dialogs: the browser's own pop-up dialogs can be blocked in embedded views
+function askConfirm(msg){
+  return new Promise(resolve => {
+    $('askMsg').textContent = msg; $('askModal').classList.add('show');
+    const done = v => { $('askModal').classList.remove('show'); $('askYes').onclick = $('askNo').onclick = null; resolve(v); };
+    $('askYes').onclick = () => done(true); $('askNo').onclick = () => done(false);
+    $('askYes').focus();
+  });
+}
+let toastTimer;
+function toast(msg){ const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2200); }
+
+// ---------- step nav ----------
+function showStep(n){
+  for(let i=1;i<=4;i++){ $('s'+i).style.display = i===n ? '' : 'none'; }
+  document.querySelectorAll('.step').forEach(b => b.classList.toggle('active', +b.dataset.s === n));
+  if(n===2) renderTestBoard();
+  if(n===3) { renderSheet(); renderDetail(); updateAudioInfo(); }
+  if(n===4) renderResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function titleText(){ return `${LEVELS[state.level].label}・第 ${state.set} 套`; }
+
+// ---------- step 1 ----------
+function renderChips(){
+  $('levelChips').innerHTML = Object.keys(LEVELS).map(k => `<button class="chip ${k===state.level?'on':''}" onclick="setLevel('${k}')">${LEVELS[k].label}</button>`).join('');
+  const d = LEVELS[state.level].denom;
+  $('levelHint').textContent = `本版本每套 60 字：○ ${d.O} 題、△ ${d.T} 題、□ ${d.S} 題。`;
+  $('setChips').innerHTML = Array.from({length:10},(_,i)=>i+1).map(n => `<button class="chip ${n===state.set?'on':''}" onclick="setSet(${n})">第 ${n} 套</button>`).join('');
+  $('previewBoard').innerHTML = chars().map(c => `<div class="q">${esc(c)}</div>`).join('');
+  ['s2title','s3title','s4title'].forEach(id => $(id).textContent = titleText());
+}
+function hasData(){ return state.results.some(r => r.status !== 'no_answer' || r.word); }
+async function setLevel(k){ if(k===state.level) return; if(hasData() && !await askConfirm('切換版本會清除目前的判讀結果，確定嗎？')) return; state.level=k; state.results=blankResults(); renderChips(); }
+async function setSet(n){ if(n===state.set) return; if(hasData() && !await askConfirm('切換題本會清除目前的判讀結果，確定嗎？')) return; state.set=n; state.results=blankResults(); renderChips(); }
+function info(){
+  return { school:$('f_school').value.trim(), grade:$('f_grade').value, date:$('f_date').value, note:$('f_note').value.trim() };
+}
+function whoText(x){ return [x.school, x.grade && x.grade+'年級', x.note].filter(Boolean).join(' '); }
+
+// ---------- step 2: board & stage ----------
+function renderTestBoard(){
+  $('testBoard').innerHTML = chars().map((c,i) => `<div class="q" onclick="this.classList.toggle('cur')">${esc(c)}</div>`).join('');
+}
+function openStage(single){
+  state.stageIdx = 0;
+  $('stage').classList.add('show'); $('stage').classList.toggle('single', !!single);
+  $('stageTitle').textContent = '🫘 ' + titleText();
+  renderStage();
+  if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+}
+function renderStage(){
+  const cs = chars();
+  $('stageBoard').innerHTML = cs.map((c,i) => `<div class="q ${i===state.stageIdx?'cur':''}" onclick="state.stageIdx=${i};renderStage()">${esc(c)}</div>`).join('');
+  $('stageOne').textContent = cs[state.stageIdx];
+}
+function stageNext(){ state.stageIdx = Math.min(59, state.stageIdx+1); renderStage(); }
+function stagePrev(){ state.stageIdx = Math.max(0, state.stageIdx-1); renderStage(); }
+function toggleSingle(){ $('stage').classList.toggle('single'); }
+function closeStage(){ $('stage').classList.remove('show'); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+document.addEventListener('keydown', e => {
+  if(!$('stage').classList.contains('show')) return;
+  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); stageNext(); }
+  if(e.key==='ArrowLeft'){ stagePrev(); }
+  if(e.key==='Escape'){ closeStage(); }
+});
+
+// ---------- audio list ----------
+function addAudio(file){
+  const url = URL.createObjectURL(file);
+  const item = {name:file.name, blob:file, url, dur:null};
+  state.audios.push(item);
+  const a = new Audio(); a.preload='metadata'; a.src=url;
+  a.onloadedmetadata = () => { item.dur = isFinite(a.duration) ? a.duration : null; renderFiles(); };
+  renderFiles();
+}
+function renderFiles(){
+  $('fileList').innerHTML = state.audios.map((a,i) => `<li><b>${i+1}.</b> <span>${esc(a.name)}</span><span class="hint">${(a.blob.size/1048576).toFixed(1)} MB${a.dur?'・'+fmtTime(a.dur):''}</span><audio controls src="${a.url}"></audio><span class="spacer"></span>
+    ${i>0?`<button class="btn ghost sm" onclick="moveAudio(${i},-1)">↑</button>`:''}
+    <button class="btn ghost sm" onclick="removeAudio(${i})">刪除</button></li>`).join('');
+  updateAudioInfo();
+}
+function moveAudio(i,d){ const a=state.audios; [a[i],a[i+d]]=[a[i+d],a[i]]; renderFiles(); }
+function removeAudio(i){ URL.revokeObjectURL(state.audios[i].url); state.audios.splice(i,1); renderFiles(); }
+function updateAudioInfo(){
+  const n = state.audios.length;
+  $('audioInfo').textContent = n ? `已有 ${n} 個錄音檔` : '尚未上傳錄音（可回上一步上傳，也可直接手動評分）';
+}
+$('fileIn').addEventListener('change', e => { [...e.target.files].forEach(addAudio); e.target.value=''; });
+const drop = $('drop');
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { [...e.dataTransfer.files].forEach(addAudio); });
+
+// ---------- audio processing ----------
+async function decodeAll(rate){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const ctx = new AC();
+  const bufs = [];
+  for(const a of state.audios){
+    const ab = await a.blob.arrayBuffer();
+    try{ bufs.push(await ctx.decodeAudioData(ab)); }
+    catch(e){ ctx.close(); throw new Error(`無法解碼錄音檔「${a.name}」，請改用 mp3 / wav / m4a 格式。`); }
+  }
+  ctx.close();
+  // resample each to mono @rate, concat with 1s gap
+  const parts = [];
+  for(const b of bufs){
+    const len = Math.ceil(b.duration * rate);
+    const off = new OfflineAudioContext(1, Math.max(1,len), rate);
+    const src = off.createBufferSource(); src.buffer = b; src.connect(off.destination); src.start();
+    const r = await off.startRendering();
+    parts.push(r.getChannelData(0));
+  }
+  const gap = rate; let total = parts.reduce((s,p)=>s+p.length,0) + gap*(parts.length-1);
+  const out = new Float32Array(total); let pos=0;
+  parts.forEach((p,i)=>{ out.set(p,pos); pos += p.length + (i<parts.length-1?gap:0); });
+  // normalize volume
+  let peak = 0; for(let i=0;i<out.length;i++){ const v=Math.abs(out[i]); if(v>peak) peak=v; }
+  if(peak>0 && peak<0.9){ const g = 0.9/peak; for(let i=0;i<out.length;i++) out[i]*=g; }
+  return out;
+}
+function encodeWav(samples, rate){
+  const buf = new ArrayBuffer(44 + samples.length*2); const v = new DataView(buf);
+  const w = (o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+  w(0,'RIFF'); v.setUint32(4, 36+samples.length*2, true); w(8,'WAVE'); w(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,rate,true);
+  v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40, samples.length*2, true);
+  let o=44; for(let i=0;i<samples.length;i++,o+=2){ const s=Math.max(-1,Math.min(1,samples[i])); v.setInt16(o, s<0?s*0x8000:s*0x7fff, true); }
+  return new Blob([buf], {type:'audio/wav'});
+}
+function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
+
+// ---------- Gemini ----------
+// "-latest" aliases always point to Google's current model, so they don't get retired
+const DEFAULT_MODEL = 'gemini-3.5-flash';
+const FALLBACK_MODELS = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-pro-latest'];
+const RETIRED_MODELS = ['gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+// API key: never written into the page itself. By default kept only for this tab
+// (sessionStorage, gone when the tab closes); localStorage only if the teacher ticks "remember".
+let memKey = '';
+function getKey(){
+  let k = memKey;
+  try{ k = k || sessionStorage.getItem('xdz_key') || ''; }catch(e){}
+  return k || ls('xdz_key') || '';
+}
+function setKey(k, remember){
+  memKey = k;
+  try{ k ? sessionStorage.setItem('xdz_key', k) : sessionStorage.removeItem('xdz_key'); }catch(e){}
+  try{ (remember && k) ? localStorage.setItem('xdz_key', k) : localStorage.removeItem('xdz_key'); }catch(e){}
+}
+function forgetKey(){ setKey('', false); $('apiKey').value=''; $('rememberKey').checked=false; toast('已清除這台電腦上的金鑰'); }
+function getSettings(){
+  let model = ls('xdz_model') || DEFAULT_MODEL;
+  if(RETIRED_MODELS.includes(model)){ model = DEFAULT_MODEL; ls('xdz_model', model); }
+  return { key: getKey(), model, strict: ls('xdz_strict') || 'normal' };
+}
+function openSettings(){
+  const s = getSettings();
+  $('apiKey').value = s.key;
+  $('rememberKey').checked = !!ls('xdz_key');
+  const known = [...$('model').options].map(o=>o.value);
+  if(known.includes(s.model)){ $('model').value = s.model; $('modelCustom').style.display='none'; }
+  else { $('model').value='custom'; $('modelCustom').style.display=''; $('modelCustom').value = s.model; }
+  $('strict').value = s.strict;
+  $('setModal').classList.add('show');
+}
+$('model').addEventListener('change', () => { $('modelCustom').style.display = $('model').value==='custom' ? '' : 'none'; });
+function closeSettings(){ $('setModal').classList.remove('show'); }
+function saveSettings(){
+  setKey($('apiKey').value.trim(), $('rememberKey').checked);
+  const m = $('model').value==='custom' ? ($('modelCustom').value.trim() || DEFAULT_MODEL) : $('model').value;
+  ls('xdz_model', m); ls('xdz_strict', $('strict').value);
+  closeSettings();
+}
+
+const API = 'https://generativelanguage.googleapis.com';
+async function uploadFile(blob, key, onMsg){
+  onMsg('上傳錄音到 Gemini 檔案空間…');
+  const start = await fetch(`${API}/upload/v1beta/files`, { method:'POST', headers:{
+    'x-goog-api-key': key, 'X-Goog-Upload-Protocol':'resumable', 'X-Goog-Upload-Command':'start',
+    'X-Goog-Upload-Header-Content-Length': String(blob.size), 'X-Goog-Upload-Header-Content-Type': blob.type, 'Content-Type':'application/json'},
+    body: JSON.stringify({file:{display_name:'xdz_'+Date.now()}}) });
+  if(!start.ok) throw new Error('上傳初始化失敗：' + await start.text());
+  const upUrl = start.headers.get('x-goog-upload-url');
+  let fileInfo;
+  if(upUrl){
+    const up = await fetch(upUrl, { method:'POST', headers:{'X-Goog-Upload-Offset':'0','X-Goog-Upload-Command':'upload, finalize'}, body: blob });
+    if(!up.ok) throw new Error('上傳失敗：' + await up.text());
+    fileInfo = (await up.json()).file;
+  } else {
+    // fallback: multipart upload
+    const boundary = 'xdz' + Math.random().toString(16).slice(2);
+    const meta = JSON.stringify({file:{display_name:'xdz_'+Date.now()}});
+    const body = new Blob([`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${blob.type}\r\n\r\n`, blob, `\r\n--${boundary}--`]);
+    const up = await fetch(`${API}/upload/v1beta/files?uploadType=multipart`, {method:'POST', headers:{'x-goog-api-key':key, 'Content-Type':`multipart/related; boundary=${boundary}`}, body});
+    if(!up.ok) throw new Error('上傳失敗：' + await up.text());
+    fileInfo = (await up.json()).file;
+  }
+  for(let i=0;i<60 && fileInfo.state==='PROCESSING';i++){
+    onMsg('Gemini 正在處理錄音檔…');
+    await new Promise(r=>setTimeout(r,2000));
+    const g = await fetch(`${API}/v1beta/${fileInfo.name}`, {headers:{'x-goog-api-key':key}});
+    fileInfo = await g.json();
+  }
+  if(fileInfo.state==='FAILED') throw new Error('Gemini 無法處理此錄音檔。');
+  return fileInfo;
+}
+
+function buildPrompt(strict){
+  const cs = chars();
+  const lv = LEVELS[state.level].label;
+  const list = cs.map((c,i)=>`${i+1}.${c}`).join(' ');
+  const refs = cs.map(c => { const b = XDZ_DATA.bank[c]; return b && b[1].length ? `${c}：${b[1].slice(0,6).join('、')}` : null; }).filter(Boolean).join('；');
+  return `你是台灣國小「識字量測驗」的評分助理，請非常仔細地聽這段錄音並逐題判分。
+
+【測驗說明】
+這是「自編識字量估計測驗－天下2012（${lv}）第${state.set}套」的施測錄音。學生依序看 60 個目標字，每個字要用它說出一個語詞並指出是哪一個字，例如看到「大」要說「大家的大」。學生說的是國語（台灣華語），可能夾雜台灣口音或童音。
+
+【請忽略老師的語音】
+- 錄音「開頭」通常有老師（主試者）的說明，例如介紹測驗、示範「大家的大」、叫學生開始；錄音「結尾」通常有老師的結語，例如「好，結束了」「謝謝」。這些都不是學生的回答，請完全忽略，不要把老師示範或說出的語詞當成學生的作答。
+- 施測中間老師的提示、鼓勵、催促（例如「下一個」「慢慢想」「這個呢？」）也一律忽略，只依「學生」的回答判斷。
+- 可以從音色（大人／小孩）、說話內容與位置來分辨老師和學生。
+
+【60 個目標字（依施測順序）】
+${list}
+
+【判分規則】
+1. 把學生說的語詞「用目標字代入」書寫，若代入後是正確存在的語詞（一般語詞、成語、常見專有名詞皆可），且目標字在詞中的讀音與學生念的相符 → status = "correct"。
+2. 學生造的詞其實是「同音或近音的別字」（例如目標字「攻」卻說「公園的公」，代入後「攻園」不成詞）→ "incorrect"。
+3. 只念字音沒有造詞、讀音錯誤、造出不存在的詞 → "incorrect"。
+4. 學生說「不知道」「不會」「不認識」「跳過」「下一個」，或沉默沒有回答、被跳過、錄音已結束、施測中止 → "no_answer"（視為該字沒有作答，不計分，word 留空字串）。
+5. 學生自我更正時，以最後一次回答為準；若學生順序跳號或回頭補答，請依語意對應到正確的題號。
+6. ${strict==='strict' ? '採嚴格標準：語詞必須是常用、正確的語詞，且學生需清楚表達是詞中的哪一個字。' : '採一般標準：只要是合理、正確的語詞即可，不一定要說出「…的…」的完整句型。'}
+7. 不確定時（聲音不清楚、可能有兩種解讀）仍要做出最可能的判斷，並把 confidence 設低（0~1）。
+
+【部分目標字的常見語詞參考（學生說出其他正確語詞也算對）】
+${refs || '（無）'}
+
+【輸出】
+回傳 JSON，items 必須剛好 60 筆，index 為 1~60 對應上面的題號：
+- heard：聽到的學生原話（繁體中文）
+- word：學生所造的詞，以目標字代入書寫（繁體中文；沒作答則空字串）
+- status："correct" / "incorrect" / "no_answer"
+- reason：簡短判分理由（20 字以內）
+- time：這題回答大約出現的時間 mm:ss
+- confidence：0~1 的信心值
+summary：用一兩句話描述整體作答情形（例如在第幾題後停止、整體流暢度）。`;
+}
+const SCHEMA = {
+  type:'OBJECT',
+  properties:{
+    items:{ type:'ARRAY', items:{ type:'OBJECT', properties:{
+      index:{type:'INTEGER'}, heard:{type:'STRING'}, word:{type:'STRING'},
+      status:{type:'STRING', enum:['correct','incorrect','no_answer']},
+      reason:{type:'STRING'}, time:{type:'STRING'}, confidence:{type:'NUMBER'} },
+      required:['index','status','word'] } },
+    summary:{type:'STRING'}
+  },
+  required:['items']
+};
+
+async function analyze(){
+  const s = getSettings();
+  $('anaErr').innerHTML = '';
+  if(!state.audios.length){ $('anaErr').innerHTML = `<div class="alert">請先在「② 施測錄音」上傳錄音檔。</div>`; return; }
+  if(!s.key){ openSettings(); return; }
+  const prog = $('progress'); const msg = t => { prog.innerHTML = `<span class="spin"></span>${esc(t)}`; };
+  prog.classList.add('show'); $('btnAnalyze').disabled = true;
+  try{
+    msg('正在讀取並轉換錄音（轉成 16kHz 單聲道）…');
+    let rate = 16000;
+    let samples = await decodeAll(rate);
+    let wav = encodeWav(samples, rate);
+    let part;
+    if(wav.size <= 14*1048576){
+      msg(`錄音長度 ${fmtTime(samples.length/rate)}，準備送出分析…`);
+      part = { inline_data:{ mime_type:'audio/wav', data: await blobToB64(wav) } };
+    } else {
+      try{
+        const f = await uploadFile(wav, s.key, msg);
+        part = { file_data:{ mime_type: f.mimeType || 'audio/wav', file_uri: f.uri } };
+      }catch(upErr){
+        console.warn(upErr);
+        rate = 8000; samples = await decodeAll(rate); wav = encodeWav(samples, rate);
+        if(wav.size > 14*1048576) throw new Error('錄音太長，無法上傳。請把錄音剪成較短的檔案（建議每段 15 分鐘以內）分次分析。\n' + upErr.message);
+        part = { inline_data:{ mime_type:'audio/wav', data: await blobToB64(wav) } };
+      }
+    }
+    const body = { contents:[{ role:'user', parts:[ {text: buildPrompt(s.strict)}, part ] }],
+      generationConfig:{ temperature:0.1, responseMimeType:'application/json', responseSchema: SCHEMA } };
+    // try chosen model; if it has been retired (404), fall back automatically
+    const tryModels = [s.model, ...FALLBACK_MODELS.filter(m => m !== s.model)];
+    let j, res, used;
+    for(const m of tryModels){
+      msg(`AI（${m}）正在聆聽錄音並逐題判讀，約需 30 秒～2 分鐘…`);
+      res = await fetch(`${API}/v1beta/models/${encodeURIComponent(m)}:generateContent`, {
+        method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':s.key}, body: JSON.stringify(body) });
+      j = await res.json();
+      used = m;
+      // retired (404), overloaded (503) or out of quota (429) → try the next model
+      if([404, 429, 500, 503].includes(res.status)) { await new Promise(r=>setTimeout(r,1500)); continue; }
+      break;
+    }
+    if(!res.ok) throw new Error(j.error ? `${j.error.code} ${j.error.status}：${j.error.message}` : JSON.stringify(j));
+    if(used !== s.model){ ls('xdz_model', used); }
+    const text = (j.candidates?.[0]?.content?.parts || []).map(p=>p.text||'').join('');
+    if(!text) throw new Error('AI 沒有回傳結果（' + (j.candidates?.[0]?.finishReason || j.promptFeedback?.blockReason || '未知原因') + '），請再試一次。');
+    applyAI(parseJSON(text));
+    prog.innerHTML = '✅ 分析完成！請檢視下方結果，有疑問的格子（標 ?）可點播錄音重聽並點格子修正。' + (lastSummary ? `<br><b>AI 摘要：</b>${esc(lastSummary)}` : '');
+  }catch(e){
+    console.error(e);
+    prog.classList.remove('show');
+    let m = e.message || String(e);
+    if(/API key not valid|API_KEY_INVALID/i.test(m)) m = 'API 金鑰無效，請到「⚙️ AI 設定」重新輸入。\n' + m;
+    if(/not found|NOT_FOUND/i.test(m)) m = '找不到此模型，請到「⚙️ AI 設定」改選其他模型。\n' + m;
+    if(/UNAVAILABLE|high demand|503/.test(m)) m = 'Google 的 AI 伺服器目前太忙（已自動換過其他模型仍失敗），請稍等 1～2 分鐘再按一次「開始 AI 分析錄音」。\n' + m;
+    if(/RESOURCE_EXHAUSTED|429/.test(m)) m = '使用量已達上限，請稍候 1 分鐘再試，或改用其他模型。\n' + m;
+    $('anaErr').innerHTML = `<div class="alert">分析失敗：${esc(m)}</div>`;
+  }finally{ $('btnAnalyze').disabled = false; }
+}
+let lastSummary = '';
+function parseJSON(t){
+  try{ return JSON.parse(t); }catch(e){}
+  const m = t.match(/\{[\s\S]*\}/); if(m) return JSON.parse(m[0]);
+  throw new Error('無法解析 AI 回傳內容');
+}
+function applyAI(obj){
+  const cs = chars();
+  const res = blankResults();
+  (obj.items || []).forEach(it => {
+    const i = (+it.index) - 1; if(!(i>=0 && i<60)) return;
+    let st = ['correct','incorrect','no_answer'].includes(it.status) ? it.status : 'no_answer';
+    let word = String(it.word||'').trim();
+    // "不知道 / 不會" → treat as no answer (not scored)
+    if(/^(我)?(不知道|不會|不曉得|不認識|跳過|下一個|忘記了?)$/.test(word.replace(/[，。！？、\s]/g,''))){ st='no_answer'; word=''; }
+    // sanity: a "correct" word must contain the target char
+    let reason = String(it.reason||'').trim();
+    let status = st;
+    if(status==='correct' && word && !word.includes(cs[i])){ status='incorrect'; reason = (reason?reason+'；':'') + '詞中未含目標字'; }
+    res[i] = { status, word, heard:String(it.heard||'').trim(), reason, time:String(it.time||'').trim(),
+               conf: typeof it.confidence==='number' ? it.confidence : 1, ai:true };
+  });
+  state.results = res;
+  lastSummary = obj.summary || '';
+  renderSheet(); renderDetail();
+}
+
+// ---------- sheet & detail ----------
+const NEXT = {no_answer:'correct', correct:'incorrect', incorrect:'no_answer'};
+const MARK = {correct:'✓', incorrect:'✗', no_answer:'—'};
+function renderSheet(){
+  const cs = chars(), ss = syms();
+  $('sheet').innerHTML = cs.map((c,i) => {
+    const r = state.results[i];
+    return `<div class="cell ${r.status} ${r.conf<0.6?'lowconf':''}" onclick="cycle(${i})" title="${esc(r.word||'')}${r.reason?'｜'+esc(r.reason):''}">
+      <span class="mk">${MARK[r.status]}</span>
+      <div class="ch">${esc(c)}</div><div class="sym s${ss[i]}">${SYMCH[ss[i]]}</div><div class="w">${esc(r.word)}</div></div>`;
+  }).join('');
+  updateLive();
+}
+function renderDetail(){
+  const cs = chars(), ss = syms();
+  $('detailBody').innerHTML = cs.map((c,i) => {
+    const r = state.results[i]; const b = XDZ_DATA.bank[c];
+    const inRef = b && r.word && b[1].includes(r.word);
+    return `<tr id="row${i}">
+      <td class="c">${i+1}</td><td class="c tch">${esc(c)}</td><td class="c"><b class="s${ss[i]}">${SYMCH[ss[i]]}</b></td>
+      <td><input value="${esc(r.word)}" placeholder="（未作答）" oninput="editWord(${i},this.value)"></td>
+      <td style="max-width:240px">${r.heard?'「'+esc(r.heard)+'」':''}${r.reason?`<div class="ref">${esc(r.reason)}${r.time?'・'+esc(r.time):''}${r.conf<0.6?' <b style="color:var(--accent)">信心低</b>':''}</div>`:''}</td>
+      <td><span class="seg">${['correct','incorrect','no_answer'].map(s=>`<button class="${s} ${r.status===s?'on':''}" onclick="setStatus(${i},'${s}')">${{correct:'正確',incorrect:'錯誤',no_answer:'未答'}[s]}</button>`).join('')}</span></td>
+      <td class="ref">${b ? `<span title="1200常用字第${b[0]}字">#${b[0]}</span> ${esc(b[1].slice(0,5).join('、'))}${inRef?' <b style="color:var(--ok)">✓詞庫</b>':''}` : '<span style="opacity:.5">非1200常用字</span>'}</td></tr>`;
+  }).join('');
+}
+function cycle(i){ setStatus(i, NEXT[state.results[i].status]); }
+function setStatus(i, s){ const r = state.results[i]; r.status = s; r.conf = 1; renderSheet(); renderDetail(); }
+function editWord(i, v){ state.results[i].word = v.trim(); const w = $('sheet').children[i]?.querySelector('.w'); if(w) w.textContent = v.trim(); }
+async function markAll(s){ if(!await askConfirm(s==='correct'?'將 60 題全部設為「正確」？':'將 60 題全部清為「未作答」？')) return; state.results.forEach(r=>{r.status=s; r.conf=1;}); renderSheet(); renderDetail(); toast(s==='correct'?'已將 60 題設為正確':'已將 60 題清為未作答'); }
+
+// ---------- scoring ----------
+function score(){
+  const ss = syms(), cs = chars();
+  const cnt = {O:0,T:0,S:0}, tot = {O:0,T:0,S:0};
+  let bankTot=0, bankOk=0, nonTot=0, nonOk=0, answered=0;
+  ss.forEach((s,i) => {
+    tot[s]++; const ok = state.results[i].status==='correct';
+    if(ok) cnt[s]++;
+    if(state.results[i].status!=='no_answer') answered++;
+    if(XDZ_DATA.bank[cs[i]]){ bankTot++; if(ok) bankOk++; } else { nonTot++; if(ok) nonOk++; }
+  });
+  const d = LEVELS[state.level].denom;
+  const raw = (cnt.O/d.O)*WEIGHT.O + (cnt.T/d.T)*WEIGHT.T + (cnt.S/d.S)*WEIGHT.S;
+  const total = cnt.O+cnt.T+cnt.S;
+  return {cnt, tot, d, raw, est: raw>0 ? Math.round(raw) : 0, total, answered, bankTot, bankOk, nonTot, nonOk};
+}
+function updateLive(){
+  const r = score();
+  $('liveCount').innerHTML = `正確：<b class="sO">○ ${r.cnt.O}</b>／<b class="sT">△ ${r.cnt.T}</b>／<b class="sS">□ ${r.cnt.S}</b>　預估識字量 <b>${r.est}</b> 字`;
+}
+function renderResults(){
+  const r = score(); const inf = info();
+  const who = whoText(inf);
+  $('bigResult').innerHTML = `<div class="lab">${esc(who || '（未填學校／年級）')}｜${titleText()}${inf.date?'｜'+esc(inf.date):''}</div>
+    <div class="val">${r.raw>0 ? r.est.toLocaleString() : '—'}</div><div class="lab">預估識字量（字）</div>
+    <div class="hint">造詞正確 ${r.total} / 60 題（正確率 ${Math.round(r.total/60*100)}%）・有作答 ${r.answered} 題</div>`;
+  $('symStats').innerHTML = ['O','T','S'].map(s => {
+    const pct = r.d[s] ? r.cnt[s]/r.d[s] : 0;
+    return `<div class="stat"><div class="lab"><b class="s${s}">${SYMCH[s]}</b> 造詞正確題數</div>
+      <div class="val s${s}">${r.cnt[s]} <span style="font-size:16px;color:var(--muted)">/ ${r.d[s]} 題</span></div>
+      <div class="bar"><i style="width:${pct*100}%;background:var(--${s})"></i></div>
+      <div class="sub">貢獻識字量：${Math.round(pct*WEIGHT[s])} / ${WEIGHT[s]} 字</div></div>`;
+  }).join('');
+  const d = r.d;
+  $('formula').textContent = `預估識字量 = (○${r.cnt.O}/${d.O})×1500 + (△${r.cnt.T}/${d.T})×1500 + (□${r.cnt.S}/${d.S})×2000 = ${r.raw.toFixed(1)}`;
+  const pc = (a,b) => b ? Math.round(a/b*100)+'%' : '—';
+  $('bankStats').innerHTML = `
+    <div class="stat"><div class="lab">1200 常用字題目</div><div class="val">${r.bankOk} <span style="font-size:16px;color:var(--muted)">/ ${r.bankTot} 題</span></div><div class="bar"><i style="width:${r.bankTot?r.bankOk/r.bankTot*100:0}%;background:var(--bean)"></i></div><div class="sub">正確率 ${pc(r.bankOk,r.bankTot)}</div></div>
+    <div class="stat"><div class="lab">非 1200 常用字（較難字）</div><div class="val">${r.nonOk} <span style="font-size:16px;color:var(--muted)">/ ${r.nonTot} 題</span></div><div class="bar"><i style="width:${r.nonTot?r.nonOk/r.nonTot*100:0}%;background:var(--accent)"></i></div><div class="sub">正確率 ${pc(r.nonOk,r.nonTot)}</div></div>`;
+  renderHist();
+}
+
+// ---------- records ----------
+function getHist(){ try{ return JSON.parse(ls('xdz_hist')||'[]'); }catch(e){ return []; } }
+function setHist(h){ ls('xdz_hist', JSON.stringify(h)); }
+function saveRecord(){
+  const r = score(); const inf = info();
+  const rec = { id: Date.now(), savedAt: new Date().toISOString(), ...inf, level: state.level, set: state.set,
+    O:r.cnt.O, T:r.cnt.T, S:r.cnt.S, total:r.total, est: r.est, raw: +r.raw.toFixed(2),
+    bank: `${r.bankOk}/${r.bankTot}`,
+    items: state.results.map((x,i)=>({c:chars()[i], s:x.status[0], w:x.word})) };
+  const h = getHist(); h.unshift(rec); setHist(h); renderHist();
+  toast('✅ 已儲存這次紀錄');
+}
+function renderHist(){
+  const h = getHist();
+  if(!h.length){ $('histBox').innerHTML = '<p class="hint">尚無紀錄。</p>'; return; }
+  $('histBox').innerHTML = `<div class="tablebox" style="max-height:320px"><table><thead><tr><th>日期</th><th>學校／年級／備註</th><th>版本</th><th>○</th><th>△</th><th>□</th><th>預估識字量</th><th></th></tr></thead><tbody>${
+    h.map((x,k)=>`<tr><td>${esc(x.date||x.savedAt.slice(0,10))}</td><td>${esc(whoText(x))}</td>
+    <td>${esc(LEVELS[x.level]?.label||x.level)} 第${x.set}套</td><td>${x.O}</td><td>${x.T}</td><td>${x.S}</td><td><b>${x.est}</b></td>
+    <td><button class="btn ghost sm" onclick="loadRecord(${k})">開啟</button> <button class="btn ghost sm" onclick="delRecord(${k})">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
+}
+function loadRecord(k){
+  const x = getHist()[k]; if(!x) return;
+  const map = {school:'f_school',grade:'f_grade',date:'f_date',note:'f_note'};
+  Object.entries(map).forEach(([a,b])=>{ $(b).value = x[a]||''; });
+  state.level = x.level; state.set = x.set; state.results = blankResults();
+  const S = {c:'correct', i:'incorrect', n:'no_answer'};
+  (x.items||[]).forEach((it,i)=>{ state.results[i].status = S[it.s]||'no_answer'; state.results[i].word = it.w||''; });
+  renderChips(); showStep(4);
+}
+async function delRecord(k){ if(!await askConfirm('刪除這筆紀錄？')) return; const h=getHist(); h.splice(k,1); setHist(h); renderHist(); }
+async function clearHist(){ if(!await askConfirm('確定清除本機所有施測紀錄？此動作無法復原。')) return; setHist([]); renderHist(); }
+function dlCSV(name, rows){
+  const csv = '﻿' + rows.map(r => r.map(v => `"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function exportHist(){
+  const h = getHist(); if(!h.length){ toast('目前沒有紀錄'); return; }
+  dlCSV('小豆子識字量測驗_全部紀錄.csv', [['測驗日期','學校','年級','版本','題本','○正確','△正確','□正確','總正確','預估識字量','1200常用字正確','備註'],
+    ...h.map(x=>[x.date,x.school,x.grade,LEVELS[x.level]?.label||x.level,x.set,x.O,x.T,x.S,x.total,x.est,x.bank,x.note])]);
+}
+function exportOne(){
+  const inf = info(), cs = chars(), ss = syms(), r = score();
+  const rows = [['學校',inf.school,'年級',inf.grade,'測驗日期',inf.date,'備註',inf.note],['版本',titleText(),'預估識字量',r.est],[],['題號','目標字','類別','學生造詞','判定','AI聽到','說明']];
+  cs.forEach((c,i)=>{ const x=state.results[i]; rows.push([i+1,c,SYMCH[ss[i]],x.word,{correct:'正確',incorrect:'錯誤',no_answer:'未作答'}[x.status],x.heard,x.reason]); });
+  rows.push([],['○造詞正確',r.cnt.O,'△造詞正確',r.cnt.T,'□造詞正確',r.cnt.S]);
+  dlCSV(`識字量_${inf.grade?inf.grade+'年級_':''}${inf.note||''}${inf.note?'_':''}${state.level}${state.set}_${inf.date||''}.csv`, rows);
+}
+function printSheet(){
+  const inf = info(), cs = chars(), ss = syms(), r = score();
+  let rows = '';
+  for(let k=0;k<6;k++){
+    const idx = Array.from({length:10},(_,j)=>k*10+j);
+    rows += `<table><tr><th>目標字</th>${idx.map(i=>`<td>${esc(cs[i])}</td>`).join('')}</tr>
+      <tr><th>類別</th>${idx.map(i=>`<td>${SYMCH[ss[i]]}</td>`).join('')}</tr>
+      <tr><th>造詞正確</th>${idx.map(i=>`<td class="wd">${state.results[i].status==='correct'?'✓':''}<br>${esc(state.results[i].word)}</td>`).join('')}</tr></table>`;
+  }
+  $('printSheet').innerHTML = `<h2>天下雜誌2012 紀錄紙 ${LEVELS[state.level].label}（第${state.set}套）</h2>
+    <div class="info"><span>學校：${esc(inf.school)}</span><span>年級：${esc(inf.grade)} 年級</span><span>測驗日期：${esc(inf.date)}</span><span>備註：${esc(inf.note)}</span></div>
+    ${rows}<div class="sum">○ 造詞正確題數：<u>&nbsp;${r.cnt.O}&nbsp;</u> 題（共 ${r.d.O} 題）　△ 造詞正確題數：<u>&nbsp;${r.cnt.T}&nbsp;</u> 題（共 ${r.d.T} 題）　□ 造詞正確題數：<u>&nbsp;${r.cnt.S}&nbsp;</u> 題（共 ${r.d.S} 題）<br>
+    預估識字量：<b>${r.est}</b> 字</div>`;
+  window.print();
+}
+async function newStudent(){
+  if(!await askConfirm('清除目前錄音與判讀結果，開始下一位？（記得先儲存紀錄）')) return;
+  $('f_note').value='';
+  state.audios.forEach(a=>URL.revokeObjectURL(a.url)); state.audios=[]; renderFiles();
+  state.results = blankResults(); lastSummary=''; $('progress').classList.remove('show'); $('anaErr').innerHTML='';
+  showStep(1);
+}
+
+// ---------- init ----------
+(function init(){
+  $('f_date').value = new Date().toISOString().slice(0,10);
+  ['f_school','f_grade'].forEach(id => { const v = ls('xdz_'+id); if(v) $(id).value = v; $(id).addEventListener('change', e => ls('xdz_'+id, e.target.value)); });
+  state.results = blankResults();
+  renderChips(); showStep(1);
+  window.addEventListener('beforeunload', e => { if(state.audios.length || hasData()){ e.preventDefault(); e.returnValue=''; } });
+})();
+</script>
+</body>
+</html>

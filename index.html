@@ -449,6 +449,7 @@
 
         function categorize(filename) {
             if (filename === '大富遊戲數學四上單元公里.html' || filename === '大富翁遊戲翰林三上數學5-10單元.html') return 'puzzle';
+            if (filename === '小豆子識字量測驗.html') return 'examtool';
             for (const cat of CATEGORIES) {
                 if (cat.id === 'other') continue;
                 if (cat.keywords.some(kw => filename.includes(kw))) return cat.id;
@@ -471,6 +472,7 @@
             "多人夜市跑腿王.html",
             "exam語音報讀程式步驟一.html",
             "exam語音報讀程式步驟二.html",
+            "小豆子識字量測驗.html",
             "學校考試儀表板.html",
             "客製化圖片9宮格猜謎遊戲.html",
             "客製化填生字猜猜看九宮格.html",
