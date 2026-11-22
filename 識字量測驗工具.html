@@ -130,9 +130,6 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
 #stage.show{display:flex}
 #stage .board{flex:1;grid-template-rows:repeat(6,1fr);align-content:stretch}
 #stage .board .q{aspect-ratio:auto;font-size:min(7vw,10vh)}
-#stage .one{flex:1;display:none;align-items:center;justify-content:center;font-size:min(50vw,60vh);font-family:"BiauKai","DFKai-SB","標楷體","Kaiti TC",serif}
-#stage.single .one{display:flex}
-#stage.single .board{display:none}
 .stagebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 @media (max-width:640px){
   .board,.sheet{gap:3px}
@@ -205,8 +202,7 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
     <h2>🎙️ 施測與上傳錄音檔 <span class="hint" id="s2title"></span></h2>
     <p class="instr">請按照順序造詞，例如：大，要能說出「<b>大家的大</b>」。</p>
     <div class="row" style="margin-bottom:10px">
-      <button class="btn warn" onclick="openStage(false)">🖥️ 全螢幕題目卡（給學生看）</button>
-      <button class="btn ghost" onclick="openStage(true)">🔍 逐字顯示模式</button>
+      <button class="btn warn" onclick="openStage()">🖥️ 全螢幕題目卡（給學生看）</button>
     </div>
     <div class="board" id="testBoard"></div>
     <h3>上傳錄音檔</h3>
@@ -245,7 +241,7 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
     </div>
     <div class="sheet" id="sheet"></div>
     <div class="row" style="margin:12px 0 6px"><h3 style="margin:0">逐題明細</h3><span class="spacer"></span><span class="hint" id="liveCount"></span></div>
-    <div class="tablebox"><table class="detail"><thead><tr><th>#</th><th>目標字</th><th>類別</th><th>學生造詞</th><th>AI 聽到 / 說明</th><th>判定</th><th>參考詞（識字量1200）</th></tr></thead><tbody id="detailBody"></tbody></table></div>
+    <div class="tablebox"><table class="detail"><thead><tr><th>#</th><th>目標字</th><th>類別</th><th>學生造詞</th><th>AI 聽到 / 說明</th><th>判定</th></tr></thead><tbody id="detailBody"></tbody></table></div>
     <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="showStep(2)">← 上一步</button><span class="spacer"></span><button class="btn" onclick="showStep(4)">查看計分結果 →</button></div>
   </section>
 
@@ -317,14 +313,10 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
 <div id="stage">
   <div class="stagebar">
     <b id="stageTitle"></b><span class="spacer"></span>
-    <button class="btn ghost sm" onclick="stagePrev()">◀ 上一字</button>
-    <button class="btn ghost sm" onclick="stageNext()">下一字 ▶</button>
-    <button class="btn ghost sm" onclick="toggleSingle()">切換 全部/逐字</button>
     <button class="btn sm" onclick="closeStage()">✕ 關閉</button>
   </div>
   <p class="instr" style="font-size:20px">請按照順序造詞，例如：大，要能說出「大家的大」。</p>
   <div class="board" id="stageBoard"></div>
-  <div class="one" id="stageOne"></div>
 </div>
 
 <div class="modal-bg" id="askModal">
@@ -411,9 +403,9 @@ function whoText(x){ return [x.school, x.grade && x.grade+'年級', x.note].filt
 function renderTestBoard(){
   $('testBoard').innerHTML = chars().map((c,i) => `<div class="q" onclick="this.classList.toggle('cur')">${esc(c)}</div>`).join('');
 }
-function openStage(single){
-  state.stageIdx = 0;
-  $('stage').classList.add('show'); $('stage').classList.toggle('single', !!single);
+function openStage(){
+  state.stageIdx = -1;
+  $('stage').classList.add('show');
   $('stageTitle').textContent = '📖 識字量測驗工具｜' + titleText();
   renderStage();
   if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
@@ -421,16 +413,10 @@ function openStage(single){
 function renderStage(){
   const cs = chars();
   $('stageBoard').innerHTML = cs.map((c,i) => `<div class="q ${i===state.stageIdx?'cur':''}" onclick="state.stageIdx=${i};renderStage()">${esc(c)}</div>`).join('');
-  $('stageOne').textContent = cs[state.stageIdx];
 }
-function stageNext(){ state.stageIdx = Math.min(59, state.stageIdx+1); renderStage(); }
-function stagePrev(){ state.stageIdx = Math.max(0, state.stageIdx-1); renderStage(); }
-function toggleSingle(){ $('stage').classList.toggle('single'); }
 function closeStage(){ $('stage').classList.remove('show'); if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
 document.addEventListener('keydown', e => {
   if(!$('stage').classList.contains('show')) return;
-  if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); stageNext(); }
-  if(e.key==='ArrowLeft'){ stagePrev(); }
   if(e.key==='Escape'){ closeStage(); }
 });
 
@@ -979,14 +965,12 @@ function renderSheet(){
 function renderDetail(){
   const cs = chars(), ss = syms();
   $('detailBody').innerHTML = cs.map((c,i) => {
-    const r = state.results[i]; const b = XDZ_DATA.bank[c];
-    const inRef = b && r.word && b[1].includes(r.word);
+    const r = state.results[i];
     return `<tr id="row${i}">
       <td class="c">${i+1}</td><td class="c tch">${esc(c)}</td><td class="c"><b class="s${ss[i]}">${SYMCH[ss[i]]}</b></td>
       <td><input value="${esc(r.word)}" placeholder="（未作答）" oninput="editWord(${i},this.value)"></td>
       <td style="max-width:240px">${r.heard?'「'+esc(r.heard)+'」':''}${r.reason?`<div class="ref">${esc(r.reason)}${r.time?'・'+esc(r.time):''}${r.conf<0.6?' <b style="color:var(--accent)">信心低</b>':''}</div>`:''}</td>
-      <td><span class="seg">${['correct','incorrect','no_answer'].map(s=>`<button class="${s} ${r.status===s?'on':''}" onclick="setStatus(${i},'${s}')">${{correct:'正確',incorrect:'錯誤',no_answer:'未答'}[s]}</button>`).join('')}</span></td>
-      <td class="ref">${b ? `<span title="1200常用字第${b[0]}字">#${b[0]}</span> ${esc(b[1].slice(0,5).join('、'))}${inRef?' <b style="color:var(--ok)">✓詞庫</b>':''}` : '<span style="opacity:.5">非1200常用字</span>'}</td></tr>`;
+      <td><span class="seg">${['correct','incorrect','no_answer'].map(s=>`<button class="${s} ${r.status===s?'on':''}" onclick="setStatus(${i},'${s}')">${{correct:'正確',incorrect:'錯誤',no_answer:'未答'}[s]}</button>`).join('')}</span></td></tr>`;
   }).join('');
 }
 function cycle(i){ setStatus(i, NEXT[state.results[i].status]); }
