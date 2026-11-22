@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小豆子識字量測驗</title>
+<title>識字量測驗工具</title>
 <style>
 :root{
   --bg:#fbf7ef; --panel:#ffffff; --ink:#3b2f22; --muted:#857560; --line:#e8dcc6;
@@ -23,6 +23,7 @@ header.top .wrap{padding:0 16px;display:flex;align-items:center;gap:14px;flex-wr
 .logo{font-size:40px;line-height:1}
 header h1{margin:0;font-size:26px;letter-spacing:2px}
 header p{margin:2px 0 0;opacity:.9;font-size:14px}
+header p.src a{color:#fff;font-weight:700;text-decoration:underline}
 .top-actions{margin-left:auto;display:flex;gap:8px}
 .btn{border:none;border-radius:10px;padding:9px 16px;font-size:15px;font-weight:600;background:var(--bean);color:#fff;transition:.15s}
 .btn:hover{background:var(--bean-d)}
@@ -159,10 +160,11 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="logo">🫘</div>
+    <div class="logo">📖</div>
     <div>
-      <h1>小豆子識字量測驗</h1>
+      <h1>識字量測驗工具</h1>
       <p>自編識字量估計測驗－天下2012｜錄音上傳 · AI 語音判讀造詞 · 自動計分</p>
+      <p class="src">測驗來源：<a href="https://sites.google.com/view/brainlearninglab/%E9%A6%96%E9%A0%81?authuser=0" target="_blank" rel="noopener">【大腦與學習實驗室】</a></p>
     </div>
     <div class="top-actions">
       <button class="btn light sm" onclick="openSettings()">⚙️ AI 設定</button>
@@ -265,7 +267,7 @@ table.detail input{width:100%;min-width:90px;padding:5px 7px;border:1px solid va
       <div class="row" style="margin-top:8px"><button class="btn ghost sm" onclick="exportHist()">⬇️ 匯出全部紀錄 CSV</button><button class="btn ghost sm" onclick="clearHist()">🗑️ 清除全部紀錄</button></div>
     </div>
   </section>
-  <p class="hint" style="text-align:center">題目資料來源：自編識字量估計測驗－天下2012（初級／中等／高階各 10 套）、計分模板、識字量1200v6。</p>
+  <p class="hint" style="text-align:center">測驗來源：<a href="https://sites.google.com/view/brainlearninglab/%E9%A6%96%E9%A0%81?authuser=0" target="_blank" rel="noopener">【大腦與學習實驗室】</a><br>題目資料：自編識字量估計測驗－天下2012（初級／中等／高階各 10 套）、計分模板、識字量1200v6。</p>
 </div>
 
 <!-- settings modal -->
@@ -396,7 +398,7 @@ function renderTestBoard(){
 function openStage(single){
   state.stageIdx = 0;
   $('stage').classList.add('show'); $('stage').classList.toggle('single', !!single);
-  $('stageTitle').textContent = '🫘 ' + titleText();
+  $('stageTitle').textContent = '📖 識字量測驗工具｜' + titleText();
   renderStage();
   if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
 }
@@ -814,7 +816,7 @@ function dlCSV(name, rows){
 }
 function exportHist(){
   const h = getHist(); if(!h.length){ toast('目前沒有紀錄'); return; }
-  dlCSV('小豆子識字量測驗_全部紀錄.csv', [['測驗日期','學校','年級','版本','題本','○正確','△正確','□正確','總正確','預估識字量','1200常用字正確','備註'],
+  dlCSV('識字量測驗工具_全部紀錄.csv', [['測驗日期','學校','年級','版本','題本','○正確','△正確','□正確','總正確','預估識字量','1200常用字正確','備註'],
     ...h.map(x=>[x.date,x.school,x.grade,LEVELS[x.level]?.label||x.level,x.set,x.O,x.T,x.S,x.total,x.est,x.bank,x.note])]);
 }
 function exportOne(){
@@ -836,7 +838,8 @@ function printSheet(){
   $('printSheet').innerHTML = `<h2>天下雜誌2012 紀錄紙 ${LEVELS[state.level].label}（第${state.set}套）</h2>
     <div class="info"><span>學校：${esc(inf.school)}</span><span>年級：${esc(inf.grade)} 年級</span><span>測驗日期：${esc(inf.date)}</span><span>備註：${esc(inf.note)}</span></div>
     ${rows}<div class="sum">○ 造詞正確題數：<u>&nbsp;${r.cnt.O}&nbsp;</u> 題（共 ${r.d.O} 題）　△ 造詞正確題數：<u>&nbsp;${r.cnt.T}&nbsp;</u> 題（共 ${r.d.T} 題）　□ 造詞正確題數：<u>&nbsp;${r.cnt.S}&nbsp;</u> 題（共 ${r.d.S} 題）<br>
-    預估識字量：<b>${r.est}</b> 字</div>`;
+    預估識字量：<b>${r.est}</b> 字</div>
+    <div style="font-size:12px;margin-top:6px">測驗來源：【大腦與學習實驗室】｜識字量測驗工具</div>`;
   window.print();
 }
 async function newStudent(){
