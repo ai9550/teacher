@@ -448,6 +448,8 @@
         }
 
         function categorize(filename) {
+            if (filename === '2019閱讀理解測驗.html') return 'examtool';
+            if (filename === 'exam語音報讀程式步驟一.html' || filename === 'exam語音報讀程式步驟二.html') return 'exam';
             if (filename === '大富遊戲數學四上單元公里.html' || filename === '大富翁遊戲翰林三上數學5-10單元.html') return 'puzzle';
             if (filename === '小豆子識字量測驗.html') return 'examtool';
             for (const cat of CATEGORIES) {
