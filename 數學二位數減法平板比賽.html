@@ -735,5 +735,271 @@
     init();
 </script>
 
+
+<!-- Page QR Code Widget (Top-Right First Page) -->
+<style id="page-qr-style">
+  #page-qr-widget {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 900;
+    background: rgba(255, 255, 255, 0.96);
+    border: 2px solid rgba(59, 143, 217, 0.35);
+    border-radius: 14px;
+    padding: 8px 8px 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  #page-qr-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  }
+  #page-qr-widget.qr-hidden {
+    display: none !important;
+  }
+  #page-qr-widget.qr-collapsed {
+    padding: 6px 10px;
+    flex-direction: row;
+    cursor: pointer;
+  }
+  #page-qr-widget.qr-collapsed .page-qr-body,
+  #page-qr-widget.qr-collapsed .page-qr-close {
+    display: none;
+  }
+  #page-qr-widget .page-qr-pill {
+    display: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e3a8a;
+    white-space: nowrap;
+  }
+  #page-qr-widget.qr-collapsed .page-qr-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  #page-qr-widget .page-qr-close {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    padding: 0;
+  }
+  #page-qr-widget .page-qr-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+  #page-qr-widget .page-qr-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: zoom-in;
+  }
+  #page-qr-widget img.page-qr-img {
+    width: 104px;
+    height: 104px;
+    display: block;
+    border-radius: 6px;
+    background: #fff;
+    image-rendering: pixelated;
+  }
+  #page-qr-widget .page-qr-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+  }
+  #page-qr-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  }
+  #page-qr-modal.open {
+    display: flex;
+  }
+  #page-qr-modal .page-qr-modal-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 24px 28px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    max-width: 92vw;
+    text-align: center;
+  }
+  #page-qr-modal .page-qr-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+  }
+  #page-qr-modal img.page-qr-modal-img {
+    width: min(280px, 70vw);
+    height: min(280px, 70vw);
+    display: block;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    background: #fff;
+    image-rendering: pixelated;
+  }
+  #page-qr-modal .page-qr-modal-hint {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+  }
+  #page-qr-modal .page-qr-modal-close {
+    margin-top: 4px;
+    padding: 8px 24px;
+    border: none;
+    border-radius: 999px;
+    background: #3b8fd9;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  #page-qr-modal .page-qr-modal-close:hover {
+    background: #2563eb;
+  }
+  @media (max-width: 640px) {
+    #page-qr-widget {
+      top: 8px;
+      right: 8px;
+      padding: 5px 5px 4px;
+      border-radius: 10px;
+    }
+    #page-qr-widget img.page-qr-img {
+      width: 68px;
+      height: 68px;
+    }
+    #page-qr-widget .page-qr-label {
+      font-size: 10px;
+    }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script id="page-qr-script">
+(function () {
+  if (document.getElementById('page-qr-widget')) return;
+  function getPageUrl() {
+    try {
+      var u = new URL(window.location.href);
+      u.hash = '';
+      return u.href;
+    } catch (e) {
+      return window.location.href;
+    }
+  }
+  function buildQrSrc(url, cellSize) {
+    try {
+      if (typeof window.qrcode === 'function') {
+        var qr = window.qrcode(0, 'M');
+        qr.addData(url);
+        qr.make();
+        return qr.createDataURL(cellSize || 6, 4);
+      }
+    } catch (e) {}
+    return 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=' + encodeURIComponent(url);
+  }
+  function initPageQr() {
+    if (document.getElementById('page-qr-widget')) return;
+    var url = getPageUrl();
+    var smallSrc = buildQrSrc(url, 6);
+    var largeSrc = buildQrSrc(url, 10);
+
+    var widget = document.createElement('div');
+    widget.id = 'page-qr-widget';
+    widget.innerHTML =
+      '<button type="button" class="page-qr-close" title="收合 QR Code" aria-label="收合 QR Code">✕</button>' +
+      '<div class="page-qr-body" title="點我放大 QR Code">' +
+        '<img class="page-qr-img" alt="本頁 QR Code">' +
+        '<div class="page-qr-label">📱 平板掃碼玩</div>' +
+      '</div>' +
+      '<span class="page-qr-pill">📱 QR Code</span>';
+
+    var modal = document.createElement('div');
+    modal.id = 'page-qr-modal';
+    modal.innerHTML =
+      '<div class="page-qr-modal-card">' +
+        '<div class="page-qr-modal-title">📱 用平板掃描立即開始</div>' +
+        '<img class="page-qr-modal-img" alt="本頁放大 QR Code">' +
+        '<div class="page-qr-modal-hint"></div>' +
+        '<button type="button" class="page-qr-modal-close">關閉</button>' +
+      '</div>';
+
+    widget.querySelector('.page-qr-img').src = smallSrc;
+    modal.querySelector('.page-qr-modal-img').src = largeSrc;
+    modal.querySelector('.page-qr-modal-hint').textContent = document.title || '數學互動遊戲';
+
+    widget.querySelector('.page-qr-close').addEventListener('click', function (e) {
+      e.stopPropagation();
+      widget.classList.add('qr-collapsed');
+    });
+    widget.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (widget.classList.contains('qr-collapsed')) {
+        widget.classList.remove('qr-collapsed');
+      } else {
+        modal.classList.add('open');
+      }
+    });
+    modal.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (e.target === modal || e.target.classList.contains('page-qr-modal-close')) {
+        modal.classList.remove('open');
+      }
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') modal.classList.remove('open');
+    });
+
+    document.body.appendChild(widget);
+    document.body.appendChild(modal);
+
+    window.setPageQrVisible = function (visible) {
+      widget.classList.toggle('qr-hidden', !visible);
+      if (!visible) modal.classList.remove('open');
+    };
+    if (typeof window.__pageQrInitialVisible === 'boolean') {
+      window.setPageQrVisible(window.__pageQrInitialVisible);
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPageQr);
+  } else {
+    initPageQr();
+  }
+})();
+</script>
 </body>
 </html>
