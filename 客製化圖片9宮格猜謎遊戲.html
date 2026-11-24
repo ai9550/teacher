@@ -30,17 +30,18 @@
             background: rgba(255,255,255,0.15);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-            width: 300px;
-            max-height: 92vh;
+            width: 250px;
+            max-height: 94vh;
             overflow-y: auto;
             transition: all 0.3s ease;
             z-index: 10;
             position: relative;
+            flex-shrink: 0;
         }
 
         .panel-title {
@@ -258,7 +259,7 @@
             align-items: center;
             justify-content: center;
             flex-grow: 1;
-            max-width: 780px;
+            max-width: 960px;
             transition: opacity 0.3s ease;
         }
 
@@ -266,38 +267,38 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 24px;
+            gap: 20px;
             flex-wrap: wrap;
-            margin: 10px auto;
+            margin: 6px auto;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.2rem;
+            margin-bottom: 4px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .question-counter {
             color: #ffeaa7;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             display: block;
-            margin-top: 5px;
+            margin-top: 2px;
         }
 
         .game-container {
             position: relative;
-            width: 320px;
-            height: 320px;
+            width: min(560px, 68vh, 90vw);
+            height: min(560px, 68vh, 90vw);
             margin: 0;
             flex-shrink: 0;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 24px;
+            box-shadow: 0 14px 36px rgba(0,0,0,0.35);
             overflow: hidden;
             background: white;
             display: flex;
@@ -316,9 +317,9 @@
         }
 
         #gameImage {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* 確保整張圖片都看得到 */
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 放大填滿且確保整張圖片完整可見 */
             display: none; /* 載入後才顯示 */
         }
 
@@ -341,13 +342,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: clamp(1.4rem, 3vw, 2.2rem);
             font-weight: bold;
             color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.35);
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.18);
         }
 
         .overlay-block:hover {
@@ -371,37 +372,65 @@
             z-index: 3;
         }
 
-        /* 1~9 抽號機樣式 */
+        /* 1~9 抽號機樣式（精巧版，凸顯左側大九宮格） */
         .lottery-machine {
-            width: 220px;
+            width: 168px;
             background: rgba(255, 255, 255, 0.16);
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 234, 167, 0.45);
-            border-radius: 20px;
-            padding: 16px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+            border-radius: 18px;
+            padding: 12px 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
+        .lottery-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
         .lottery-title {
-            font-size: 1.15rem;
+            font-size: 0.95rem;
             font-weight: bold;
             color: #ffeaa7;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .lottery-sound-btn {
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            padding: 0;
+        }
+
+        .lottery-sound-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
         }
 
         .lottery-screen {
-            width: 116px;
-            height: 116px;
-            border-radius: 18px;
+            width: 82px;
+            height: 82px;
+            border-radius: 14px;
             background: linear-gradient(145deg, #2d3436, #1e272e);
-            border: 4px solid #ffeaa7;
-            box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(253, 203, 110, 0.35);
+            border: 3px solid #ffeaa7;
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(253, 203, 110, 0.35);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -410,40 +439,41 @@
 
         .lottery-screen.rolling {
             border-color: #74b9ff;
-            box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 22px rgba(116, 185, 255, 0.75);
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5), 0 0 18px rgba(116, 185, 255, 0.8);
         }
 
         .lottery-screen.landed {
             border-color: #55efc4;
             transform: scale(1.06);
-            box-shadow: inset 0 4px 14px rgba(0, 0, 0, 0.4), 0 0 24px rgba(85, 239, 196, 0.85);
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 20px rgba(85, 239, 196, 0.85);
         }
 
         .lottery-number {
-            font-size: 4rem;
+            font-size: 2.9rem;
             font-weight: bold;
             color: #ffeaa7;
             line-height: 1;
-            text-shadow: 0 3px 10px rgba(255, 234, 167, 0.45);
+            text-shadow: 0 2px 8px rgba(255, 234, 167, 0.45);
         }
 
         .lottery-status {
-            font-size: 0.9rem;
+            font-size: 0.78rem;
             color: #f1f2f6;
             background: rgba(0, 0, 0, 0.22);
-            padding: 4px 12px;
+            padding: 3px 8px;
             border-radius: 999px;
             text-align: center;
-            min-height: 26px;
+            min-height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
+            width: 100%;
         }
 
         .lottery-dots {
             display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            gap: 3px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
             width: 100%;
         }
 
@@ -452,7 +482,7 @@
             border-radius: 6px;
             background: rgba(255, 255, 255, 0.25);
             color: #fff;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -469,16 +499,16 @@
         .lottery-dot.active {
             background: #ffeaa7;
             color: #2d3436;
-            transform: scale(1.15);
+            transform: scale(1.08);
         }
 
         .lottery-btn {
             width: 100%;
             background: linear-gradient(135deg, #00b894, #00cec9);
             color: white;
-            font-size: 1.05rem;
-            padding: 10px 14px;
-            box-shadow: 0 4px 12px rgba(0, 184, 148, 0.4);
+            font-size: 0.92rem;
+            padding: 8px 10px;
+            box-shadow: 0 4px 10px rgba(0, 184, 148, 0.4);
         }
 
         .lottery-btn:hover:not(:disabled) {
@@ -499,16 +529,16 @@
 
         .block-number {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.2);
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.28);
             border-radius: 50%;
-            width: 24px;
-            height: 24px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 1.15rem;
         }
 
         .game-controls {
@@ -615,8 +645,8 @@
             }
 
             .game-container {
-                width: 280px;
-                height: 280px;
+                width: min(360px, 92vw);
+                height: min(360px, 92vw);
             }
             
             .header h1 {
@@ -710,7 +740,10 @@
 
     <!-- 1~9 號抽號機 -->
     <div class="lottery-machine" id="lotteryMachine">
-     <div class="lottery-title">🎰 1~9 抽號機</div>
+     <div class="lottery-header">
+      <div class="lottery-title">🎰 1~9 抽號機</div>
+      <button type="button" class="lottery-sound-btn" id="lotterySoundBtn" title="切換抽號音效">🔊</button>
+     </div>
      <div class="lottery-screen" id="lotteryScreen">
       <div class="lottery-number" id="lotteryNumber">?</div>
      </div>
@@ -772,6 +805,7 @@
         let isDrawing = false;
         let lotteryTimer = null;
         let lotteryAudioCtx = null;
+        let lotterySoundEnabled = true;
         const totalBlocks = 9;
 
         // DOM 元素選取
@@ -802,6 +836,7 @@
         const lotteryStatus = document.getElementById('lotteryStatus');
         const lotteryDots = document.getElementById('lotteryDots');
         const drawNumberBtn = document.getElementById('drawNumberBtn');
+        const lotterySoundBtn = document.getElementById('lotterySoundBtn');
 
         // ----- 事件綁定區 -----
 
@@ -825,6 +860,12 @@
         revealBtn.addEventListener('click', revealAll);
         btnNext.addEventListener('click', nextQuestion);
         drawNumberBtn.addEventListener('click', drawRandomNumber);
+        lotterySoundBtn.addEventListener('click', () => {
+            lotterySoundEnabled = !lotterySoundEnabled;
+            lotterySoundBtn.textContent = lotterySoundEnabled ? '🔊' : '🔇';
+            lotterySoundBtn.title = lotterySoundEnabled ? '抽號音效：開啟（點擊靜音）' : '抽號音效：靜音（點擊開啟）';
+            if (lotterySoundEnabled) playRollTick(4, 10);
+        });
 
         clearBtn.addEventListener('click', () => {
             if (confirm("確定要清空所有內容並回到初始畫面嗎？")) {
@@ -1018,22 +1059,81 @@
 
         // ----- 1~9 抽號機功能 -----
 
-        function playLotteryTone(freq, durationMs, type = 'sine', gainVal = 0.08) {
+        function ensureAudioCtx() {
+            if (!lotterySoundEnabled) return null;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+            if (!lotteryAudioCtx) lotteryAudioCtx = new AudioCtx();
+            if (lotteryAudioCtx.state === 'suspended') lotteryAudioCtx.resume();
+            return lotteryAudioCtx;
+        }
+
+        // 抽號滾動音效（清脆轉輪嗒嗒聲，音高隨進度漸升）
+        function playRollTick(stepIndex, totalSteps) {
             try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtx) return;
-                if (!lotteryAudioCtx) lotteryAudioCtx = new AudioCtx();
-                if (lotteryAudioCtx.state === 'suspended') lotteryAudioCtx.resume();
-                const osc = lotteryAudioCtx.createOscillator();
-                const gain = lotteryAudioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(gainVal, lotteryAudioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, lotteryAudioCtx.currentTime + durationMs / 1000);
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const baseFreq = 520 + (stepIndex / Math.max(1, totalSteps)) * 380;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(baseFreq, now);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, now + 0.045);
+                gain.gain.setValueAtTime(0.24, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
                 osc.connect(gain);
-                gain.connect(lotteryAudioCtx.destination);
-                osc.start();
-                osc.stop(lotteryAudioCtx.currentTime + durationMs / 1000);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.06);
+            } catch (e) {}
+        }
+
+        // 中獎定格音效（明亮三和弦叮咚聲）
+        function playLandFanfare() {
+            try {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const notes = [
+                    { freq: 523.25, start: 0.00, dur: 0.14 },
+                    { freq: 659.25, start: 0.07, dur: 0.14 },
+                    { freq: 783.99, start: 0.14, dur: 0.16 },
+                    { freq: 1046.5, start: 0.21, dur: 0.32 }
+                ];
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.freq, now + n.start);
+                    gain.gain.setValueAtTime(0.28, now + n.start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + n.start);
+                    osc.stop(now + n.start + n.dur + 0.02);
+                });
+            } catch (e) {}
+        }
+
+        // 格子翻開音效（輕快啵一聲）
+        function playRevealPop() {
+            try {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(360, now);
+                osc.frequency.exponentialRampToValueAtTime(760, now + 0.09);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.11);
             } catch (e) {}
         }
 
@@ -1132,7 +1232,7 @@
                     const dot = document.getElementById(`lottery-dot-${previewNum}`);
                     if (blk) blk.classList.add('rolling-highlight');
                     if (dot) dot.classList.add('active');
-                    playLotteryTone(420 + stepIndex * 35, 45, 'triangle', 0.05);
+                    playRollTick(stepIndex, steps.length);
 
                     const delay = steps[stepIndex];
                     stepIndex++;
@@ -1146,16 +1246,15 @@
                     const dot = document.getElementById(`lottery-dot-${picked}`);
                     if (blk) blk.classList.add('rolling-highlight');
                     if (dot) dot.classList.add('active');
-                    lotteryStatus.textContent = `🎉 抽出 ${picked} 號！打開第 ${picked} 格`;
-                    playLotteryTone(784, 140, 'sine', 0.1);
-                    setTimeout(() => playLotteryTone(1046, 200, 'sine', 0.1), 110);
+                    lotteryStatus.textContent = `🎉 抽出 ${picked} 號！`;
+                    playLandFanfare();
 
                     lotteryTimer = setTimeout(() => {
                         clearRollingHighlights();
                         isDrawing = false;
                         lotteryTimer = null;
                         revealBlock(picked, true);
-                    }, 260);
+                    }, 340);
                 }
             }
 
@@ -1276,7 +1375,8 @@
             if (block && !block.classList.contains('clicked')) {
                 block.classList.add('clicked');
                 revealedBlocks.add(n);
-                syncLotteryUI(fromLottery ? `🎉 已抽出並打開 ${n} 號格` : null);
+                playRevealPop();
+                syncLotteryUI(fromLottery ? `🎉 已打開 ${n} 號格` : null);
 
                 if (revealedBlocks.size === totalBlocks) {
                     setTimeout(showCompletion, 500);
