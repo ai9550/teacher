@@ -36,7 +36,8 @@
             gap: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.2);
             width: 300px;
-            max-height: 90vh;
+            max-height: 92vh;
+            overflow-y: auto;
             transition: all 0.3s ease;
             z-index: 10;
             position: relative;
@@ -55,7 +56,7 @@
         .upload-container {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 220px;
         }
 
         /* 實際捲動區域 */
@@ -203,6 +204,24 @@
         .btn-edit:hover {
             background: #d63031;
             transform: translateY(-2px);
+        }
+
+        .btn-gallery {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
+        }
+
+        .btn-gallery:hover {
+            filter: brightness(1.06);
+            transform: translateY(-2px);
+        }
+
+        .btn-gallery:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
         }
         
         /* 清空按鈕 - 獨立定位 */
@@ -492,7 +511,7 @@
     <div class="panel-title">📝 題目設定</div>
     
     <div class="instruction">
-        <strong>使用說明：</strong>請上傳圖片作為題目，檔名即為答案提示 (例："蘋果.jpg")
+        <strong>使用說明：</strong>開啟時自動從「猜謎遊戲圖庫」隨機選出 10 張圖片開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
     </div>
 
     <!-- 隱藏的檔案輸入框 -->
@@ -508,14 +527,14 @@
             
             <div id="uploadPlaceholder" class="upload-placeholder">
                 <span class="upload-icon">🖼️</span><br>
-                尚未選擇圖片
+                正在載入猜謎遊戲圖庫...
             </div>
 
             <ul id="fileList" class="file-list">
                 <!-- 檔案列表會顯示在這裡 -->
             </ul>
             
-            <div id="maskedMessage" class="hidden" style="margin-top: 80px; font-style: italic;">
+            <div id="maskedMessage" class="hidden" style="margin-top: 50px; font-style: italic;">
                 🙈 遊戲進行中<br>圖片列表已隱藏
             </div>
         </div>
@@ -523,6 +542,10 @@
         <!-- 清空按鈕 -->
         <button type="button" id="clearBtn" class="btn-clear">🗑️ 清空重置</button>
     </div>
+
+    <button id="reloadGalleryBtn" class="action-btn btn-gallery">
+        <span>🎲 重新隨機抽 10 張圖庫</span>
+    </button>
 
     <button id="startBtn" class="action-btn btn-start">
         <span>▶️ 開始遊戲</span>
@@ -565,15 +588,46 @@
   </div>
 
   <script>
+        // 遊戲圖庫設定（GitHub: ai9550/teacher/猜謎遊戲圖庫）
+        const GALLERY_CONFIG = {
+            owner: 'ai9550',
+            repo: 'teacher',
+            branch: 'main',
+            folder: '猜謎遊戲圖庫',
+            pickCount: 10
+        };
+        const IMAGE_EXT_REGEX = /\.(jpe?g|png|gif|webp|bmp|svg)$/i;
+        // 若 GitHub API 連線受限或離線時的備用清單
+        const FALLBACK_GALLERY_FILES = [
+            "bah010018.jpg",
+            "bah010029.jpg",
+            "bah010036.jpg",
+            "bah010039.jpg",
+            "bah010092.JPG",
+            "bah010103.JPG",
+            "bah010147.JPG",
+            "bah020046.jpg",
+            "bah020075.jpg",
+            "bah020163.jpg",
+            "bah020249.jpg",
+            "bah020287.jpg",
+            "bah020435.jpg",
+            "bah020495.JPG",
+            "bah020618.JPG",
+            "bah020643.JPG"
+        ];
+
         // 遊戲狀態
-        let gameData = []; 
+        let galleryPool = [];
+        let isGalleryMode = false;
+        let gameData = [];
         let currentIndex = 0;
         let shuffledIndices = [];
         let revealedBlocks = new Set();
         let isTransitioning = false;
         const totalBlocks = 9;
 
-        // DOM 元素選取 (確保 DOM 載入後可存取)
+        // DOM 元素選取
         const uploadArea = document.getElementById('uploadArea');
         const uploadPlaceholder = document.getElementById('uploadPlaceholder');
         const fileList = document.getElementById('fileList');
@@ -581,86 +635,174 @@
         const imageInput = document.getElementById('imageInput');
         const clearBtn = document.getElementById('clearBtn');
         const uploadTriggerBtn = document.getElementById('uploadTriggerBtn');
-        
+        const reloadGalleryBtn = document.getElementById('reloadGalleryBtn');
+
         const gameArea = document.getElementById('gameArea');
         const controlPanel = document.getElementById('controlPanel');
         const editBtn = document.getElementById('editBtn');
         const startBtn = document.getElementById('startBtn');
         const gameStatus = document.getElementById('gameStatus');
-        
+
         const grid = document.getElementById('grid');
         const gameImage = document.getElementById('gameImage');
         const msgBox = document.getElementById('completionMessage');
-        
+
         const resetRoundBtn = document.getElementById('resetRoundBtn');
         const revealBtn = document.getElementById('revealBtn');
         const btnNext = document.getElementById('btnNext');
 
         // ----- 事件綁定區 -----
 
-        // 1. 上傳按鈕觸發
         uploadTriggerBtn.addEventListener('click', () => {
             imageInput.click();
         });
 
-        // 2. 檔案選擇變更
         imageInput.addEventListener('change', (e) => {
             handleFiles(e.target.files);
         });
 
-        // 3. 開始遊戲
         startBtn.addEventListener('click', startGame);
 
-        // 4. 修改題目 (編輯模式)
+        reloadGalleryBtn.addEventListener('click', () => {
+            loadRandomGalleryImages(true, true);
+        });
+
         editBtn.addEventListener('click', enableEditing);
 
-        // 5. 遊戲內按鈕
         resetRoundBtn.addEventListener('click', resetCurrentRound);
         revealBtn.addEventListener('click', revealAll);
         btnNext.addEventListener('click', nextQuestion);
 
-        // 6. 清空重置按鈕 (最關鍵的功能)
         clearBtn.addEventListener('click', () => {
             if (confirm("確定要清空所有內容並回到初始畫面嗎？")) {
                 fullReset();
             }
         });
 
+        // ----- 圖庫載入與隨機抽取函式 -----
+
+        function getRepoInfo() {
+            const hostname = window.location.hostname || '';
+            const pathname = window.location.pathname || '';
+            if (hostname.includes('github.io')) {
+                const parts = pathname.split('/').filter(Boolean);
+                if (parts.length > 0) {
+                    return { owner: hostname.split('.')[0], repo: parts[0] };
+                }
+            }
+            return { owner: GALLERY_CONFIG.owner, repo: GALLERY_CONFIG.repo };
+        }
+
+        function buildGalleryItem(fileName, downloadUrl) {
+            const repoInfo = getRepoInfo();
+            const folderEncoded = encodeURIComponent(GALLERY_CONFIG.folder);
+            const fileEncoded = encodeURIComponent(fileName);
+            const localSrc = `./${folderEncoded}/${fileEncoded}`;
+            const rawSrc = downloadUrl || `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/${GALLERY_CONFIG.branch}/${folderEncoded}/${fileEncoded}`;
+            return {
+                src: localSrc,
+                fallbackSrc: rawSrc,
+                name: fileName.replace(/\.[^/.]+$/, "")
+            };
+        }
+
+        function shuffleArray(arr) {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        async function fetchGalleryPool(forceRefresh = false) {
+            if (!forceRefresh && galleryPool.length > 0) {
+                return galleryPool;
+            }
+            const repoInfo = getRepoInfo();
+            const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${encodeURIComponent(GALLERY_CONFIG.folder)}?ref=${GALLERY_CONFIG.branch}`;
+            try {
+                const res = await fetch(apiUrl, { cache: 'no-cache' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const items = await res.json();
+                if (Array.isArray(items)) {
+                    const images = items
+                        .filter(item => item.type === 'file' && IMAGE_EXT_REGEX.test(item.name))
+                        .map(item => buildGalleryItem(item.name, item.download_url));
+                    if (images.length > 0) {
+                        galleryPool = images;
+                        return galleryPool;
+                    }
+                }
+            } catch (err) {
+                console.warn('讀取 GitHub 猜謎遊戲圖庫失敗，切換至備用清單:', err);
+            }
+            galleryPool = FALLBACK_GALLERY_FILES.map(name => buildGalleryItem(name));
+            return galleryPool;
+        }
+
+        async function loadRandomGalleryImages(autoStart = true, forceRefresh = false) {
+            reloadGalleryBtn.disabled = true;
+            reloadGalleryBtn.innerHTML = '<span>⏳ 正在抽取圖庫...</span>';
+            if (gameData.length === 0) {
+                uploadPlaceholder.innerHTML = '<span class="upload-icon">⏳</span><br>正在從猜謎遊戲圖庫<br>隨機載入 10 張圖片...';
+                uploadPlaceholder.style.display = 'block';
+            }
+
+            try {
+                const pool = await fetchGalleryPool(forceRefresh);
+                if (pool.length === 0) {
+                    uploadPlaceholder.innerHTML = '<span class="upload-icon">🖼️</span><br>圖庫目前沒有圖片<br>請自行上傳圖片';
+                    return;
+                }
+                const count = Math.min(GALLERY_CONFIG.pickCount, pool.length);
+                gameData = shuffleArray(pool).slice(0, count);
+                isGalleryMode = true;
+                updateFileListUI();
+                gameStatus.textContent = `遊戲進行中（從圖庫 ${pool.length} 張中隨機選出 ${count} 張）`;
+
+                if (autoStart) {
+                    startGame();
+                }
+            } finally {
+                reloadGalleryBtn.disabled = false;
+                reloadGalleryBtn.innerHTML = '<span>🎲 重新隨機抽 10 張圖庫</span>';
+            }
+        }
+
         // ----- 功能函式區 -----
 
-        // 強制重置回到初始畫面
         function fullReset() {
-            // 清空數據
             gameData = [];
+            isGalleryMode = false;
             imageInput.value = '';
-            
-            // 重置 UI
+
             fileList.innerHTML = '';
+            uploadPlaceholder.innerHTML = '<span class="upload-icon">🖼️</span><br>尚未選擇圖片';
             uploadPlaceholder.style.display = 'block';
-            clearBtn.style.display = 'none'; // 隱藏清空按鈕
-            
-            // 確保回到設定模式
+            clearBtn.style.display = 'none';
+
             uploadArea.classList.remove('masked');
             maskedMessage.classList.add('hidden');
             uploadTriggerBtn.style.display = 'inline-block';
-            
-            // 重置右側按鈕狀態
+
             startBtn.classList.remove('hidden');
             gameStatus.classList.add('hidden');
+            gameStatus.textContent = '遊戲進行中...';
             editBtn.classList.add('hidden');
-            
-            // 隱藏遊戲區域
+
             gameArea.classList.add('hidden');
-            
-            // 重置遊戲變數
+
             currentIndex = 0;
             shuffledIndices = [];
             revealedBlocks.clear();
         }
 
-        // 處理檔案上傳
         function handleFiles(files) {
             if (files.length === 0) return;
+
+            isGalleryMode = false;
+            gameStatus.textContent = '遊戲進行中...';
 
             Array.from(files).forEach(file => {
                 if (file.type.startsWith('image/')) {
@@ -679,33 +821,34 @@
             imageInput.value = '';
         }
 
-        // 更新檔案列表 UI
         function updateFileListUI() {
             fileList.innerHTML = '';
-            
+
             if (gameData.length === 0) {
                 uploadPlaceholder.style.display = 'block';
                 clearBtn.style.display = 'none';
             } else {
                 uploadPlaceholder.style.display = 'none';
-                clearBtn.style.display = 'block'; // 顯示清空按鈕
-                
+                clearBtn.style.display = 'block';
+
                 gameData.forEach((item, index) => {
                     const li = document.createElement('li');
                     li.className = 'file-item';
-                    li.innerHTML = `
-                        <span class="file-count-badge">${index + 1}</span>
-                        <span>${item.name}</span>
-                    `;
+                    const badge = document.createElement('span');
+                    badge.className = 'file-count-badge';
+                    badge.textContent = index + 1;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = item.name;
+                    li.appendChild(badge);
+                    li.appendChild(nameSpan);
                     fileList.appendChild(li);
                 });
             }
         }
 
-        // 初始化網格
         function initGrid() {
             grid.innerHTML = '';
-            for(let i=1; i<=9; i++) {
+            for (let i = 1; i <= 9; i++) {
                 const div = document.createElement('div');
                 div.className = `overlay-block block-${i}`;
                 div.onclick = () => revealBlock(i);
@@ -714,38 +857,36 @@
             }
         }
 
-        // 開始遊戲
         function startGame() {
             if (gameData.length === 0) {
-                alert("請先上傳至少一張圖片！");
+                alert("請先上傳至少一張圖片，或點選「重新隨機抽 10 張圖庫」！");
                 return;
             }
 
             uploadArea.classList.add('masked');
             uploadPlaceholder.style.display = 'none';
-            fileList.style.display = 'none'; 
+            fileList.style.display = 'none';
             maskedMessage.classList.remove('hidden');
-            uploadTriggerBtn.style.display = 'none'; 
+            uploadTriggerBtn.style.display = 'none';
 
             startBtn.classList.add('hidden');
             gameStatus.classList.remove('hidden');
             editBtn.classList.remove('hidden');
-            clearBtn.style.display = 'none'; // 遊戲中隱藏清空按鈕
+            clearBtn.style.display = 'none';
 
             gameArea.classList.remove('hidden');
-            
-            if(window.innerWidth <= 768) {
-                gameArea.scrollIntoView({behavior: 'smooth'});
+
+            if (window.innerWidth <= 768) {
+                gameArea.scrollIntoView({ behavior: 'smooth' });
             }
 
             initGrid();
             initializeRandomOrder();
         }
 
-        // 啟用編輯模式
         function enableEditing() {
             gameArea.classList.add('hidden');
-            
+
             uploadArea.classList.remove('masked');
             fileList.style.display = 'block';
             maskedMessage.classList.add('hidden');
@@ -758,18 +899,18 @@
             startBtn.classList.remove('hidden');
             gameStatus.classList.add('hidden');
             editBtn.classList.add('hidden');
-            
+
             if (gameData.length > 0) {
                 clearBtn.style.display = 'block';
             }
-            
-            if(window.innerWidth <= 768) {
-                controlPanel.scrollIntoView({behavior: 'smooth'});
+
+            if (window.innerWidth <= 768) {
+                controlPanel.scrollIntoView({ behavior: 'smooth' });
             }
         }
 
         function initializeRandomOrder() {
-            shuffledIndices = Array.from({length: gameData.length}, (_, i) => i);
+            shuffledIndices = Array.from({ length: gameData.length }, (_, i) => i);
             for (let i = shuffledIndices.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
@@ -800,18 +941,29 @@
             }
         }
 
+        function applyImageWithFallback(imgEl, data) {
+            imgEl.onerror = null;
+            if (data.fallbackSrc && data.fallbackSrc !== data.src) {
+                imgEl.onerror = function() {
+                    imgEl.onerror = null;
+                    imgEl.src = data.fallbackSrc;
+                };
+            }
+            imgEl.src = data.src;
+        }
+
         function updateImage() {
             const data = gameData[shuffledIndices[currentIndex]];
-            gameImage.src = data.src;
+            applyImageWithFallback(gameImage, data);
             gameImage.style.display = 'block';
 
-            document.getElementById('questionCounter').textContent = 
+            document.getElementById('questionCounter').textContent =
                 `(第 ${currentIndex + 1} 題 / 共 ${gameData.length} 題)`;
         }
 
         function revealBlock(n) {
             if (isTransitioning) return;
-            
+
             const block = document.querySelector(`.block-${n}`);
             if (block && !block.classList.contains('clicked')) {
                 block.classList.add('clicked');
@@ -824,9 +976,9 @@
         }
 
         function revealAll() {
-            for(let i=1; i<=9; i++) {
+            for (let i = 1; i <= 9; i++) {
                 const block = document.querySelector(`.block-${i}`);
-                if(block) block.classList.add('clicked');
+                if (block) block.classList.add('clicked');
                 revealedBlocks.add(i);
             }
             setTimeout(showCompletion, 300);
@@ -844,7 +996,13 @@
 
             currentIndex++;
             if (currentIndex >= gameData.length) {
-                if(confirm("題目已全部完成！要重新開始嗎？")) {
+                if (isGalleryMode) {
+                    if (confirm("10 題已全部完成！要從猜謎遊戲圖庫再隨機抽出 10 張新題目嗎？")) {
+                        loadRandomGalleryImages(true, false);
+                    } else {
+                        currentIndex = gameData.length - 1;
+                    }
+                } else if (confirm("題目已全部完成！要重新開始嗎？")) {
                     initializeRandomOrder();
                 } else {
                     currentIndex = gameData.length - 1;
@@ -859,14 +1017,16 @@
             msgBox.innerHTML = `
                 <h2>🎉 答對了！</h2>
                 <div style="margin: 10px 0;">
-                    <img src="${data.src}" class="preview-img-small">
-                    <div style="font-size: 1.5rem; color: #2d3436; font-weight: bold;">${data.name}</div>
+                    <img class="preview-img-small" alt="答案圖片">
+                    <div class="answer-name" style="font-size: 1.5rem; color: #2d3436; font-weight: bold;"></div>
                 </div>
                 <div>
                     <button class="btn btn-primary" onclick="resetCurrentRound()">再玩一次</button>
                     <button class="btn btn-secondary" onclick="nextQuestion()">下一題 ➡️</button>
                 </div>
             `;
+            applyImageWithFallback(msgBox.querySelector('.preview-img-small'), data);
+            msgBox.querySelector('.answer-name').textContent = data.name;
             msgBox.classList.add('show');
         }
 
@@ -883,6 +1043,11 @@
             }
             if (key === 'n' || key === 'N') nextQuestion();
             if (key === 'r' || key === 'R') resetCurrentRound();
+        });
+
+        // 頁面載入後自動從「猜謎遊戲圖庫」隨機選出 10 張圖片開始遊戲
+        window.addEventListener('DOMContentLoaded', () => {
+            loadRandomGalleryImages(true, false);
         });
   </script>
  </body>
