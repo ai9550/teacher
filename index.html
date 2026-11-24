@@ -271,6 +271,38 @@
             border-radius: 20px;
         }
 
+        .card-has-preview {
+            gap: 6px;
+            padding-bottom: 12px;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .card-preview {
+            width: 72px;
+            height: 45px;
+            max-width: 100%;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 143, 217, 0.3);
+            background: #f3f6fb;
+            flex-shrink: 0;
+        }
+
+        .card-preview img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+
         .card-name {
             font-weight: 700;
             font-size: 1.02em;
@@ -350,6 +382,10 @@
             .card-grid {
                 grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
                 gap: 16px;
+            }
+            .card-preview {
+                width: 54px;
+                height: 34px;
             }
         }
 
@@ -520,6 +556,7 @@
             "數學拔河大賽二位數減法大象.html",
             "數學拔河大賽加減法.html",
             "數學拔河大賽除法.html",
+            "數學除法夜戰月光城堡.html",
             "文字雲展示.html",
             "文字雲投稿.html",
             "考試儀表板可上傳.html",
@@ -588,6 +625,23 @@
             return btn;
         }
 
+        const MATH_PREVIEWS = {
+            "一位數加法小朋友下樓梯.html": "math-previews/add-1d-stairs.jpg",
+            "九九乘法小朋友下樓梯.html": "math-previews/mul-99-stairs.jpg",
+            "二位數減法小朋友下樓梯.html": "math-previews/sub-2d-stairs.jpg",
+            "二位數直式減法.html": "math-previews/sub-2d-vertical.jpg",
+            "三位數直式減法計算練習.html": "math-previews/sub-3d-vertical.jpg",
+            "三位數除以一位數直式除法.html": "math-previews/div-3d-vertical.jpg",
+            "數學二位數減法平板比賽.html": "math-previews/sub-2d-tablet.jpg",
+            "數學拔河大賽18以內加法大象.html": "math-previews/tug-add-18.jpg",
+            "數學拔河大賽二位數加法大象.html": "math-previews/tug-add-2d.jpg",
+            "數學拔河大賽二位數減法大象.html": "math-previews/tug-sub-2d.jpg",
+            "數學拔河大賽乘法大象.html": "math-previews/tug-mul.jpg",
+            "數學拔河大賽加減法.html": "math-previews/tug-add-sub.jpg",
+            "數學拔河大賽除法.html": "math-previews/tug-div.jpg",
+            "數學除法夜戰月光城堡.html": "math-previews/div-night-castle.jpg"
+        };
+
         function renderCards() {
             const loadingDiv = document.getElementById('loading');
             const contentDiv = document.getElementById('content');
@@ -620,12 +674,25 @@
                 a.style.animationDelay = `${index * 0.03}s`;
 
                 const displayName = file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name === '大富翁遊戲翰林三上數學5-10單元.html' ? '大富翁遊戲翰林三上數學5-10單元' : file.name.replace(/\.html$/i, '');
+                const previewSrc = file.categoryId === 'math' ? MATH_PREVIEWS[file.name] : null;
 
-                a.innerHTML = `
-                    <span class="card-tag">${cat.icon} ${cat.name}</span>
-                    <div class="card-name">${displayName}</div>
-                    <span class="card-go">開始遊戲 ▶</span>
-                `;
+                if (previewSrc) {
+                    a.classList.add('card-has-preview');
+                    a.innerHTML = `
+                        <span class="card-tag">${cat.icon} ${cat.name}</span>
+                        <div class="card-name">${displayName}</div>
+                        <div class="card-footer">
+                            <div class="card-preview"><img src="${previewSrc}" alt="${displayName} 預覽畫面" loading="lazy"></div>
+                            <span class="card-go">開始遊戲 ▶</span>
+                        </div>
+                    `;
+                } else {
+                    a.innerHTML = `
+                        <span class="card-tag">${cat.icon} ${cat.name}</span>
+                        <div class="card-name">${displayName}</div>
+                        <span class="card-go">開始遊戲 ▶</span>
+                    `;
+                }
                 grid.appendChild(a);
             });
 
