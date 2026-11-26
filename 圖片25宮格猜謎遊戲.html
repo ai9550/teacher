@@ -1,0 +1,1410 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圖片25宮格猜謎遊戲</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+            gap: 30px;
+            box-sizing: border-box;
+        }
+
+        /* 左側控制區 */
+        .control-panel {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            width: 250px;
+            max-height: 94vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            z-index: 10;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-align: center;
+            color: #ffeaa7;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin-bottom: 5px;
+        }
+
+        /* 上傳區塊容器 - 用於定位 */
+        .upload-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+        }
+
+        /* 實際捲動區域 */
+        .upload-area {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            /* 預留底部空間給浮動按鈕，避免內容被擋住 */
+            padding-bottom: 60px; 
+            border: 2px dashed #b2bec3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow-y: auto; /* 只有這裡捲動 */
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .upload-placeholder {
+            margin-top: 60px;
+            text-align: center;
+            color: #636e72;
+            pointer-events: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        /* 檔案列表樣式 */
+        .file-list {
+            width: 100%;
+            list-style: none;
+            width: 100%;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            background: #f1f2f6;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #2d3436;
+        }
+
+        .file-item span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .file-count-badge {
+            background: #6c5ce7;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        /* 隱藏原生 input */
+        #imageInput {
+            display: none;
+        }
+
+        /* 遊戲進行中，遮罩樣式 */
+        .upload-area.masked {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255,255,255,0.8);
+            justify-content: center;
+            pointer-events: none;
+            border-style: solid;
+        }
+        
+        .masked .file-list, .masked .btn-upload-trigger {
+            display: none;
+        }
+
+        .instruction {
+            font-size: 0.9rem;
+            color: #dfe6e9;
+            line-height: 1.4;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-upload-trigger {
+            background: #ffeaa7;
+            color: #2d3436;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-upload-trigger:hover {
+            background: #fdcb6e;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            color: #2d3436;
+            box-shadow: 0 4px 10px rgba(253, 203, 110, 0.3);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(253, 203, 110, 0.5);
+        }
+
+        .btn-edit {
+            background: #ff7675;
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(214, 48, 49, 0.3);
+        }
+
+        .btn-edit:hover {
+            background: #d63031;
+            transform: translateY(-2px);
+        }
+
+        .btn-gallery {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3);
+        }
+
+        .btn-gallery:hover {
+            filter: brightness(1.06);
+            transform: translateY(-2px);
+        }
+
+        .btn-gallery:disabled {
+            opacity: 0.65;
+            cursor: wait;
+            transform: none;
+        }
+        
+        /* 清空按鈕 - 獨立定位 */
+        .btn-clear {
+            position: absolute; /* 相對於 upload-container 定位 */
+            bottom: 15px;
+            right: 15px;
+            background: #dfe6e9;
+            border: 1px solid #b2bec3;
+            color: #636e72;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            z-index: 9999; /* 給予極高層級確保可點擊 */
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            display: none; /* 預設隱藏 */
+        }
+        .btn-clear:hover {
+            background: #d63031;
+            color: white;
+            border-color: #d63031;
+            transform: translateY(-1px);
+        }
+        .btn-clear:active {
+            transform: translateY(1px);
+        }
+
+        /* 右側遊戲區 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            max-width: 960px;
+            transition: opacity 0.3s ease;
+        }
+
+        .game-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 6px auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .question-counter {
+            color: #ffeaa7;
+            font-weight: bold;
+            font-size: 1.15rem;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .game-container {
+            position: relative;
+            width: min(560px, 68vh, 90vw);
+            height: min(560px, 68vh, 90vw);
+            margin: 0;
+            flex-shrink: 0;
+            border-radius: 24px;
+            box-shadow: 0 14px 36px rgba(0,0,0,0.35);
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 圖片顯示區 */
+        .game-image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f6fa;
+        }
+
+        #gameImage {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* 放大填滿且確保整張圖片完整可見 */
+            display: none; /* 載入後才顯示 */
+        }
+
+        .overlay-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 0;
+            z-index: 5;
+        }
+
+        .overlay-block {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.88rem, 1.6vw, 1.2rem);
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 2px 4px rgba(0,0,0,0.35);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.18);
+        }
+
+        .overlay-block:hover {
+            filter: brightness(1.1);
+            z-index: 2;
+        }
+
+        .overlay-block:active {
+            transform: scale(0.95);
+        }
+
+        .overlay-block.clicked {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.8);
+        }
+
+        .overlay-block.rolling-highlight {
+            box-shadow: inset 0 0 0 4px #fff, 0 0 18px rgba(255, 234, 167, 0.95);
+            filter: brightness(1.22);
+            z-index: 3;
+        }
+
+        /* 1~25 抽號機樣式（精巧版，凸顯左側大二十五宮格） */
+        .lottery-machine {
+            width: 196px;
+            background: rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 234, 167, 0.45);
+            border-radius: 18px;
+            padding: 12px 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .lottery-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .lottery-title {
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #ffeaa7;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+        }
+
+        .lottery-sound-btn {
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            padding: 0;
+        }
+
+        .lottery-sound-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .lottery-screen {
+            width: 82px;
+            height: 82px;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #2d3436, #1e272e);
+            border: 3px solid #ffeaa7;
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(253, 203, 110, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .lottery-screen.rolling {
+            border-color: #74b9ff;
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.5), 0 0 18px rgba(116, 185, 255, 0.8);
+        }
+
+        .lottery-screen.landed {
+            border-color: #55efc4;
+            transform: scale(1.06);
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.4), 0 0 20px rgba(85, 239, 196, 0.85);
+        }
+
+        .lottery-number {
+            font-size: 2.55rem;
+            font-weight: bold;
+            color: #ffeaa7;
+            line-height: 1;
+            text-shadow: 0 2px 8px rgba(255, 234, 167, 0.45);
+        }
+
+        .lottery-status {
+            font-size: 0.78rem;
+            color: #f1f2f6;
+            background: rgba(0, 0, 0, 0.22);
+            padding: 3px 8px;
+            border-radius: 999px;
+            text-align: center;
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .lottery-dots {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+            width: 100%;
+        }
+
+        .lottery-dot {
+            height: 21px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.25);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .lottery-dot.opened {
+            background: rgba(0, 0, 0, 0.28);
+            color: rgba(255, 255, 255, 0.35);
+            text-decoration: line-through;
+        }
+
+        .lottery-dot.active {
+            background: #ffeaa7;
+            color: #2d3436;
+            transform: scale(1.08);
+        }
+
+        .lottery-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            font-size: 0.92rem;
+            padding: 8px 10px;
+            box-shadow: 0 4px 10px rgba(0, 184, 148, 0.4);
+        }
+
+        .lottery-btn:hover:not(:disabled) {
+            filter: brightness(1.08);
+            transform: translateY(-2px);
+        }
+
+        /* 二十五宮格顏色（5x5） */
+        .block-1  { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+        .block-2  { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+        .block-3  { background: linear-gradient(135deg, #ffeaa7, #fdcb6e); }
+        .block-4  { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+        .block-5  { background: linear-gradient(135deg, #fd79a8, #e84393); }
+        .block-6  { background: linear-gradient(135deg, #fab1a0, #e17055); }
+        .block-7  { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .block-8  { background: linear-gradient(135deg, #74b9ff, #0984e3); }
+        .block-9  { background: linear-gradient(135deg, #fdcb6e, #e17055); }
+        .block-10 { background: linear-gradient(135deg, #55efc4, #00b894); }
+        .block-11 { background: linear-gradient(135deg, #81ecec, #00cec9); }
+        .block-12 { background: linear-gradient(135deg, #ff9ff3, #f368e0); }
+        .block-13 { background: linear-gradient(135deg, #feca57, #ff9f43); }
+        .block-14 { background: linear-gradient(135deg, #54a0ff, #2e86de); }
+        .block-15 { background: linear-gradient(135deg, #5f27cd, #341f97); }
+        .block-16 { background: linear-gradient(135deg, #ff7675, #d63031); }
+        .block-17 { background: linear-gradient(135deg, #1dd1a1, #10ac84); }
+        .block-18 { background: linear-gradient(135deg, #48dbfb, #0abde3); }
+        .block-19 { background: linear-gradient(135deg, #f368e0, #be2edd); }
+        .block-20 { background: linear-gradient(135deg, #ff9f43, #ee5253); }
+        .block-21 { background: linear-gradient(135deg, #badc58, #6ab04c); }
+        .block-22 { background: linear-gradient(135deg, #7ed6df, #22a6b3); }
+        .block-23 { background: linear-gradient(135deg, #e056fd, #686de0); }
+        .block-24 { background: linear-gradient(135deg, #f6e58d, #f9ca24); }
+        .block-25 { background: linear-gradient(135deg, #ffbe76, #f0932b); }
+
+        .block-number {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.28);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-primary {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+        .btn-primary:hover { background: #fdcb6e; transform: translateY(-2px); }
+
+        .btn-secondary {
+            background: white;
+            color: #6c5ce7;
+        }
+        .btn-secondary:hover { background: #f1f2f6; transform: translateY(-2px); }
+
+        .btn-danger {
+            background: #ff7675;
+            color: white;
+        }
+        .btn-danger:hover { background: #d63031; transform: translateY(-2px); }
+
+
+        .completion-message {
+            background: rgba(46, 213, 115, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+            backdrop-filter: blur(5px);
+            display: none;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+
+        .completion-message.show {
+            display: block;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .preview-img-small {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            margin: 10px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* 狀態切換類別 */
+        .hidden {
+            display: none !important;
+        }
+
+        .disabled-area {
+            pointer-events: none;
+            opacity: 0.6;
+            background: rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                padding: 10px;
+                gap: 15px;
+            }
+
+            .control-panel {
+                width: 100%;
+                padding: 15px;
+            }
+            
+            .upload-container {
+                height: 200px;
+            }
+
+            .game-container {
+                width: min(360px, 92vw);
+                height: min(360px, 92vw);
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+        }
+    </style>
+   <style>
+    /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
+    .character, .char, .word, .vocab, .meaning, .question, .answer, .answer-char, .character-card, .overlay-char, .block, strong, b, .char-display, .word-display, .bingo-cell, .mole-char, .question-char, .stage0-char, .stage2-char, .hint-text, .question-text {
+        font-weight: normal !important;
+    }
+  </style>
+</head>
+ <body>
+  
+  <!-- 左側設定面板 -->
+  <div class="control-panel" id="controlPanel">
+    <div class="panel-title">📝 題目設定</div>
+    
+    <div class="instruction">
+        <strong>使用說明：</strong>開啟時自動載入 10 張原創繪本動物插畫開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
+    </div>
+
+    <!-- 隱藏的檔案輸入框 -->
+    <input type="file" id="imageInput" multiple accept="image/*">
+
+    <!-- 上傳區塊容器 -->
+    <div class="upload-container">
+        <!-- 實際捲動內容區 -->
+        <div id="uploadArea" class="upload-area">
+            <button class="btn-upload-trigger" id="uploadTriggerBtn">
+                📸 選擇/拍照上傳
+            </button>
+            
+            <div id="uploadPlaceholder" class="upload-placeholder">
+                <span class="upload-icon">🖼️</span><br>
+                正在載入原創動物圖庫...
+            </div>
+
+            <ul id="fileList" class="file-list">
+                <!-- 檔案列表會顯示在這裡 -->
+            </ul>
+            
+            <div id="maskedMessage" class="hidden" style="margin-top: 50px; font-style: italic;">
+                🙈 遊戲進行中<br>圖片列表已隱藏
+            </div>
+        </div>
+
+        <!-- 清空按鈕 -->
+        <button type="button" id="clearBtn" class="btn-clear">🗑️ 清空重置</button>
+    </div>
+
+    <button id="reloadGalleryBtn" class="action-btn btn-gallery">
+        <span>🐾 重新洗牌 10 張動物題</span>
+    </button>
+
+    <button id="startBtn" class="action-btn btn-start">
+        <span>▶️ 開始遊戲</span>
+    </button>
+
+    <div id="gameStatus" class="instruction hidden" style="text-align: center; background: rgba(0,0,0,0.4);">
+        遊戲進行中...
+    </div>
+
+    <button id="editBtn" class="action-btn btn-edit hidden">
+        <span>✏️ 修改題目 / 重新設定</span>
+    </button>
+  </div>
+
+  <!-- 右側遊戲區 -->
+  <div class="main-content hidden" id="gameArea">
+   <div class="header">
+    <h1>🎲 圖片二十五宮格猜謎</h1>
+    <span id="questionCounter" class="question-counter">(第 1 題 / 共 ? 題)</span>
+   </div>
+   
+   <div class="game-stage">
+    <div class="game-container">
+     <div class="game-image-container">
+         <img id="gameImage" src="" alt="題目圖片">
+     </div>
+     <div class="overlay-grid" id="grid">
+      <!-- 網格由 JS 生成 -->
+     </div>
+    </div>
+
+    <!-- 1~25 號抽號機 -->
+    <div class="lottery-machine" id="lotteryMachine">
+     <div class="lottery-header">
+      <div class="lottery-title">🎰 1~25 抽號機</div>
+      <button type="button" class="lottery-sound-btn" id="lotterySoundBtn" title="切換抽號音效">🔊</button>
+     </div>
+     <div class="lottery-screen" id="lotteryScreen">
+      <div class="lottery-number" id="lotteryNumber">?</div>
+     </div>
+     <div class="lottery-status" id="lotteryStatus">剩餘 25 格可抽</div>
+     <div class="lottery-dots" id="lotteryDots"></div>
+     <button type="button" class="btn lottery-btn" id="drawNumberBtn">🎲 抽號碼開格</button>
+    </div>
+   </div>
+
+   <div class="game-controls">
+    <button class="btn btn-danger" id="resetRoundBtn">🔄 重置本題</button>
+    <button class="btn btn-primary" id="revealBtn">👁️ 看答案</button>
+    <button class="btn btn-secondary" id="btnNext">🎲 下一題</button>
+   </div>
+
+   <div class="completion-message" id="completionMessage">
+    <!-- 完成訊息由 JS 生成 -->
+   </div>
+  </div>
+
+  <script>
+        // 原創繪本風 10 款動物題庫（不再使用原本的猜謎遊戲圖庫）
+        const CUSTOM_ANIMAL_GALLERY = [
+            { file: "01_elephant.jpg", name: "大象" },
+            { file: "02_giraffe.jpg",  name: "長頸鹿" },
+            { file: "03_panda.jpg",    name: "貓熊" },
+            { file: "04_lion.jpg",     name: "獅子" },
+            { file: "05_penguin.jpg",  name: "企鵝" },
+            { file: "06_rabbit.jpg",   name: "兔子" },
+            { file: "07_tiger.jpg",    name: "老虎" },
+            { file: "08_koala.jpg",    name: "無尾熊" },
+            { file: "09_dolphin.jpg",  name: "海豚" },
+            { file: "10_owl.jpg",      name: "貓頭鷹" }
+        ];
+        const ANIMAL_IMAGE_DIR = "animal-puzzle-images";
+
+        // 遊戲狀態
+        let galleryPool = [];
+        let isGalleryMode = false;
+        let gameData = [];
+        let currentIndex = 0;
+        let shuffledIndices = [];
+        let revealedBlocks = new Set();
+        let isTransitioning = false;
+        let isDrawing = false;
+        let lotteryTimer = null;
+        let lotteryAudioCtx = null;
+        let lotterySoundEnabled = true;
+        const totalBlocks = 25;
+
+        // DOM 元素選取
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const fileList = document.getElementById('fileList');
+        const maskedMessage = document.getElementById('maskedMessage');
+        const imageInput = document.getElementById('imageInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const uploadTriggerBtn = document.getElementById('uploadTriggerBtn');
+        const reloadGalleryBtn = document.getElementById('reloadGalleryBtn');
+
+        const gameArea = document.getElementById('gameArea');
+        const controlPanel = document.getElementById('controlPanel');
+        const editBtn = document.getElementById('editBtn');
+        const startBtn = document.getElementById('startBtn');
+        const gameStatus = document.getElementById('gameStatus');
+
+        const grid = document.getElementById('grid');
+        const gameImage = document.getElementById('gameImage');
+        const msgBox = document.getElementById('completionMessage');
+
+        const resetRoundBtn = document.getElementById('resetRoundBtn');
+        const revealBtn = document.getElementById('revealBtn');
+        const btnNext = document.getElementById('btnNext');
+        const lotteryScreen = document.getElementById('lotteryScreen');
+        const lotteryNumber = document.getElementById('lotteryNumber');
+        const lotteryStatus = document.getElementById('lotteryStatus');
+        const lotteryDots = document.getElementById('lotteryDots');
+        const drawNumberBtn = document.getElementById('drawNumberBtn');
+        const lotterySoundBtn = document.getElementById('lotterySoundBtn');
+
+        // ----- 事件綁定區 -----
+
+        uploadTriggerBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        startBtn.addEventListener('click', startGame);
+
+        reloadGalleryBtn.addEventListener('click', () => {
+            loadRandomGalleryImages(true, true);
+        });
+
+        editBtn.addEventListener('click', enableEditing);
+
+        resetRoundBtn.addEventListener('click', resetCurrentRound);
+        revealBtn.addEventListener('click', revealAll);
+        btnNext.addEventListener('click', nextQuestion);
+        drawNumberBtn.addEventListener('click', drawRandomNumber);
+        lotterySoundBtn.addEventListener('click', () => {
+            lotterySoundEnabled = !lotterySoundEnabled;
+            lotterySoundBtn.textContent = lotterySoundEnabled ? '🔊' : '🔇';
+            lotterySoundBtn.title = lotterySoundEnabled ? '抽號音效：開啟（點擊靜音）' : '抽號音效：靜音（點擊開啟）';
+            if (lotterySoundEnabled) playRollTick(4, 10);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            if (confirm("確定要清空所有內容並回到初始畫面嗎？")) {
+                fullReset();
+            }
+        });
+
+        // ----- 原創動物圖庫載入與隨機洗牌函式 -----
+
+        function buildAnimalItem(item) {
+            return {
+                src: `./${ANIMAL_IMAGE_DIR}/${item.file}`,
+                fallbackSrc: `https://raw.githubusercontent.com/ai9550/teacher/main/${ANIMAL_IMAGE_DIR}/${item.file}`,
+                name: item.name
+            };
+        }
+
+        function shuffleArray(arr) {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function loadRandomGalleryImages(autoStart = true) {
+            galleryPool = CUSTOM_ANIMAL_GALLERY.map(buildAnimalItem);
+            gameData = shuffleArray(galleryPool);
+            isGalleryMode = true;
+            updateFileListUI();
+            gameStatus.textContent = `遊戲進行中（原創繪本動物共 ${gameData.length} 題）`;
+            if (autoStart) {
+                startGame();
+            }
+        }
+
+        // ----- 功能函式區 -----
+
+        function fullReset() {
+            gameData = [];
+            isGalleryMode = false;
+            imageInput.value = '';
+
+            fileList.innerHTML = '';
+            uploadPlaceholder.innerHTML = '<span class="upload-icon">🖼️</span><br>尚未選擇圖片';
+            uploadPlaceholder.style.display = 'block';
+            clearBtn.style.display = 'none';
+
+            uploadArea.classList.remove('masked');
+            maskedMessage.classList.add('hidden');
+            uploadTriggerBtn.style.display = 'inline-block';
+
+            startBtn.classList.remove('hidden');
+            gameStatus.classList.add('hidden');
+            gameStatus.textContent = '遊戲進行中...';
+            editBtn.classList.add('hidden');
+
+            gameArea.classList.add('hidden');
+
+            currentIndex = 0;
+            shuffledIndices = [];
+            revealedBlocks.clear();
+            resetLotteryUI();
+        }
+
+        function handleFiles(files) {
+            if (files.length === 0) return;
+
+            isGalleryMode = false;
+            gameStatus.textContent = '遊戲進行中...';
+
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const name = file.name.replace(/\.[^/.]+$/, "");
+                        gameData.push({
+                            src: e.target.result,
+                            name: name
+                        });
+                        updateFileListUI();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            imageInput.value = '';
+        }
+
+        function updateFileListUI() {
+            fileList.innerHTML = '';
+
+            if (gameData.length === 0) {
+                uploadPlaceholder.style.display = 'block';
+                clearBtn.style.display = 'none';
+            } else {
+                uploadPlaceholder.style.display = 'none';
+                clearBtn.style.display = 'block';
+
+                gameData.forEach((item, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    const badge = document.createElement('span');
+                    badge.className = 'file-count-badge';
+                    badge.textContent = index + 1;
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = item.name;
+                    li.appendChild(badge);
+                    li.appendChild(nameSpan);
+                    fileList.appendChild(li);
+                });
+            }
+        }
+
+        function initGrid() {
+            grid.innerHTML = '';
+            for (let i = 1; i <= totalBlocks; i++) {
+                const div = document.createElement('div');
+                div.className = `overlay-block block-${i}`;
+                div.onclick = () => {
+                    if (isDrawing) return;
+                    revealBlock(i);
+                };
+                div.innerHTML = `<div class="block-number">${i}</div><div>點我</div>`;
+                grid.appendChild(div);
+            }
+            initLotteryDots();
+            resetLotteryUI();
+        }
+
+        // ----- 1~25 抽號機功能 -----
+
+        function ensureAudioCtx() {
+            if (!lotterySoundEnabled) return null;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+            if (!lotteryAudioCtx) lotteryAudioCtx = new AudioCtx();
+            if (lotteryAudioCtx.state === 'suspended') lotteryAudioCtx.resume();
+            return lotteryAudioCtx;
+        }
+
+        // 抽號滾動音效（清脆轉輪嗒嗒聲，音高隨進度漸升）
+        function playRollTick(stepIndex, totalSteps) {
+            try {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const baseFreq = 520 + (stepIndex / Math.max(1, totalSteps)) * 380;
+
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(baseFreq, now);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.25, now + 0.045);
+                gain.gain.setValueAtTime(0.24, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.06);
+            } catch (e) {}
+        }
+
+        // 中獎定格音效（明亮三和弦叮咚聲）
+        function playLandFanfare() {
+            try {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const notes = [
+                    { freq: 523.25, start: 0.00, dur: 0.14 },
+                    { freq: 659.25, start: 0.07, dur: 0.14 },
+                    { freq: 783.99, start: 0.14, dur: 0.16 },
+                    { freq: 1046.5, start: 0.21, dur: 0.32 }
+                ];
+                notes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.freq, now + n.start);
+                    gain.gain.setValueAtTime(0.28, now + n.start);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now + n.start);
+                    osc.stop(now + n.start + n.dur + 0.02);
+                });
+            } catch (e) {}
+        }
+
+        // 格子翻開音效（輕快啵一聲）
+        function playRevealPop() {
+            try {
+                const ctx = ensureAudioCtx();
+                if (!ctx) return;
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(360, now);
+                osc.frequency.exponentialRampToValueAtTime(760, now + 0.09);
+                gain.gain.setValueAtTime(0.22, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.11);
+            } catch (e) {}
+        }
+
+        function initLotteryDots() {
+            lotteryDots.innerHTML = '';
+            for (let i = 1; i <= totalBlocks; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'lottery-dot';
+                dot.id = `lottery-dot-${i}`;
+                dot.textContent = i;
+                lotteryDots.appendChild(dot);
+            }
+        }
+
+        function clearRollingHighlights() {
+            document.querySelectorAll('.overlay-block.rolling-highlight').forEach(el => {
+                el.classList.remove('rolling-highlight');
+            });
+            document.querySelectorAll('.lottery-dot.active').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+
+        function stopLotteryAnimation() {
+            if (lotteryTimer) {
+                clearTimeout(lotteryTimer);
+                lotteryTimer = null;
+            }
+            isDrawing = false;
+            lotteryScreen.classList.remove('rolling', 'landed');
+            clearRollingHighlights();
+        }
+
+        function syncLotteryUI(statusOverride = null) {
+            const remaining = [];
+            for (let i = 1; i <= totalBlocks; i++) {
+                const dot = document.getElementById(`lottery-dot-${i}`);
+                const isOpened = revealedBlocks.has(i);
+                if (dot) dot.classList.toggle('opened', isOpened);
+                if (!isOpened) remaining.push(i);
+            }
+
+            if (statusOverride) {
+                lotteryStatus.textContent = statusOverride;
+            } else if (remaining.length === 0) {
+                lotteryStatus.textContent = '全部 25 格已翻開';
+            } else {
+                lotteryStatus.textContent = `剩餘 ${remaining.length} 格可抽`;
+            }
+
+            if (!isDrawing) {
+                drawNumberBtn.disabled = remaining.length === 0 || isTransitioning;
+                drawNumberBtn.textContent = remaining.length === 0 ? '✅ 已全部翻開' : '🎲 抽號碼開格';
+            }
+        }
+
+        function resetLotteryUI() {
+            stopLotteryAnimation();
+            lotteryNumber.textContent = '?';
+            syncLotteryUI();
+        }
+
+        function drawRandomNumber() {
+            if (isDrawing || isTransitioning) return;
+
+            const remaining = [];
+            for (let i = 1; i <= totalBlocks; i++) {
+                if (!revealedBlocks.has(i)) remaining.push(i);
+            }
+            if (remaining.length === 0) {
+                syncLotteryUI();
+                return;
+            }
+
+            isDrawing = true;
+            drawNumberBtn.disabled = true;
+            drawNumberBtn.textContent = '🎰 抽號中...';
+            lotteryScreen.classList.remove('landed');
+            lotteryScreen.classList.add('rolling');
+            lotteryStatus.textContent = '正在隨機抽號...';
+
+            const picked = remaining[Math.floor(Math.random() * remaining.length)];
+
+            // 若只剩 1 格直接抽出，否則播放減速滾動動畫
+            const steps = remaining.length === 1 ? [120] : [45, 50, 55, 65, 75, 90, 110, 135, 165];
+            let stepIndex = 0;
+
+            function runStep() {
+                clearRollingHighlights();
+                if (stepIndex < steps.length) {
+                    const previewNum = remaining.length === 1
+                        ? picked
+                        : remaining[Math.floor(Math.random() * remaining.length)];
+                    lotteryNumber.textContent = previewNum;
+                    const blk = document.querySelector(`.block-${previewNum}`);
+                    const dot = document.getElementById(`lottery-dot-${previewNum}`);
+                    if (blk) blk.classList.add('rolling-highlight');
+                    if (dot) dot.classList.add('active');
+                    playRollTick(stepIndex, steps.length);
+
+                    const delay = steps[stepIndex];
+                    stepIndex++;
+                    lotteryTimer = setTimeout(runStep, delay);
+                } else {
+                    // 定格抽出最終號碼並自動打開該格
+                    lotteryNumber.textContent = picked;
+                    lotteryScreen.classList.remove('rolling');
+                    lotteryScreen.classList.add('landed');
+                    const blk = document.querySelector(`.block-${picked}`);
+                    const dot = document.getElementById(`lottery-dot-${picked}`);
+                    if (blk) blk.classList.add('rolling-highlight');
+                    if (dot) dot.classList.add('active');
+                    lotteryStatus.textContent = `🎉 抽出 ${picked} 號！`;
+                    playLandFanfare();
+
+                    lotteryTimer = setTimeout(() => {
+                        clearRollingHighlights();
+                        isDrawing = false;
+                        lotteryTimer = null;
+                        revealBlock(picked, true);
+                    }, 340);
+                }
+            }
+
+            runStep();
+        }
+
+        function startGame() {
+            if (gameData.length === 0) {
+                alert("請先上傳至少一張圖片，或點選「重新洗牌 10 張動物題」！");
+                return;
+            }
+
+            uploadArea.classList.add('masked');
+            uploadPlaceholder.style.display = 'none';
+            fileList.style.display = 'none';
+            maskedMessage.classList.remove('hidden');
+            uploadTriggerBtn.style.display = 'none';
+
+            startBtn.classList.add('hidden');
+            gameStatus.classList.remove('hidden');
+            editBtn.classList.remove('hidden');
+            clearBtn.style.display = 'none';
+
+            gameArea.classList.remove('hidden');
+
+            if (window.innerWidth <= 768) {
+                gameArea.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            initGrid();
+            initializeRandomOrder();
+        }
+
+        function enableEditing() {
+            stopLotteryAnimation();
+            gameArea.classList.add('hidden');
+
+            uploadArea.classList.remove('masked');
+            fileList.style.display = 'block';
+            maskedMessage.classList.add('hidden');
+            uploadTriggerBtn.style.display = 'inline-block';
+
+            if (gameData.length === 0) {
+                uploadPlaceholder.style.display = 'block';
+            }
+
+            startBtn.classList.remove('hidden');
+            gameStatus.classList.add('hidden');
+            editBtn.classList.add('hidden');
+
+            if (gameData.length > 0) {
+                clearBtn.style.display = 'block';
+            }
+
+            if (window.innerWidth <= 768) {
+                controlPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function initializeRandomOrder() {
+            shuffledIndices = Array.from({ length: gameData.length }, (_, i) => i);
+            for (let i = shuffledIndices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+            }
+            currentIndex = 0;
+            loadQuestion(false);
+        }
+
+        function loadQuestion(delayed = false) {
+            resetCurrentRound();
+            msgBox.classList.remove('show');
+            isTransitioning = true;
+
+            if (gameData.length === 0) return;
+
+            if (delayed) {
+                btnNext.disabled = true;
+                btnNext.innerText = "準備中...";
+                setTimeout(() => {
+                    updateImage();
+                    btnNext.disabled = false;
+                    btnNext.innerText = "🎲 下一題";
+                    isTransitioning = false;
+                    syncLotteryUI();
+                }, 1000);
+            } else {
+                updateImage();
+                isTransitioning = false;
+                syncLotteryUI();
+            }
+        }
+
+        function applyImageWithFallback(imgEl, data) {
+            imgEl.onerror = null;
+            if (data.fallbackSrc && data.fallbackSrc !== data.src) {
+                imgEl.onerror = function() {
+                    imgEl.onerror = null;
+                    imgEl.src = data.fallbackSrc;
+                };
+            }
+            imgEl.src = data.src;
+        }
+
+        function updateImage() {
+            const data = gameData[shuffledIndices[currentIndex]];
+            applyImageWithFallback(gameImage, data);
+            gameImage.style.display = 'block';
+
+            document.getElementById('questionCounter').textContent =
+                `(第 ${currentIndex + 1} 題 / 共 ${gameData.length} 題)`;
+        }
+
+        function revealBlock(n, fromLottery = false) {
+            if (isTransitioning) return;
+
+            const block = document.querySelector(`.block-${n}`);
+            if (block && !block.classList.contains('clicked')) {
+                block.classList.add('clicked');
+                revealedBlocks.add(n);
+                playRevealPop();
+                syncLotteryUI(fromLottery ? `🎉 已打開 ${n} 號格` : null);
+
+                if (revealedBlocks.size === totalBlocks) {
+                    setTimeout(showCompletion, 500);
+                }
+            } else if (fromLottery) {
+                syncLotteryUI();
+            }
+        }
+
+        function revealAll() {
+            stopLotteryAnimation();
+            for (let i = 1; i <= totalBlocks; i++) {
+                const block = document.querySelector(`.block-${i}`);
+                if (block) block.classList.add('clicked');
+                revealedBlocks.add(i);
+            }
+            syncLotteryUI();
+            setTimeout(showCompletion, 300);
+        }
+
+        function resetCurrentRound() {
+            revealedBlocks.clear();
+            const blocks = document.querySelectorAll('.overlay-block');
+            blocks.forEach(b => b.classList.remove('clicked'));
+            msgBox.classList.remove('show');
+            resetLotteryUI();
+        }
+
+        function nextQuestion() {
+            if (isTransitioning) return;
+
+            currentIndex++;
+            if (currentIndex >= gameData.length) {
+                if (isGalleryMode) {
+                    if (confirm("10 題動物猜謎已全部完成！要重新洗牌再玩一次嗎？")) {
+                        loadRandomGalleryImages(true, false);
+                    } else {
+                        currentIndex = gameData.length - 1;
+                    }
+                } else if (confirm("題目已全部完成！要重新開始嗎？")) {
+                    initializeRandomOrder();
+                } else {
+                    currentIndex = gameData.length - 1;
+                }
+            } else {
+                loadQuestion(true);
+            }
+        }
+
+        function showCompletion() {
+            const data = gameData[shuffledIndices[currentIndex]];
+            msgBox.innerHTML = `
+                <h2>🎉 答對了！</h2>
+                <div style="margin: 10px 0;">
+                    <img class="preview-img-small" alt="答案圖片">
+                    <div class="answer-name" style="font-size: 1.5rem; color: #2d3436; font-weight: bold;"></div>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="resetCurrentRound()">再玩一次</button>
+                    <button class="btn btn-secondary" onclick="nextQuestion()">下一題 ➡️</button>
+                </div>
+            `;
+            applyImageWithFallback(msgBox.querySelector('.preview-img-small'), data);
+            msgBox.querySelector('.answer-name').textContent = data.name;
+            msgBox.classList.add('show');
+        }
+
+        // 鍵盤支援
+        document.addEventListener('keydown', (e) => {
+            if (gameArea.classList.contains('hidden')) return;
+            if (isTransitioning) return;
+
+            const key = e.key;
+            if (key >= '1' && key <= '9') revealBlock(parseInt(key));
+            if (key === ' ' || key === 'Enter') {
+                e.preventDefault();
+                revealAll();
+            }
+            if (key === 'd' || key === 'D') drawRandomNumber();
+            if (key === 'n' || key === 'N') nextQuestion();
+            if (key === 'r' || key === 'R') resetCurrentRound();
+        });
+
+        // 頁面載入後自動載入 10 張原創動物插畫開始遊戲
+        window.addEventListener('DOMContentLoaded', () => {
+            loadRandomGalleryImages(true, false);
+        });
+  </script>
+ </body>
+</html>
