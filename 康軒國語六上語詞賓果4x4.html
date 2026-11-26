@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>康軒國語六上語詞賓果遊戲4x4</title>
+    <title>康軒國語六上語詞賓果4*4</title>
     <!-- 載入 Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 Google Fonts & Font Awesome -->
@@ -423,7 +423,7 @@
     <a href="index.html" class="home-btn" onclick="goHome(event)">🏠 回首頁</a>
 
     <h1 id="mainTitle" class="text-3xl sm:text-4xl font-extrabold text-blue-800 mb-6 text-center w-full max-w-xl" style="font-family: 'ZCOOL KuaiLe', 'Noto Sans TC', sans-serif;">
-        康軒國語六上語詞賓果遊戲4x4
+        康軒國語六上語詞賓果4*4
     </h1>
 
     <!-- 第 1 頁面：設定選擇區 -->
@@ -1386,7 +1386,7 @@
                 const label = document.createElement('label');
                 label.className = 'checkbox-container';
                 label.innerHTML = `
-                    <input type="checkbox" class="lesson-checkbox" value="${index}" ${index >= 6 ? "checked" : ""}>
+                    <input type="checkbox" class="lesson-checkbox" value="${index}" checked>
                     <span class="checkmark border border-gray-400"></span>
                     ${lesson.title} <span class="text-sm text-gray-500 font-normal">(${lesson.words.length}詞)</span>
                 `;
