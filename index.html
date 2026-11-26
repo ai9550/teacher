@@ -544,6 +544,7 @@
             "康軒國語六上7-12生字猜謎遊戲4宮格.html",
             "康軒國語六上7-12生字猜謎遊戲9宮格.html",
             "康軒國語六上語詞賓果4x4.html",
+            "康軒國語六上語詞賓果5x5.html",
             "康軒國語六上第7-12課生字打地鼠.html",
             "康軒國語六上第7到12課語詞洞察先機.html",
             "康軒國語六上第九課語詞解釋賓果.html",
@@ -675,7 +676,7 @@
                 a.style.setProperty('--tilt', `${tilts[index % tilts.length]}deg`);
                 a.style.animationDelay = `${index * 0.03}s`;
 
-                const displayName = file.name === '康軒國語六上語詞賓果4x4.html' ? '康軒國語六上語詞賓果4*4' : file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name === '大富翁遊戲翰林三上數學5-10單元.html' ? '大富翁遊戲翰林三上數學5-10單元' : file.name.replace(/\.html$/i, '');
+                const displayName = file.name === '康軒國語六上語詞賓果4x4.html' ? '康軒國語六上語詞賓果4*4' : file.name === '康軒國語六上語詞賓果5x5.html' ? '康軒國語六上語詞賓果 5×5' : file.name === '大富遊戲數學四上單元公里.html' ? '大富翁遊戲翰林數學四上5到10單元' : file.name === '大富翁遊戲翰林三上數學5-10單元.html' ? '大富翁遊戲翰林三上數學5-10單元' : file.name.replace(/\.html$/i, '');
                 const previewSrc = file.categoryId === 'math' ? MATH_PREVIEWS[file.name] : null;
 
                 if (previewSrc) {
