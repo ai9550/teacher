@@ -267,6 +267,149 @@
             flex-direction: column;
             align-items: center;
         }
+
+        /* 第 2 頁右上角 QR Code 卡片（置於回首頁按鈕下方，不重疊） */
+        #gameQrWidget {
+            position: fixed;
+            top: 70px;
+            right: 15px;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.96);
+            border: 2px solid rgba(37, 99, 235, 0.35);
+            border-radius: 14px;
+            padding: 8px 8px 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        #gameQrWidget.visible {
+            display: flex;
+        }
+        #gameQrWidget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+        }
+        #gameQrWidget.qr-collapsed {
+            padding: 6px 10px;
+            flex-direction: row;
+            cursor: pointer;
+        }
+        #gameQrWidget.qr-collapsed .game-qr-body,
+        #gameQrWidget.qr-collapsed .game-qr-close {
+            display: none;
+        }
+        #gameQrWidget .game-qr-pill {
+            display: none;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e3a8a;
+            white-space: nowrap;
+        }
+        #gameQrWidget.qr-collapsed .game-qr-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        #gameQrWidget .game-qr-close {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            padding: 0;
+        }
+        #gameQrWidget .game-qr-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        #gameQrWidget .game-qr-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: zoom-in;
+        }
+        #gameQrWidget img.game-qr-img {
+            width: 110px;
+            height: 110px;
+            display: block;
+            border-radius: 6px;
+            background: #fff;
+            image-rendering: pixelated;
+        }
+        #gameQrWidget .game-qr-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+            text-align: center;
+            white-space: nowrap;
+        }
+        #gameQrModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #gameQrModal.open {
+            display: flex;
+        }
+        #gameQrModal .game-qr-modal-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 24px 28px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            max-width: 92vw;
+            text-align: center;
+        }
+        #gameQrModal img.game-qr-modal-img {
+            width: min(290px, 72vw);
+            height: min(290px, 72vw);
+            display: block;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            image-rendering: pixelated;
+        }
+        @media (max-width: 720px) {
+            #gameQrWidget {
+                top: 64px;
+                right: 10px;
+                padding: 5px 5px 4px;
+                border-radius: 10px;
+            }
+            #gameQrWidget img.game-qr-img {
+                width: 68px;
+                height: 68px;
+            }
+            #gameQrWidget .game-qr-label {
+                font-size: 10px;
+            }
+        }
     </style>
   <style>
     /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
@@ -388,6 +531,26 @@
         </div>
     </div>
 
+    <!-- 第 2 頁右上角 QR Code（學生用平板掃描即可直接帶入相同課別開始玩） -->
+    <div id="gameQrWidget">
+        <button type="button" class="game-qr-close" id="btnCloseGameQr" title="收合 QR Code" aria-label="收合 QR Code">✕</button>
+        <div class="game-qr-body" id="gameQrBody" title="點我放大 QR Code">
+            <img id="gameQrImg" class="game-qr-img" alt="遊戲頁面 QR Code">
+            <div class="game-qr-label">📱 平板掃碼玩</div>
+        </div>
+        <span class="game-qr-pill">📱 QR Code</span>
+    </div>
+
+    <div id="gameQrModal">
+        <div class="game-qr-modal-card">
+            <div class="text-xl font-bold text-slate-800">📱 用平板掃描立即開始玩</div>
+            <img id="gameQrModalImg" class="game-qr-modal-img" alt="放大版 QR Code">
+            <div id="gameQrModalHint" class="text-sm text-slate-500">掃描後會自動帶入目前選擇的課別並直接進入賓果遊戲</div>
+            <button type="button" id="btnCloseGameQrModal" class="mt-1 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full">關閉</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         // 回首頁跳轉處理
         function goHome(e) {
@@ -1341,7 +1504,84 @@
             }
         }
 
-        $btnProceedToGame.addEventListener('click', () => {
+        // 第 2 頁右上角 QR Code 控制（自動將所選課別帶入網址，學生掃描即可直接開玩）
+        const $gameQrWidget = document.getElementById('gameQrWidget');
+        const $gameQrImg = document.getElementById('gameQrImg');
+        const $gameQrModal = document.getElementById('gameQrModal');
+        const $gameQrModalImg = document.getElementById('gameQrModalImg');
+        const $gameQrModalHint = document.getElementById('gameQrModalHint');
+        const $btnCloseGameQr = document.getElementById('btnCloseGameQr');
+        const $btnCloseGameQrModal = document.getElementById('btnCloseGameQrModal');
+
+        function getSelectedLessonIds() {
+            const checked = Array.from(document.querySelectorAll('.lesson-checkbox:checked'));
+            return checked.map(cb => LESSONS_DATA[parseInt(cb.value, 10)].id);
+        }
+
+        function buildShareGameUrl() {
+            const ids = getSelectedLessonIds();
+            try {
+                const u = new URL(window.location.href);
+                u.hash = '';
+                u.search = '';
+                if (ids.length === LESSONS_DATA.length) {
+                    u.searchParams.set('lessons', 'all');
+                } else if (ids.length > 0) {
+                    u.searchParams.set('lessons', ids.join(','));
+                }
+                return u.href;
+            } catch (e) {
+                return window.location.href;
+            }
+        }
+
+        function buildQrDataUrl(url, cellSize) {
+            try {
+                if (typeof window.qrcode === 'function') {
+                    const qr = window.qrcode(0, 'M');
+                    qr.addData(url);
+                    qr.make();
+                    return qr.createDataURL(cellSize || 6, 4);
+                }
+            } catch (e) {}
+            return 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=' + encodeURIComponent(url);
+        }
+
+        function updateGameQr() {
+            const shareUrl = buildShareGameUrl();
+            $gameQrImg.src = buildQrDataUrl(shareUrl, 6);
+            $gameQrModalImg.src = buildQrDataUrl(shareUrl, 10);
+            const ids = getSelectedLessonIds();
+            $gameQrModalHint.textContent = ids.length === LESSONS_DATA.length
+                ? '目前範圍：全部課別（學生掃描後自動進入遊戲畫面）'
+                : `目前範圍：${ids.join('、')}（學生掃描後自動進入相同課別）`;
+        }
+
+        $btnCloseGameQr.addEventListener('click', (e) => {
+            e.stopPropagation();
+            $gameQrWidget.classList.add('qr-collapsed');
+        });
+
+        $gameQrWidget.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if ($gameQrWidget.classList.contains('qr-collapsed')) {
+                $gameQrWidget.classList.remove('qr-collapsed');
+            } else {
+                $gameQrModal.classList.add('open');
+            }
+        });
+
+        $gameQrModal.addEventListener('click', (e) => {
+            if (e.target === $gameQrModal || e.target === $btnCloseGameQrModal) {
+                $gameQrModal.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') $gameQrModal.classList.remove('open');
+        });
+
+        function enterGameScreen() {
             $setupScreen.classList.add('hidden');
             $gameScreen.classList.remove('hidden');
             $gameScreen.classList.add('flex');
@@ -1357,12 +1597,19 @@
             initializeGrid();
             renderGrid();
             $scoreDisplay.textContent = '請點擊「固定配置」開始遊戲';
-        });
+
+            updateGameQr();
+            $gameQrWidget.classList.add('visible');
+        }
+
+        $btnProceedToGame.addEventListener('click', enterGameScreen);
 
         $btnBackToSetup.onclick = () => {
             $gameScreen.classList.add('hidden');
             $gameScreen.classList.remove('flex');
             $setupScreen.classList.remove('hidden');
+            $gameQrWidget.classList.remove('visible');
+            $gameQrModal.classList.remove('open');
         };
 
         // -----------------------------------------------------
@@ -1696,9 +1943,31 @@
         }
 
         // -----------------------------------------------------
-        // 6. 初始啟動
+        // 6. 初始啟動（若由平板掃描 QR Code 帶入 lessons 參數，直接套用並進入遊戲）
         // -----------------------------------------------------
         initializeSetupScreen();
+
+        (function applyUrlLessonsAndAutoStart() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const lessonsParam = params.get('lessons');
+                if (!lessonsParam) return;
+                const checkboxes = document.querySelectorAll('.lesson-checkbox');
+                if (lessonsParam.toLowerCase() === 'all') {
+                    checkboxes.forEach(cb => { cb.checked = true; });
+                } else {
+                    const wanted = new Set(lessonsParam.split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+                    checkboxes.forEach(cb => {
+                        const id = LESSONS_DATA[parseInt(cb.value, 10)].id.toUpperCase();
+                        cb.checked = wanted.has(id);
+                    });
+                }
+                updateSelectedWordCount();
+                if (!$btnProceedToGame.disabled) {
+                    enterGameScreen();
+                }
+            } catch (e) {}
+        })();
 
         window.addEventListener('resize', () => {
             if (gameState === 'playing') {
