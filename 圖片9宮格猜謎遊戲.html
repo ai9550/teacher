@@ -672,7 +672,7 @@
     <div class="panel-title">📝 題目設定</div>
     
     <div class="instruction">
-        <strong>使用說明：</strong>開啟時自動載入 10 張原創繪本動物插畫開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
+        <strong>使用說明：</strong>開啟時自動從 30 張題庫（10 動物＋10 交通工具＋10 生活用品）隨機選出 10 題開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
     </div>
 
     <!-- 隱藏的檔案輸入框 -->
@@ -688,7 +688,7 @@
             
             <div id="uploadPlaceholder" class="upload-placeholder">
                 <span class="upload-icon">🖼️</span><br>
-                正在載入原創動物圖庫...
+                正在從 30 張題庫隨機抽題...
             </div>
 
             <ul id="fileList" class="file-list">
@@ -705,7 +705,7 @@
     </div>
 
     <button id="reloadGalleryBtn" class="action-btn btn-gallery">
-        <span>🐾 重新洗牌 10 張動物題</span>
+        <span>🎲 重新隨機抽 10 題</span>
     </button>
 
     <button id="startBtn" class="action-btn btn-start">
@@ -765,20 +765,44 @@
   </div>
 
   <script>
-        // 原創繪本風 10 款動物題庫（不再使用原本的猜謎遊戲圖庫）
-        const CUSTOM_ANIMAL_GALLERY = [
-            { file: "01_elephant.jpg", name: "大象" },
-            { file: "02_giraffe.jpg",  name: "長頸鹿" },
-            { file: "03_panda.jpg",    name: "貓熊" },
-            { file: "04_lion.jpg",     name: "獅子" },
-            { file: "05_penguin.jpg",  name: "企鵝" },
-            { file: "06_rabbit.jpg",   name: "兔子" },
-            { file: "07_tiger.jpg",    name: "老虎" },
-            { file: "08_koala.jpg",    name: "無尾熊" },
-            { file: "09_dolphin.jpg",  name: "海豚" },
-            { file: "10_owl.jpg",      name: "貓頭鷹" }
+        // 內建 30 張題庫（10 動物＋10 寫實交通工具＋10 寫實生活用品），每輪隨機抽取 10 題
+        const CUSTOM_PUZZLE_GALLERY = [
+            // 動物 (10)
+            { file: "01_elephant.jpg",        name: "大象" },
+            { file: "02_giraffe.jpg",         name: "長頸鹿" },
+            { file: "03_panda.jpg",           name: "貓熊" },
+            { file: "04_lion.jpg",            name: "獅子" },
+            { file: "05_penguin.jpg",         name: "企鵝" },
+            { file: "06_rabbit.jpg",          name: "兔子" },
+            { file: "07_tiger.jpg",           name: "老虎" },
+            { file: "08_koala.jpg",           name: "無尾熊" },
+            { file: "09_dolphin.jpg",         name: "海豚" },
+            { file: "10_owl.jpg",             name: "貓頭鷹" },
+            // 交通工具 (10)
+            { file: "11_fire_truck.jpg",      name: "消防車" },
+            { file: "12_ambulance.jpg",       name: "救護車" },
+            { file: "13_hsr_train.jpg",       name: "高鐵" },
+            { file: "14_airplane.jpg",        name: "飛機" },
+            { file: "15_ship.jpg",            name: "輪船" },
+            { file: "16_bus.jpg",             name: "公車" },
+            { file: "17_bicycle.jpg",         name: "腳踏車" },
+            { file: "18_excavator.jpg",       name: "挖土機" },
+            { file: "19_hot_air_balloon.jpg", name: "熱氣球" },
+            { file: "20_helicopter.jpg",      name: "直升機" },
+            // 生活用品 (10)
+            { file: "21_umbrella.jpg",        name: "雨傘" },
+            { file: "22_toothbrush.jpg",      name: "牙刷" },
+            { file: "23_backpack.jpg",        name: "書包" },
+            { file: "24_scissors.jpg",        name: "剪刀" },
+            { file: "25_alarm_clock.jpg",     name: "鬧鐘" },
+            { file: "26_hair_dryer.jpg",      name: "吹風機" },
+            { file: "27_thermos.jpg",         name: "保溫瓶" },
+            { file: "28_electric_fan.jpg",    name: "電風扇" },
+            { file: "29_eyeglasses.jpg",      name: "眼鏡" },
+            { file: "30_desk_lamp.jpg",       name: "檯燈" }
         ];
         const ANIMAL_IMAGE_DIR = "animal-puzzle-images";
+        const GALLERY_PICK_COUNT = 10;
 
         // 遊戲狀態
         let galleryPool = [];
@@ -879,11 +903,12 @@
         }
 
         function loadRandomGalleryImages(autoStart = true) {
-            galleryPool = CUSTOM_ANIMAL_GALLERY.map(buildAnimalItem);
-            gameData = shuffleArray(galleryPool);
+            galleryPool = CUSTOM_PUZZLE_GALLERY.map(buildAnimalItem);
+            const count = Math.min(GALLERY_PICK_COUNT, galleryPool.length);
+            gameData = shuffleArray(galleryPool).slice(0, count);
             isGalleryMode = true;
             updateFileListUI();
-            gameStatus.textContent = `遊戲進行中（原創繪本動物共 ${gameData.length} 題）`;
+            gameStatus.textContent = `遊戲進行中（從 ${galleryPool.length} 張題庫中隨機選出 ${count} 題）`;
             if (autoStart) {
                 startGame();
             }
@@ -1188,7 +1213,7 @@
 
         function startGame() {
             if (gameData.length === 0) {
-                alert("請先上傳至少一張圖片，或點選「重新洗牌 10 張動物題」！");
+                alert("請先上傳至少一張圖片，或點選「重新隨機抽 10 題」！");
                 return;
             }
 
@@ -1336,7 +1361,7 @@
             currentIndex++;
             if (currentIndex >= gameData.length) {
                 if (isGalleryMode) {
-                    if (confirm("10 題動物猜謎已全部完成！要重新洗牌再玩一次嗎？")) {
+                    if (confirm("10 題猜謎已全部完成！要從 30 張題庫重新隨機抽 10 題再玩一次嗎？")) {
                         loadRandomGalleryImages(true, false);
                     } else {
                         currentIndex = gameData.length - 1;
