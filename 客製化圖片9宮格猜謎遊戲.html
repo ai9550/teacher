@@ -672,7 +672,7 @@
     <div class="panel-title">📝 題目設定</div>
     
     <div class="instruction">
-        <strong>使用說明：</strong>開啟時自動從「猜謎遊戲圖庫」隨機選出 10 張圖片開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
+        <strong>使用說明：</strong>開啟時自動載入 10 張原創繪本動物插畫開始遊戲；也可自行上傳圖片作為題目（檔名即為答案提示）。
     </div>
 
     <!-- 隱藏的檔案輸入框 -->
@@ -688,7 +688,7 @@
             
             <div id="uploadPlaceholder" class="upload-placeholder">
                 <span class="upload-icon">🖼️</span><br>
-                正在載入猜謎遊戲圖庫...
+                正在載入原創動物圖庫...
             </div>
 
             <ul id="fileList" class="file-list">
@@ -705,7 +705,7 @@
     </div>
 
     <button id="reloadGalleryBtn" class="action-btn btn-gallery">
-        <span>🎲 重新隨機抽 10 張圖庫</span>
+        <span>🐾 重新洗牌 10 張動物題</span>
     </button>
 
     <button id="startBtn" class="action-btn btn-start">
@@ -765,34 +765,20 @@
   </div>
 
   <script>
-        // 遊戲圖庫設定（GitHub: ai9550/teacher/猜謎遊戲圖庫）
-        const GALLERY_CONFIG = {
-            owner: 'ai9550',
-            repo: 'teacher',
-            branch: 'main',
-            folder: '猜謎遊戲圖庫',
-            pickCount: 10
-        };
-        const IMAGE_EXT_REGEX = /\.(jpe?g|png|gif|webp|bmp|svg)$/i;
-        // 若 GitHub API 連線受限或離線時的備用清單
-        const FALLBACK_GALLERY_FILES = [
-            "bah010018.jpg",
-            "bah010029.jpg",
-            "bah010036.jpg",
-            "bah010039.jpg",
-            "bah010092.JPG",
-            "bah010103.JPG",
-            "bah010147.JPG",
-            "bah020046.jpg",
-            "bah020075.jpg",
-            "bah020163.jpg",
-            "bah020249.jpg",
-            "bah020287.jpg",
-            "bah020435.jpg",
-            "bah020495.JPG",
-            "bah020618.JPG",
-            "bah020643.JPG"
+        // 原創繪本風 10 款動物題庫（不再使用原本的猜謎遊戲圖庫）
+        const CUSTOM_ANIMAL_GALLERY = [
+            { file: "01_elephant.jpg", name: "大象" },
+            { file: "02_giraffe.jpg",  name: "長頸鹿" },
+            { file: "03_panda.jpg",    name: "貓熊" },
+            { file: "04_lion.jpg",     name: "獅子" },
+            { file: "05_penguin.jpg",  name: "企鵝" },
+            { file: "06_rabbit.jpg",   name: "兔子" },
+            { file: "07_tiger.jpg",    name: "老虎" },
+            { file: "08_koala.jpg",    name: "無尾熊" },
+            { file: "09_dolphin.jpg",  name: "海豚" },
+            { file: "10_owl.jpg",      name: "貓頭鷹" }
         ];
+        const ANIMAL_IMAGE_DIR = "animal-puzzle-images";
 
         // 遊戲狀態
         let galleryPool = [];
@@ -873,30 +859,13 @@
             }
         });
 
-        // ----- 圖庫載入與隨機抽取函式 -----
+        // ----- 原創動物圖庫載入與隨機洗牌函式 -----
 
-        function getRepoInfo() {
-            const hostname = window.location.hostname || '';
-            const pathname = window.location.pathname || '';
-            if (hostname.includes('github.io')) {
-                const parts = pathname.split('/').filter(Boolean);
-                if (parts.length > 0) {
-                    return { owner: hostname.split('.')[0], repo: parts[0] };
-                }
-            }
-            return { owner: GALLERY_CONFIG.owner, repo: GALLERY_CONFIG.repo };
-        }
-
-        function buildGalleryItem(fileName, downloadUrl) {
-            const repoInfo = getRepoInfo();
-            const folderEncoded = encodeURIComponent(GALLERY_CONFIG.folder);
-            const fileEncoded = encodeURIComponent(fileName);
-            const localSrc = `./${folderEncoded}/${fileEncoded}`;
-            const rawSrc = downloadUrl || `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/${GALLERY_CONFIG.branch}/${folderEncoded}/${fileEncoded}`;
+        function buildAnimalItem(item) {
             return {
-                src: localSrc,
-                fallbackSrc: rawSrc,
-                name: fileName.replace(/\.[^/.]+$/, "")
+                src: `./${ANIMAL_IMAGE_DIR}/${item.file}`,
+                fallbackSrc: `https://raw.githubusercontent.com/ai9550/teacher/main/${ANIMAL_IMAGE_DIR}/${item.file}`,
+                name: item.name
             };
         }
 
@@ -909,58 +878,14 @@
             return copy;
         }
 
-        async function fetchGalleryPool(forceRefresh = false) {
-            if (!forceRefresh && galleryPool.length > 0) {
-                return galleryPool;
-            }
-            const repoInfo = getRepoInfo();
-            const apiUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${encodeURIComponent(GALLERY_CONFIG.folder)}?ref=${GALLERY_CONFIG.branch}`;
-            try {
-                const res = await fetch(apiUrl, { cache: 'no-cache' });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const items = await res.json();
-                if (Array.isArray(items)) {
-                    const images = items
-                        .filter(item => item.type === 'file' && IMAGE_EXT_REGEX.test(item.name))
-                        .map(item => buildGalleryItem(item.name, item.download_url));
-                    if (images.length > 0) {
-                        galleryPool = images;
-                        return galleryPool;
-                    }
-                }
-            } catch (err) {
-                console.warn('讀取 GitHub 猜謎遊戲圖庫失敗，切換至備用清單:', err);
-            }
-            galleryPool = FALLBACK_GALLERY_FILES.map(name => buildGalleryItem(name));
-            return galleryPool;
-        }
-
-        async function loadRandomGalleryImages(autoStart = true, forceRefresh = false) {
-            reloadGalleryBtn.disabled = true;
-            reloadGalleryBtn.innerHTML = '<span>⏳ 正在抽取圖庫...</span>';
-            if (gameData.length === 0) {
-                uploadPlaceholder.innerHTML = '<span class="upload-icon">⏳</span><br>正在從猜謎遊戲圖庫<br>隨機載入 10 張圖片...';
-                uploadPlaceholder.style.display = 'block';
-            }
-
-            try {
-                const pool = await fetchGalleryPool(forceRefresh);
-                if (pool.length === 0) {
-                    uploadPlaceholder.innerHTML = '<span class="upload-icon">🖼️</span><br>圖庫目前沒有圖片<br>請自行上傳圖片';
-                    return;
-                }
-                const count = Math.min(GALLERY_CONFIG.pickCount, pool.length);
-                gameData = shuffleArray(pool).slice(0, count);
-                isGalleryMode = true;
-                updateFileListUI();
-                gameStatus.textContent = `遊戲進行中（從圖庫 ${pool.length} 張中隨機選出 ${count} 張）`;
-
-                if (autoStart) {
-                    startGame();
-                }
-            } finally {
-                reloadGalleryBtn.disabled = false;
-                reloadGalleryBtn.innerHTML = '<span>🎲 重新隨機抽 10 張圖庫</span>';
+        function loadRandomGalleryImages(autoStart = true) {
+            galleryPool = CUSTOM_ANIMAL_GALLERY.map(buildAnimalItem);
+            gameData = shuffleArray(galleryPool);
+            isGalleryMode = true;
+            updateFileListUI();
+            gameStatus.textContent = `遊戲進行中（原創繪本動物共 ${gameData.length} 題）`;
+            if (autoStart) {
+                startGame();
             }
         }
 
@@ -1263,7 +1188,7 @@
 
         function startGame() {
             if (gameData.length === 0) {
-                alert("請先上傳至少一張圖片，或點選「重新隨機抽 10 張圖庫」！");
+                alert("請先上傳至少一張圖片，或點選「重新洗牌 10 張動物題」！");
                 return;
             }
 
@@ -1411,7 +1336,7 @@
             currentIndex++;
             if (currentIndex >= gameData.length) {
                 if (isGalleryMode) {
-                    if (confirm("10 題已全部完成！要從猜謎遊戲圖庫再隨機抽出 10 張新題目嗎？")) {
+                    if (confirm("10 題動物猜謎已全部完成！要重新洗牌再玩一次嗎？")) {
                         loadRandomGalleryImages(true, false);
                     } else {
                         currentIndex = gameData.length - 1;
@@ -1459,7 +1384,7 @@
             if (key === 'r' || key === 'R') resetCurrentRound();
         });
 
-        // 頁面載入後自動從「猜謎遊戲圖庫」隨機選出 10 張圖片開始遊戲
+        // 頁面載入後自動載入 10 張原創動物插畫開始遊戲
         window.addEventListener('DOMContentLoaded', () => {
             loadRandomGalleryImages(true, false);
         });
