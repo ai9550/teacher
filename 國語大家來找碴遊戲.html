@@ -106,9 +106,12 @@
     <div id="upload-view" class="bg-white rounded-2xl shadow-lg p-6 relative transition-all duration-300 flex-1 flex flex-col">
         <!-- 標題區域 -->
         <div class="flex justify-between items-center mb-4">
-            <div class="flex-1 text-center relative">
+            <a href="index.html" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors font-bold flex items-center gap-1 whitespace-nowrap">
+                🏠 回首頁
+            </a>
+            <div class="flex-1 text-center relative px-2">
                 <h1 class="text-2xl font-bold text-slate-800 mb-1">大家來找碴：圖片挑戰</h1>
-                <p class="text-slate-500 text-xs">規則：檔名前兩個字相同即為一組（最少 1 組即可開始）</p>
+                <p class="text-slate-500 text-xs">可直接點選下方內建國語一上圖庫，或手動上傳／讀取圖庫（最少 1 組即可開始）</p>
             </div>
             <!-- 上傳頁面的重新選擇按鈕 -->
             <button id="reset-selection-btn" class="hidden absolute top-0 right-0 md:static text-xs bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-lg transition-colors font-medium flex items-center gap-1">
@@ -117,6 +120,22 @@
                 </svg>
                 重選
             </button>
+        </div>
+
+        <!-- 內建康軒國語一上圖庫快速選擇 -->
+        <div class="mb-5 p-4 bg-rose-50 border-2 border-rose-200 rounded-xl">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">📚</span>
+                    <h2 class="text-base font-bold text-rose-800">內建圖庫：康軒國語一上（點選課次立即載入）</h2>
+                </div>
+                <button id="open-g1a-picker-btn" class="text-xs bg-white hover:bg-rose-100 text-rose-700 border border-rose-300 px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer">
+                    🔍 自由勾選一上圖卡
+                </button>
+            </div>
+            <div id="g1a-lesson-pills" class="flex flex-wrap gap-2">
+                <!-- 動態產生一上課次按鈕 -->
+            </div>
         </div>
         
         <!-- 選擇方式區域 (強制 3 欄，縮減高度) -->
@@ -292,6 +311,114 @@
 </div>
 
 <script>
+    const G1A_CARDS_DATA = [
+        { lesson: '一上第一課', lessonLabel: '第一課 拍拍手', word: '拍手', diff: '顏色差異' },
+        { lesson: '一上第二課', lessonLabel: '第二課 這是誰的', word: '一個', diff: '顏色差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '秋千', diff: '方向差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '高山', diff: '方向差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '大海', diff: '方向差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '好朋友', diff: '方向差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '我們', diff: '部件差異' },
+        { lesson: '一上第三課', lessonLabel: '第三課 秋千', word: '一起', diff: '方向差異' },
+        { lesson: '一上第四課', lessonLabel: '第四課 大個子，小個子', word: '個子', diff: '方向差異' },
+        { lesson: '一上第四課', lessonLabel: '第四課 大個子，小個子', word: '上課', diff: '方向差異' },
+        { lesson: '一上第四課', lessonLabel: '第四課 大個子，小個子', word: '青蛙', diff: '部件差異' },
+        { lesson: '一上第四課', lessonLabel: '第四課 大個子，小個子', word: '開心', diff: '部件差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '門外', diff: '顏色差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '什麼', diff: '顏色差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '不同', diff: '方向差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '早上', diff: '部件差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '晚上', diff: '方向差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '王子', diff: '顏色差異' },
+        { lesson: '一上第五課', lessonLabel: '第五課 比一比', word: '主人', diff: '方向差異' },
+        { lesson: '一上第六課', lessonLabel: '第六課 小路', word: '小路', diff: '方向差異' },
+        { lesson: '一上第六課', lessonLabel: '第六課 小路', word: '白花', diff: '部件差異' },
+        { lesson: '一上第六課', lessonLabel: '第六課 小路', word: '紅花', diff: '部件差異' },
+        { lesson: '一上第六課', lessonLabel: '第六課 小路', word: '一頭', diff: '方向差異' }
+    ];
+
+    function getPairKey(fileName) {
+        const clean = fileName.replace(/\.[^.]+$/, '');
+        if (/_(原圖|找碴版)/.test(clean)) {
+            return clean.replace(/_(原圖|找碴版).*$/, '');
+        }
+        return clean.substring(0, 2);
+    }
+
+    function buildG1ACardUrl(fileName) {
+        return `大家來找碴圖庫/${encodeURIComponent(fileName)}`;
+    }
+
+    function initG1ALessonPills() {
+        const container = document.getElementById('g1a-lesson-pills');
+        const pickerBtn = document.getElementById('open-g1a-picker-btn');
+        if (!container) return;
+
+        const lessonOrder = [
+            { key: 'ALL', label: `全部一上 (${G1A_CARDS_DATA.length}組)` },
+            { key: '一上第一課', label: '第一課 拍拍手 (1)' },
+            { key: '一上第二課', label: '第二課 這是誰的 (1)' },
+            { key: '一上第三課', label: '第三課 秋千 (6)' },
+            { key: '一上第四課', label: '第四課 大個子，小個子 (4)' },
+            { key: '一上第五課', label: '第五課 比一比 (7)' },
+            { key: '一上第六課', label: '第六課 小路 (4)' }
+        ];
+
+        container.innerHTML = '';
+        lessonOrder.forEach(item => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'g1a-pill px-3 py-1.5 rounded-full text-xs font-bold border border-rose-300 bg-white text-rose-700 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer';
+            btn.textContent = item.label;
+            btn.onclick = () => {
+                container.querySelectorAll('.g1a-pill').forEach(b => {
+                    b.classList.remove('bg-rose-600', 'text-white', 'border-rose-600');
+                    b.classList.add('bg-white', 'text-rose-700', 'border-rose-300');
+                });
+                btn.classList.remove('bg-white', 'text-rose-700', 'border-rose-300');
+                btn.classList.add('bg-rose-600', 'text-white', 'border-rose-600');
+
+                const selected = item.key === 'ALL'
+                    ? G1A_CARDS_DATA
+                    : G1A_CARDS_DATA.filter(c => c.lesson === item.key);
+                const pairs = {};
+                selected.forEach(c => {
+                    const orig = `${c.lesson}_${c.word}_原圖.png`;
+                    const diff = `${c.lesson}_${c.word}_找碴版_${c.diff}.png`;
+                    pairs[`${c.lesson}_${c.word}`] = [buildG1ACardUrl(orig), buildG1ACardUrl(diff)];
+                });
+                state.allPairs = pairs;
+                updateFileStatusUI(pairs, [], selected.length);
+            };
+            container.appendChild(btn);
+        });
+
+        if (pickerBtn) {
+            pickerBtn.onclick = () => openBuiltInG1AModal();
+        }
+    }
+
+    function openBuiltInG1AModal() {
+        resetModalState();
+        modalTitle.innerText = "自由勾選：康軒國語一上圖卡";
+        modalSubtitle.innerText = "來源：內建 大家來找碴圖庫（共 23 組／46 張）";
+        driveConfigPanel.classList.add('hidden');
+        selectionModal.classList.remove('hidden');
+
+        const files = [];
+        G1A_CARDS_DATA.forEach(c => {
+            const orig = `${c.lesson}_${c.word}_原圖.png`;
+            const diff = `${c.lesson}_${c.word}_找碴版_${c.diff}.png`;
+            files.push({ name: orig, url: buildG1ACardUrl(orig) });
+            files.push({ name: diff, url: buildG1ACardUrl(diff) });
+        });
+        state.fetchedFiles = files;
+        renderModalGrid();
+        modalLoading.classList.add('hidden');
+        modalContentArea.classList.remove('hidden');
+        modalFooter.classList.remove('hidden');
+    }
+
     const state = {
         allPairs: {}, 
         currentSet: [], 
@@ -575,7 +702,7 @@
 
             const groups = {};
             selectedFiles.forEach(file => {
-                const prefix = file.name.substring(0, 2);
+                const prefix = getPairKey(file.name);
                 if (!groups[prefix]) groups[prefix] = [];
                 groups[prefix].push(file);
             });
@@ -628,6 +755,7 @@
     nextBtn.onclick = () => setupRound();
     reselectBtn.onclick = () => showView('upload');
     resetSelectionBtn.onclick = resetUploadState;
+    initG1ALessonPills();
 
     function resetUploadState() {
         state.allPairs = {};
@@ -649,7 +777,7 @@
         const tempMap = {};
         imageFiles.forEach(file => {
             const fileName = file.name;
-            const baseName = fileName.substring(0, 2);
+            const baseName = getPairKey(fileName);
             if (!tempMap[baseName]) tempMap[baseName] = [];
             tempMap[baseName].push(URL.createObjectURL(file));
         });
