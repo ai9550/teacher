@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語三上語詞洞察先機</title>
+  <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 32px;
+            box-sizing: border-box;
+            gap: 24px;
+        }
+
+        .lesson-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .lesson-btn {
+            background: linear-gradient(45deg, #ffffff, #f7fafc);
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 9px 16px;
+            font-size: 0.96rem;
+            font-weight: bold;
+            color: #4a5568;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 195px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .lesson-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+        }
+
+        .lesson-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .lesson-btn.active:hover {
+            background: linear-gradient(45deg, #5a67d8, #6b46c1);
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .main-title {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 0;
+            margin-bottom: 12px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .progress-info {
+            font-size: 1.15rem;
+            color: #4a5568;
+            margin-bottom: 30px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .word-card {
+            position: relative;
+            width: 400px;
+            height: 200px;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 3px solid #e2e8f0;
+            overflow: hidden;
+            margin: 0 auto 30px;
+        }
+
+        .cover-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            z-index: 2;
+            -webkit-mask-image:
+                radial-gradient(circle at 12.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 12.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 75%, transparent 30px, black 32px);
+            -webkit-mask-composite: intersect;
+            mask-image:
+                radial-gradient(circle at 12.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 25%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 32.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 12.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 30.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 48.5% 75%, transparent 30px, black 32px),
+                radial-gradient(circle at 66.75% 62.5%, transparent 30px, black 32px),
+                radial-gradient(circle at 86.5% 75%, transparent 30px, black 32px);
+            mask-composite: intersect;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+
+        .number-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #2d3748;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 3;
+            width: 66px;
+            height: 66px;
+            font-size: 1.5rem;
+        }
+
+        .number-circle.pos-1 { top: 32.5%; left: 12.5%; transform: translate(-50%, -50%); }
+        .number-circle.pos-2 { top: 25%; left: 30.75%; transform: translate(-50%, -50%); }
+        .number-circle.pos-3 { top: 32.5%; left: 48.5%; transform: translate(-50%, -50%); }
+        .number-circle.pos-4 { top: 25%; left: 66.75%; transform: translate(-50%, -50%); }
+        .number-circle.pos-5 { top: 32.5%; left: 86.5%; transform: translate(-50%, -50%); }
+        .number-circle.pos-6 { top: 75%; left: 12.5%; transform: translate(-50%, -50%); }
+        .number-circle.pos-7 { top: 62.5%; left: 30.75%; transform: translate(-50%, -50%); }
+        .number-circle.pos-8 { top: 75%; left: 48.5%; transform: translate(-50%, -50%); }
+        .number-circle.pos-9 { top: 62.5%; left: 66.75%; transform: translate(-50%, -50%); }
+        .number-circle.pos-10 { top: 75%; left: 86.5%; transform: translate(-50%, -50%); }
+
+        .number-circle:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            background: #ffffff;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+
+        .number-circle.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+        }
+
+        .cover-card.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .word {
+            font-size: 12rem;
+            font-weight: normal;
+            color: #2d3748;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif;
+            transition: opacity 0.3s ease;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .word.long-word {
+            font-size: 8rem;
+        }
+
+        .word.extra-long-word {
+            font-size: 6rem;
+        }
+
+        .word.len-5 {
+            font-size: 4.8rem;
+        }
+
+        .word.len-6 {
+            font-size: 3.4rem;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .next-btn {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+        }
+
+        .prev-btn {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .prev-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(237, 137, 54, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        @media (max-width: 860px) {
+            body {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .lesson-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-top: 0;
+            }
+
+            .lesson-btn {
+                min-width: auto;
+                padding: 8px 12px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .word-card {
+                width: 300px;
+                height: 150px;
+            }
+
+            .word {
+                font-size: 8rem;
+            }
+
+            .word.long-word {
+                font-size: 5.5rem;
+            }
+
+            .word.extra-long-word {
+                font-size: 4.2rem;
+            }
+
+            .word.len-5 {
+                font-size: 3.4rem;
+            }
+
+            .word.len-6 {
+                font-size: 2.5rem;
+            }
+
+            .main-title {
+                font-size: 1.5rem;
+            }
+
+            .game-container {
+                padding: 20px;
+            }
+
+            .lesson-btn {
+                padding: 6px 10px;
+                font-size: 0.82rem;
+            }
+        }
+
+        /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
+        .character, .char, .word, .vocab, .meaning, .question, .answer, .answer-char, .character-card, .overlay-char, .block, strong, b, .char-display, .word-display, .bingo-cell, .mole-char, .question-char, .stage0-char, .stage2-char, .hint-text, .question-text {
+            font-weight: normal !important;
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body>
+  <div class="lesson-buttons">
+   <button class="lesson-btn active" data-lesson="1" onclick="switchLesson(1)">第一課 字的小旅行</button>
+   <button class="lesson-btn" data-lesson="2" onclick="switchLesson(2)">第二課 妙故事點點名</button>
+   <button class="lesson-btn" data-lesson="3" onclick="switchLesson(3)">第三課 繞口令村</button>
+   <button class="lesson-btn" data-lesson="4" onclick="switchLesson(4)">第四課 小丑魚和海葵</button>
+   <button class="lesson-btn" data-lesson="5" onclick="switchLesson(5)">第五課 飛舞的絲帶</button>
+   <button class="lesson-btn" data-lesson="6" onclick="switchLesson(6)">第六課 小女生</button>
+   <button class="lesson-btn" data-lesson="7" onclick="switchLesson(7)">閱讀階梯一 丸子與我</button>
+   <button class="lesson-btn" data-lesson="8" onclick="switchLesson(8)">第七課 淡水小鎮</button>
+   <button class="lesson-btn" data-lesson="9" onclick="switchLesson(9)">第八課 安平古堡參觀記</button>
+   <button class="lesson-btn" data-lesson="10" onclick="switchLesson(10)">第九課 馬太鞍的巴拉告</button>
+   <button class="lesson-btn" data-lesson="11" onclick="switchLesson(11)">第十課 狐狸的故事</button>
+   <button class="lesson-btn" data-lesson="12" onclick="switchLesson(12)">第十一課 巨人的花園</button>
+   <button class="lesson-btn" data-lesson="13" onclick="switchLesson(13)">第十二課 模仿貓</button>
+   <button class="lesson-btn" data-lesson="14" onclick="switchLesson(14)">閱讀階梯二 拜訪火燒島</button>
+  </div>
+  <div class="game-container">
+   <h1 class="main-title" id="gameTitle">康軒國語三上語詞洞察先機</h1>
+   <div class="progress-info">
+    <span id="currentLessonLabel">第一課 字的小旅行</span> ｜ 第 <span id="currentQuestion">1</span> 題 / 共 <span id="totalQuestions">3</span> 題
+   </div>
+   <div class="word-card">
+    <div class="word" id="currentWord"></div>
+    <div class="cover-card" onclick="revealWord()"></div>
+    <div class="number-circle pos-1" onclick="removeCircle(1)">1</div>
+    <div class="number-circle pos-2" onclick="removeCircle(2)">2</div>
+    <div class="number-circle pos-3" onclick="removeCircle(3)">3</div>
+    <div class="number-circle pos-4" onclick="removeCircle(4)">4</div>
+    <div class="number-circle pos-5" onclick="removeCircle(5)">5</div>
+    <div class="number-circle pos-6" onclick="removeCircle(6)">6</div>
+    <div class="number-circle pos-7" onclick="removeCircle(7)">7</div>
+    <div class="number-circle pos-8" onclick="removeCircle(8)">8</div>
+    <div class="number-circle pos-9" onclick="removeCircle(9)">9</div>
+    <div class="number-circle pos-10" onclick="removeCircle(10)">10</div>
+   </div>
+   <div class="game-controls">
+    <button class="btn prev-btn" onclick="previousWord()" id="prevBtn">⬅️ 上一題</button>
+    <button class="btn restart-btn" onclick="restartCurrentWord()">🔄 重新開始</button>
+    <button class="btn next-btn" onclick="nextWord()" id="nextBtn">下一題 ➡️</button>
+   </div>
+  </div>
+  <script>
+        const lessonData = {
+            "1": [
+                        "航行",
+                        "忌妒",
+                        "消失"
+            ],
+            "2": [
+                        "歪打正著",
+                        "窗戶",
+                        "霧裡看花",
+                        "點名",
+                        "黑板",
+                        "答案",
+                        "專心",
+                        "收穫",
+                        "比賽",
+                        "晃動",
+                        "已經",
+                        "手忙腳亂",
+                        "雨傘",
+                        "飛也似的",
+                        "喊叫"
+            ],
+            "3": [
+                        "由於",
+                        "暴風雨",
+                        "迷失",
+                        "上岸",
+                        "老闆",
+                        "飛機",
+                        "用料",
+                        "實在",
+                        "獅子",
+                        "繞口令",
+                        "停留",
+                        "參觀"
+            ],
+            "4": [
+                        "海葵",
+                        "小丑魚",
+                        "擺動",
+                        "露出",
+                        "不懷好意",
+                        "觸手",
+                        "欺負",
+                        "感動",
+                        "遇到",
+                        "危險"
+            ],
+            "5": [
+                        "練習",
+                        "努力",
+                        "指導",
+                        "利用",
+                        "壓住",
+                        "秒針",
+                        "整排",
+                        "絲帶",
+                        "鬆了一口氣",
+                        "必定",
+                        "通通",
+                        "操場",
+                        "翩翩起舞"
+            ],
+            "6": [
+                        "非常",
+                        "喵喵",
+                        "關門",
+                        "洗澡",
+                        "哪怕",
+                        "奮力",
+                        "回應",
+                        "平時",
+                        "毛茸茸",
+                        "肚子",
+                        "柔細",
+                        "一副",
+                        "黏人",
+                        "膠水"
+            ],
+            "7": [
+                        "治療犬",
+                        "撫摸",
+                        "難關",
+                        "夢鄉",
+                        "康復",
+                        "退休"
+            ],
+            "8": [
+                        "傳統",
+                        "商行",
+                        "古老",
+                        "阿婆",
+                        "鐵蛋",
+                        "蒼老",
+                        "山坡",
+                        "回憶",
+                        "夕陽",
+                        "搖盪"
+            ],
+            "9": [
+                        "教育",
+                        "博物館",
+                        "史料",
+                        "模型",
+                        "荷蘭",
+                        "鄭成功",
+                        "打敗",
+                        "駐守",
+                        "守護",
+                        "勇敢",
+                        "士兵",
+                        "附近",
+                        "瞭望臺",
+                        "屋頂",
+                        "地標"
+            ],
+            "10": [
+                        "花蓮",
+                        "馬太鞍",
+                        "溼地",
+                        "阿美族",
+                        "特別",
+                        "方式",
+                        "打造",
+                        "植物",
+                        "釣魚",
+                        "智慧",
+                        "生態"
+            ],
+            "11": [
+                        "萬里",
+                        "狐狸",
+                        "兄弟",
+                        "祕密",
+                        "葡\u0001",
+                        "放棄",
+                        "烏鴉",
+                        "妙計",
+                        "強壯"
+            ],
+            "12": [
+                        "歌曲",
+                        "愉悅",
+                        "拜訪",
+                        "免得",
+                        "離開",
+                        "顯得",
+                        "漫長",
+                        "乾枯",
+                        "恍然大悟",
+                        "拆除",
+                        "盛開"
+            ],
+            "13": [
+                        "農場",
+                        "羨慕",
+                        "模仿",
+                        "啼聲",
+                        "雞冠",
+                        "沙啞",
+                        "優雅",
+                        "脖子",
+                        "眼淚",
+                        "松鼠",
+                        "牙齒",
+                        "羽毛",
+                        "容易",
+                        "發揮",
+                        "掌聲"
+            ],
+            "14": [
+                        "魯賓遜漂流記",
+                        "金銀島",
+                        "潛水人的天堂",
+                        "浮潛",
+                        "興致盎然",
+                        "星斗",
+                        "大開眼界"
+            ]
+};
+
+        const lessonTitles = {
+            "1": "第一課 字的小旅行",
+            "2": "第二課 妙故事點點名",
+            "3": "第三課 繞口令村",
+            "4": "第四課 小丑魚和海葵",
+            "5": "第五課 飛舞的絲帶",
+            "6": "第六課 小女生",
+            "7": "閱讀階梯一 丸子與我",
+            "8": "第七課 淡水小鎮",
+            "9": "第八課 安平古堡參觀記",
+            "10": "第九課 馬太鞍的巴拉告",
+            "11": "第十課 狐狸的故事",
+            "12": "第十一課 巨人的花園",
+            "13": "第十二課 模仿貓",
+            "14": "閱讀階梯二 拜訪火燒島"
+};
+
+        let currentLesson = 1;
+        let words = [...lessonData[currentLesson]].sort(() => Math.random() - 0.5);
+        let currentWordIndex = 0;
+
+        function applyWordSize(wordElement, word) {
+            wordElement.classList.remove('long-word', 'extra-long-word', 'len-5', 'len-6');
+            if (word.length >= 6) {
+                wordElement.classList.add('len-6');
+            } else if (word.length === 5) {
+                wordElement.classList.add('len-5');
+            } else if (word.length === 4) {
+                wordElement.classList.add('extra-long-word');
+            } else if (word.length === 3) {
+                wordElement.classList.add('long-word');
+            }
+        }
+
+        function updateDisplay() {
+            const wordElement = document.getElementById('currentWord');
+            const currentWord = words[currentWordIndex];
+
+            wordElement.textContent = currentWord;
+            applyWordSize(wordElement, currentWord);
+
+            document.getElementById('currentLessonLabel').textContent = lessonTitles[currentLesson];
+            document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+            document.getElementById('totalQuestions').textContent = words.length;
+
+            document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+            document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+        }
+
+        function revealWord() {
+            const coverCard = document.querySelector('.cover-card');
+            coverCard.classList.add('hidden');
+        }
+
+        function removeCircle(number) {
+            const circles = document.querySelectorAll('.number-circle');
+            circles[number - 1].classList.add('hidden');
+        }
+
+        function restartCurrentWord() {
+            const coverCard = document.querySelector('.cover-card');
+            const circles = document.querySelectorAll('.number-circle');
+
+            coverCard.classList.remove('hidden');
+            circles.forEach(circle => {
+                circle.classList.remove('hidden');
+            });
+        }
+
+        function nextWord() {
+            if (currentWordIndex < words.length - 1) {
+                const wordElement = document.getElementById('currentWord');
+                wordElement.style.opacity = '0';
+
+                currentWordIndex++;
+                document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+                document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+                document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+                restartCurrentWord();
+
+                setTimeout(() => {
+                    const currentWord = words[currentWordIndex];
+                    wordElement.textContent = currentWord;
+                    applyWordSize(wordElement, currentWord);
+                    wordElement.style.opacity = '1';
+                }, 1000);
+            }
+        }
+
+        function previousWord() {
+            if (currentWordIndex > 0) {
+                const wordElement = document.getElementById('currentWord');
+                wordElement.style.opacity = '0';
+
+                currentWordIndex--;
+                document.getElementById('currentQuestion').textContent = currentWordIndex + 1;
+                document.getElementById('prevBtn').disabled = currentWordIndex === 0;
+                document.getElementById('nextBtn').disabled = currentWordIndex === words.length - 1;
+                restartCurrentWord();
+
+                setTimeout(() => {
+                    const currentWord = words[currentWordIndex];
+                    wordElement.textContent = currentWord;
+                    applyWordSize(wordElement, currentWord);
+                    wordElement.style.opacity = '1';
+                }, 1000);
+            }
+        }
+
+        function switchLesson(lessonNumber) {
+            currentLesson = lessonNumber;
+
+            words = [...lessonData[lessonNumber]].sort(() => Math.random() - 0.5);
+            currentWordIndex = 0;
+
+            document.querySelectorAll('.lesson-btn').forEach(btn => {
+                btn.classList.toggle('active', Number(btn.dataset.lesson) === lessonNumber);
+            });
+
+            restartCurrentWord();
+            updateDisplay();
+        }
+
+        updateDisplay();
+    </script>
+ </body>
+</html>
