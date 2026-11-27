@@ -200,13 +200,46 @@
             max-width: 600px;
         }
 
+        .question-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
         .question-prompt {
             font-size: 1.9rem;
             color: #1a365d;
-            margin-bottom: 8px;
             font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif;
             font-weight: normal !important;
             min-height: 2.4rem;
+        }
+
+        .speak-btn {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(142, 68, 173, 0.28);
+            transition: all 0.2s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            white-space: nowrap;
+        }
+
+        .speak-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            transform: translateY(-1px);
+        }
+
+        .speak-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
 
         .game-info {
@@ -512,7 +545,10 @@
     </div>
 
     <div class="score-board">
-     <div id="question" class="question-prompt">請按「開始遊戲」挑戰！</div>
+     <div class="question-row">
+      <div id="question" class="question-prompt">請按「開始遊戲」挑戰！</div>
+      <button type="button" id="speakButton" class="speak-btn" disabled>🗣️ 再唸一次</button>
+     </div>
      <div class="game-info">
       <div>題目：<span id="questionNumber">0/9</span></div>
       <div>分數：<span id="score">0</span></div>
@@ -545,6 +581,52 @@
             constructor() {
                 this.ctx = null;
                 this.muted = false;
+                this.twVoice = null;
+                this.initVoices();
+            }
+
+            initVoices() {
+                if (!('speechSynthesis' in window)) return;
+                const pickVoice = () => {
+                    const voices = window.speechSynthesis.getVoices() || [];
+                    if (!voices.length) return;
+                    const isTW = v => /^(zh[-_]tw|cmn[-_]hant[-_]tw)/i.test(v.lang || '') || /taiwan|臺灣|台灣|國語/i.test(v.name || '');
+                    const twVoices = voices.filter(isTW);
+                    const pool = twVoices.length ? twVoices : voices.filter(v => /^zh/i.test(v.lang || ''));
+                    if (!pool.length) return;
+                    // 優先選取台灣國語自然發音（Microsoft Online Natural / Google 國語臺灣 / Meijia）
+                    this.twVoice =
+                        pool.find(v => /hsiaochen|yunjhe|hsiaoyu/i.test(v.name) && /natural|online/i.test(v.name)) ||
+                        pool.find(v => /natural|neural|online/i.test(v.name)) ||
+                        pool.find(v => /google/i.test(v.name) && isTW(v)) ||
+                        pool.find(v => /meijia|yating|hanhan|zhiwei/i.test(v.name)) ||
+                        pool[0];
+                };
+                pickVoice();
+                window.speechSynthesis.onvoiceschanged = pickVoice;
+            }
+
+            speakQuestion(text) {
+                if (this.muted || !('speechSynthesis' in window) || !text) return;
+                try {
+                    window.speechSynthesis.cancel();
+                    if (!this.twVoice) this.initVoices();
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'zh-TW';
+                    if (this.twVoice) {
+                        utter.voice = this.twVoice;
+                    }
+                    utter.rate = 0.88;
+                    utter.pitch = 1.02;
+                    utter.volume = 1.0;
+                    window.speechSynthesis.speak(utter);
+                } catch (e) {}
+            }
+
+            stopSpeech() {
+                if ('speechSynthesis' in window) {
+                    try { window.speechSynthesis.cancel(); } catch (e) {}
+                }
             }
 
             ensureContext() {
@@ -621,8 +703,8 @@
                 this.sound = new SoundFX();
 
                 this.speedConfig = {
-                    slow:   { spawnMin: 1300, spawnMax: 2000, hideMin: 2400, hideMax: 3400 },
-                    medium: { spawnMin: 850,  spawnMax: 1450, hideMin: 1600, hideMax: 2400 },
+                    slow:   { spawnMin: 1900, spawnMax: 2800, hideMin: 3800, hideMax: 5200 },
+                    medium: { spawnMin: 900,  spawnMax: 1500, hideMin: 1700, hideMax: 2500 },
                     fast:   { spawnMin: 480,  spawnMax: 850,  hideMin: 950,  hideMax: 1500 }
                 };
 
@@ -670,7 +752,7 @@
                             { question: '「ㄓㄜˋ」是誰的', answer: '這' },
                             { question: '這「ㄕˋ」我的', answer: '是' },
                             { question: '這是「ㄕㄟˊ」的', answer: '誰' },
-                            { question: '我「˙ㄉㄜ」', answer: '的' },
+                            { question: '我「˙ㄉㄜ」', answer: '的', speak: '我的，的' },
                             { question: '這是「ㄨㄛˇ」的', answer: '我' },
                             { question: '「ㄈㄣ」好了', answer: '分' },
                             { question: '分「ㄏㄠˇ」了', answer: '好' },
@@ -740,8 +822,8 @@
                             { question: '有什麼不「ㄊㄨㄥˊ」', answer: '同' },
                             { question: '「ㄗㄠˇ」上晚上', answer: '早' },
                             { question: '早上「ㄨㄢˇ」上', answer: '晚' },
-                            { question: '「ㄨㄤˊ」子的王', answer: '王' },
-                            { question: '「ㄓㄨˇ」人的主', answer: '主' },
+                            { question: '「ㄨㄤˊ」子的王', answer: '王', speak: '王子的王' },
+                            { question: '「ㄓㄨˇ」人的主', answer: '主', speak: '主人的主' },
                             { question: '「ㄧㄡˋ」有什麼不同', answer: '又' }
                         ],
                         answers: ['比', '門', '裡', '外', '有', '什', '麼', '不', '同', '早', '晚', '王', '主', '又'],
@@ -777,6 +859,7 @@
                 this.questionNumberElement = document.getElementById('questionNumber');
                 this.timerElement = document.getElementById('timer');
                 this.pauseButton = document.getElementById('pauseButton');
+                this.speakButton = document.getElementById('speakButton');
                 this.restartButton = document.getElementById('restartButton');
                 this.startOverlay = document.getElementById('startOverlay');
                 this.overlayLessonMsg = document.getElementById('overlayLessonMsg');
@@ -813,6 +896,10 @@
                     this.togglePause();
                 });
 
+                this.speakButton.addEventListener('click', () => {
+                    this.speakCurrentQuestion();
+                });
+
                 this.restartButton.addEventListener('click', () => {
                     this.prepareLesson(this.currentLesson);
                     this.startGame();
@@ -833,6 +920,7 @@
 
                 this.soundToggleBtn.addEventListener('click', () => {
                     this.sound.muted = !this.sound.muted;
+                    if (this.sound.muted) this.sound.stopSpeech();
                     this.soundToggleBtn.textContent = this.sound.muted ? '🔇 靜音' : '🔊 音效開';
                     this.soundToggleBtn.classList.toggle('muted', this.sound.muted);
                 });
@@ -864,11 +952,27 @@
                 this.activeMoles.clear();
             }
 
+            buildSpokenText(item) {
+                if (!item) return '';
+                if (item.speak) return item.speak;
+                const fullPhrase = item.question
+                    .replace(/「[^」]+」/g, item.answer)
+                    .replace(/[，、！？。]/g, '');
+                return `${fullPhrase}的${item.answer}`;
+            }
+
+            speakCurrentQuestion() {
+                if (!this.isStarted || this.gameEnded || this.isPaused) return;
+                const item = this.questions[this.currentQuestionIndex];
+                this.sound.speakQuestion(this.buildSpokenText(item));
+            }
+
             prepareLesson(lesson) {
                 this.isStarted = false;
                 this.gameEnded = false;
                 this.isPaused = false;
                 this.isTransitioning = false;
+                this.sound.stopSpeech();
                 clearInterval(this.timerInterval);
                 this.timerInterval = null;
                 this.clearAllMoles();
@@ -897,6 +1001,7 @@
                 this.pauseButton.textContent = '暫停';
                 this.pauseButton.classList.remove('paused');
                 this.pauseButton.disabled = true;
+                this.speakButton.disabled = true;
                 this.restartButton.style.display = 'none';
 
                 this.overlayLessonMsg.textContent = `${data.name}（共 ${this.questions.length} 題）`;
@@ -919,12 +1024,14 @@
                 this.startOverlay.classList.add('hidden');
                 this.restartButton.style.display = 'none';
                 this.pauseButton.disabled = false;
+                this.speakButton.disabled = false;
                 this.pauseButton.textContent = '暫停';
                 this.pauseButton.classList.remove('paused');
 
                 this.scoreElement.textContent = '0';
                 this.questionElement.textContent = this.questions[0].question;
                 this.questionNumberElement.textContent = `1/${this.questions.length}`;
+                setTimeout(() => this.speakCurrentQuestion(), 220);
 
                 this.startTime = Date.now();
                 clearInterval(this.timerInterval);
@@ -957,13 +1064,16 @@
 
                 if (this.isPaused) {
                     this.pausedTime += Date.now() - this.startTime;
+                    this.sound.stopSpeech();
                     this.clearAllMoles();
                     this.pauseButton.textContent = '繼續';
                     this.pauseButton.classList.add('paused');
+                    this.speakButton.disabled = true;
                 } else {
                     this.startTime = Date.now();
                     this.pauseButton.textContent = '暫停';
                     this.pauseButton.classList.remove('paused');
+                    this.speakButton.disabled = false;
                     this.scheduleNextSpawn();
                 }
             }
@@ -1072,12 +1182,14 @@
                 } else {
                     this.questionElement.textContent = this.questions[this.currentQuestionIndex].question;
                     this.questionNumberElement.textContent = `${this.currentQuestionIndex + 1}/${this.questions.length}`;
+                    this.speakCurrentQuestion();
                 }
             }
 
             endGame() {
                 this.gameEnded = true;
                 this.isStarted = false;
+                this.sound.stopSpeech();
                 clearInterval(this.timerInterval);
                 this.timerInterval = null;
                 this.clearAllMoles();
@@ -1086,6 +1198,7 @@
                 const totalPossibleScore = this.questions.length * 10;
                 this.questionElement.textContent = `🎉 恭喜完成！總分：${this.score}/${totalPossibleScore}`;
                 this.pauseButton.disabled = true;
+                this.speakButton.disabled = true;
                 this.restartButton.style.display = 'inline-block';
             }
 
