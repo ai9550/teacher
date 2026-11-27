@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="zh-TW">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>康軒國語一上生字打地鼠</title>
+  <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .home-btn {
+            position: fixed;
+            top: 14px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.92);
+            color: #2c3e50;
+            border: 2px solid #3498db;
+            padding: 8px 16px;
+            border-radius: 22px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .home-btn:hover {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .layout-wrapper {
+            display: flex;
+            gap: 28px;
+            align-items: flex-start;
+            width: 100%;
+            max-width: 980px;
+            justify-content: center;
+        }
+
+        .lesson-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .lesson-button {
+            background: white;
+            color: #2c3e50;
+            border: 3px solid #3498db;
+            padding: 12px 18px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.25s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            text-align: left;
+            min-width: 210px;
+            white-space: nowrap;
+        }
+
+        .lesson-button:hover {
+            background: #3498db;
+            color: white;
+            transform: translateX(4px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .lesson-button.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border-color: #2980b9;
+            transform: translateX(4px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .title-board {
+            background: white;
+            padding: 16px 32px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 14px;
+            text-align: center;
+            font-size: 1.65rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .control-strip {
+            background: rgba(255, 255, 255, 0.94);
+            padding: 10px 20px;
+            border-radius: 18px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .speed-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.98rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .speed-btn {
+            border: 2px solid #cbd5e0;
+            background: #f7fafc;
+            color: #2d3748;
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .speed-btn:hover {
+            border-color: #3498db;
+            background: #ebf8ff;
+        }
+
+        .speed-btn.active {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            border-color: #d35400;
+            box-shadow: 0 3px 10px rgba(230, 126, 34, 0.35);
+        }
+
+        .sound-btn {
+            border: 2px solid #cbd5e0;
+            background: #f7fafc;
+            color: #2d3748;
+            padding: 6px 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .sound-btn:hover {
+            border-color: #27ae60;
+            background: #e9f7ef;
+        }
+
+        .sound-btn.muted {
+            background: #f8d7da;
+            border-color: #e74c3c;
+            color: #922b21;
+        }
+
+        .score-board {
+            background: white;
+            padding: 14px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            margin-bottom: 18px;
+            text-align: center;
+            font-size: 1.35rem;
+            font-weight: bold;
+            color: #2c3e50;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .question-prompt {
+            font-size: 1.9rem;
+            color: #1a365d;
+            margin-bottom: 8px;
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif;
+            font-weight: normal !important;
+            min-height: 2.4rem;
+        }
+
+        .game-info {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 1.15rem;
+        }
+
+        .pause-button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            font-size: 0.98rem;
+            font-weight: bold;
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.25s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .pause-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            transform: translateY(-1px);
+        }
+
+        .pause-button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .pause-button.paused {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .game-area {
+            position: relative;
+            width: 600px;
+            height: 390px;
+            background: radial-gradient(circle at 50% 35%, #9c5624 0%, #7d3f12 100%);
+            border-radius: 24px;
+            border: 6px solid #5D4037;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            place-items: center;
+            gap: 20px;
+            padding: 32px 36px;
+            overflow: hidden;
+        }
+
+        .start-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(44, 62, 80, 0.72);
+            backdrop-filter: blur(3px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 20;
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .start-overlay.hidden {
+            display: none;
+        }
+
+        .start-overlay-msg {
+            color: #ffffff;
+            font-size: 1.35rem;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .start-overlay-sub {
+            color: #ffeaa7;
+            font-size: 1.05rem;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            border: 3px solid #ffffff;
+            padding: 16px 42px;
+            font-size: 1.55rem;
+            font-weight: bold;
+            border-radius: 32px;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transition: all 0.25s ease;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .start-button:hover {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+        }
+
+        .hole {
+            position: relative;
+            width: 126px;
+            height: 126px;
+            background: radial-gradient(circle at 50% 55%, #4a2f16 0%, #2e1b0b 100%);
+            border-radius: 50%;
+            border: 8px solid #5D4037;
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.6), 0 4px 10px rgba(0,0,0,0.25);
+            overflow: hidden;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .mole {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            bottom: -115px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: bottom 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+            background: radial-gradient(circle at 35% 30%, #e58e3c 0%, #c86419 100%);
+            border-radius: 50%;
+            border: 4px solid #8B4513;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.1rem;
+            line-height: 1;
+            font-family: 'DFKai-SB', '標楷體', 'BiauKai', serif;
+            font-weight: normal !important;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.45);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+            user-select: none;
+        }
+
+        /* 洞口內徑為 126 - 16 = 110px，地鼠為 100px，bottom: 5px 正好上下左右完全置中 */
+        .mole.active {
+            bottom: 5px;
+        }
+
+        .mole:hover {
+            transform: translateX(-50%) scale(1.04);
+        }
+
+        .hit-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.6rem;
+            color: #2ecc71;
+            font-weight: bold;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            animation: hitAnimation 0.6s ease-out;
+        }
+
+        .hit-effect.wrong {
+            color: #e74c3c;
+        }
+
+        @keyframes hitAnimation {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.25);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .restart-button {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 14px 34px;
+            font-size: 1.35rem;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+            transition: all 0.25s ease;
+            margin-top: 16px;
+            font-family: 'Microsoft JhengHei', sans-serif;
+        }
+
+        .restart-button:hover {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding: 12px;
+                padding-top: 56px;
+            }
+
+            .layout-wrapper {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .lesson-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                margin-top: 0;
+            }
+
+            .lesson-button {
+                padding: 9px 14px;
+                font-size: 0.95rem;
+                min-width: auto;
+            }
+
+            .title-board {
+                font-size: 1.35rem;
+                padding: 12px 20px;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .game-area {
+                width: 92vw;
+                height: 62vw;
+                min-height: 250px;
+                padding: 18px;
+                gap: 12px;
+            }
+
+            .hole {
+                width: 88px;
+                height: 88px;
+                border-width: 6px;
+            }
+
+            .mole {
+                width: 70px;
+                height: 70px;
+                bottom: -82px;
+                font-size: 2.1rem;
+            }
+
+            /* 洞口內徑 88 - 12 = 76px，地鼠 70px，bottom: 3px 置中 */
+            .mole.active {
+                bottom: 3px;
+            }
+        }
+
+        /* 強制將生字、語詞、題目的字體改為非粗體 (正常標楷體) */
+        .character, .char, .word, .vocab, .meaning, .question, .answer, .answer-char, .character-card, .overlay-char, .block, strong, b, .char-display, .word-display, .bingo-cell, .mole-char, .question-char, .stage0-char, .stage2-char, .hint-text, .question-text, .mole, .question-prompt {
+            font-weight: normal !important;
+        }
+    </style>
+ </head>
+ <body>
+  <a href="index.html" class="home-btn">🏠 回首頁</a>
+
+  <div class="layout-wrapper">
+   <div class="lesson-buttons" id="lessonButtons">
+    <button type="button" class="lesson-button" data-lesson="0">數字 一到十</button>
+    <button type="button" class="lesson-button active" data-lesson="1">第一課 拍拍手</button>
+    <button type="button" class="lesson-button" data-lesson="2">第二課 這是誰的</button>
+    <button type="button" class="lesson-button" data-lesson="3">第三課 秋千</button>
+    <button type="button" class="lesson-button" data-lesson="4">第四課 大個子，小個子</button>
+    <button type="button" class="lesson-button" data-lesson="5">第五課 比一比</button>
+    <button type="button" class="lesson-button" data-lesson="6">第六課 小路</button>
+   </div>
+
+   <div class="main-panel">
+    <div class="title-board">
+     <span id="lessonTitle">康軒國語一上生字打地鼠｜第一課 拍拍手</span>
+    </div>
+
+    <div class="control-strip">
+     <div class="speed-group">
+      <span>速度：</span>
+      <button type="button" class="speed-btn" data-speed="slow">🐢 慢</button>
+      <button type="button" class="speed-btn active" data-speed="medium">🐇 中</button>
+      <button type="button" class="speed-btn" data-speed="fast">⚡ 快</button>
+     </div>
+     <button type="button" id="soundToggleBtn" class="sound-btn">🔊 音效開</button>
+    </div>
+
+    <div class="score-board">
+     <div id="question" class="question-prompt">請按「開始遊戲」挑戰！</div>
+     <div class="game-info">
+      <div>題目：<span id="questionNumber">0/9</span></div>
+      <div>分數：<span id="score">0</span></div>
+      <div>時間：<span id="timer">00:00</span></div>
+      <button type="button" id="pauseButton" class="pause-button" disabled>暫停</button>
+     </div>
+    </div>
+
+    <div class="game-area">
+     <div class="hole" data-hole="0"><div class="mole"></div></div>
+     <div class="hole" data-hole="1"><div class="mole"></div></div>
+     <div class="hole" data-hole="2"><div class="mole"></div></div>
+     <div class="hole" data-hole="3"><div class="mole"></div></div>
+     <div class="hole" data-hole="4"><div class="mole"></div></div>
+     <div class="hole" data-hole="5"><div class="mole"></div></div>
+
+     <div id="startOverlay" class="start-overlay">
+      <div class="start-overlay-msg" id="overlayLessonMsg">第一課 拍拍手（共 9 題）</div>
+      <div class="start-overlay-sub">選擇上方速度後，按下開始按鈕即可作答！</div>
+      <button type="button" id="startButton" class="start-button">▶️ 開始遊戲</button>
+     </div>
+    </div>
+
+    <button type="button" id="restartButton" class="restart-button" style="display: none;">🔄 再玩一次</button>
+   </div>
+  </div>
+
+  <script>
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            ensureContext() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, startOffset, duration, type = 'triangle', volume = 0.22) {
+                if (this.muted) return;
+                this.ensureContext();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime + startOffset;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, now);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + duration + 0.02);
+            }
+
+            playStart() {
+                this.playTone(392.0, 0, 0.1, 'triangle', 0.2);
+                this.playTone(523.25, 0.09, 0.16, 'triangle', 0.22);
+            }
+
+            playCorrect() {
+                this.playTone(523.25, 0, 0.1, 'triangle', 0.24);
+                this.playTone(659.25, 0.08, 0.1, 'triangle', 0.24);
+                this.playTone(783.99, 0.16, 0.2, 'sine', 0.25);
+            }
+
+            playWrong() {
+                this.playTone(230, 0, 0.12, 'sawtooth', 0.14);
+                this.playTone(165, 0.1, 0.18, 'sawtooth', 0.14);
+            }
+
+            playWin() {
+                this.playTone(523.25, 0, 0.12, 'triangle', 0.24);
+                this.playTone(659.25, 0.11, 0.12, 'triangle', 0.24);
+                this.playTone(783.99, 0.22, 0.12, 'triangle', 0.24);
+                this.playTone(1046.5, 0.34, 0.32, 'sine', 0.28);
+            }
+        }
+
+        class WhackAMoleGame {
+            constructor() {
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.startTime = null;
+                this.timerInterval = null;
+                this.isStarted = false;
+                this.isPaused = false;
+                this.isTransitioning = false;
+                this.pausedTime = 0;
+                this.currentLesson = 1;
+                this.currentSpeed = 'medium';
+                this.sound = new SoundFX();
+
+                this.speedConfig = {
+                    slow:   { spawnMin: 1300, spawnMax: 2000, hideMin: 2400, hideMax: 3400 },
+                    medium: { spawnMin: 850,  spawnMax: 1450, hideMin: 1600, hideMax: 2400 },
+                    fast:   { spawnMin: 480,  spawnMax: 850,  hideMin: 950,  hideMax: 1500 }
+                };
+
+                // 依據專案內「國小國語1上生字表」與各課課文語詞編製
+                this.lessonData = {
+                    0: {
+                        name: '數字 一到十',
+                        title: '康軒國語一上生字打地鼠｜數字 一到十',
+                        questions: [
+                            { question: '「ㄧ」二三', answer: '一' },
+                            { question: '一「ㄦˋ」三', answer: '二' },
+                            { question: '一二「ㄙㄢ」', answer: '三' },
+                            { question: '「ㄙˋ」五六', answer: '四' },
+                            { question: '四「ㄨˇ」六', answer: '五' },
+                            { question: '四五「ㄌㄧㄡˋ」', answer: '六' },
+                            { question: '「ㄑㄧ」八九', answer: '七' },
+                            { question: '七「ㄅㄚ」九', answer: '八' },
+                            { question: '七八「ㄐㄧㄡˇ」', answer: '九' },
+                            { question: '九、「ㄕˊ」', answer: '十' }
+                        ],
+                        answers: ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'],
+                        distractors: ['土', '工', '王', '田', '正', '大', '人', '入', '力', '干']
+                    },
+                    1: {
+                        name: '第一課 拍拍手',
+                        title: '康軒國語一上生字打地鼠｜第一課 拍拍手',
+                        questions: [
+                            { question: '「ㄆㄞ」拍手', answer: '拍' },
+                            { question: '拍拍「ㄕㄡˇ」', answer: '手' },
+                            { question: '「ㄗㄨㄛˇ」拍拍', answer: '左' },
+                            { question: '「ㄧㄡˋ」拍拍', answer: '右' },
+                            { question: '「ㄋㄧˇ」拍拍', answer: '你' },
+                            { question: '「ㄊㄚ」拍拍', answer: '他' },
+                            { question: '你「ㄧㄝˇ」拍', answer: '也' },
+                            { question: '「ㄕㄤˋ」上下下', answer: '上' },
+                            { question: '上上「ㄒㄧㄚˋ」下', answer: '下' }
+                        ],
+                        answers: ['拍', '手', '左', '右', '你', '他', '也', '上', '下'],
+                        distractors: ['白', '毛', '在', '石', '們', '她', '地', '止', '不']
+                    },
+                    2: {
+                        name: '第二課 這是誰的',
+                        title: '康軒國語一上生字打地鼠｜第二課 這是誰的',
+                        questions: [
+                            { question: '「ㄓㄜˋ」是誰的', answer: '這' },
+                            { question: '這「ㄕˋ」我的', answer: '是' },
+                            { question: '這是「ㄕㄟˊ」的', answer: '誰' },
+                            { question: '我「˙ㄉㄜ」', answer: '的' },
+                            { question: '這是「ㄨㄛˇ」的', answer: '我' },
+                            { question: '「ㄈㄣ」好了', answer: '分' },
+                            { question: '分「ㄏㄠˇ」了', answer: '好' },
+                            { question: '分好「˙ㄌㄜ」', answer: '了' },
+                            { question: '分好了，「ㄚ」！', answer: '啊' },
+                            { question: '「ㄉㄨㄛ」了一個', answer: '多' },
+                            { question: '多了一「˙ㄍㄜ」', answer: '個' }
+                        ],
+                        answers: ['這', '是', '誰', '的', '我', '分', '好', '了', '啊', '多', '個'],
+                        distractors: ['文', '足', '說', '白', '找', '公', '女', '子', '阿', '夕', '人']
+                    },
+                    3: {
+                        name: '第三課 秋千',
+                        title: '康軒國語一上生字打地鼠｜第三課 秋千',
+                        questions: [
+                            { question: '「ㄑㄧㄡ」千', answer: '秋' },
+                            { question: '秋「ㄑㄧㄢ」', answer: '千' },
+                            { question: '「ㄏㄢˋ」我玩', answer: '和' },
+                            { question: '和我「ㄨㄢˊ」', answer: '玩' },
+                            { question: '「ㄆㄟˊ」我上高山', answer: '陪' },
+                            { question: '「ㄍㄠ」山', answer: '高' },
+                            { question: '高「ㄕㄢ」', answer: '山' },
+                            { question: '陪我「ㄉㄠˋ」大海', answer: '到' },
+                            { question: '「ㄉㄚˋ」海', answer: '大' },
+                            { question: '大「ㄏㄞˇ」', answer: '海' },
+                            { question: '好「ㄆㄥˊ」友', answer: '朋' },
+                            { question: '好朋「ㄧㄡˇ」', answer: '友' },
+                            { question: '我「˙ㄇㄣ」一起玩', answer: '們' },
+                            { question: '一「ㄑㄧˇ」玩', answer: '起' }
+                        ],
+                        answers: ['秋', '千', '和', '玩', '陪', '高', '山', '到', '大', '海', '朋', '友', '們', '起'],
+                        distractors: ['火', '干', '知', '王', '部', '亮', '出', '倒', '太', '每', '明', '右', '門', '走']
+                    },
+                    4: {
+                        name: '第四課 大個子，小個子',
+                        title: '康軒國語一上生字打地鼠｜第四課 大個子，小個子',
+                        questions: [
+                            { question: '大個「˙ㄗ」', answer: '子' },
+                            { question: '「ㄒㄧㄠˇ」個子', answer: '小' },
+                            { question: '一起上「ㄎㄜˋ」', answer: '課' },
+                            { question: '「ㄌㄧㄤˇ」個人', answer: '兩' },
+                            { question: '兩個「ㄖㄣˊ」', answer: '人' },
+                            { question: '手「ㄌㄚ」手', answer: '拉' },
+                            { question: '左「ㄎㄢˋ」看', answer: '看' },
+                            { question: '右「ㄓㄠˇ」找', answer: '找' },
+                            { question: '一「ㄓ」大青蛙', answer: '隻' },
+                            { question: '「ㄑㄧㄥ」蛙', answer: '青' },
+                            { question: '青「ㄨㄚ」', answer: '蛙' },
+                            { question: '好「ㄎㄞ」心', answer: '開' },
+                            { question: '好開「ㄒㄧㄣ」', answer: '心' }
+                        ],
+                        answers: ['子', '小', '課', '兩', '人', '拉', '看', '找', '隻', '青', '蛙', '開', '心'],
+                        distractors: ['了', '少', '說', '雨', '八', '立', '著', '我', '雙', '清', '娃', '關', '必']
+                    },
+                    5: {
+                        name: '第五課 比一比',
+                        title: '康軒國語一上生字打地鼠｜第五課 比一比',
+                        questions: [
+                            { question: '「ㄅㄧˇ」一比', answer: '比' },
+                            { question: '「ㄇㄣˊ」裡門外', answer: '門' },
+                            { question: '門「ㄌㄧˇ」門外', answer: '裡' },
+                            { question: '門裡門「ㄨㄞˋ」', answer: '外' },
+                            { question: '「ㄧㄡˇ」什麼不同', answer: '有' },
+                            { question: '有「ㄕㄣˊ」麼不同', answer: '什' },
+                            { question: '有什「˙ㄇㄜ」不同', answer: '麼' },
+                            { question: '有什麼「ㄅㄨˋ」同', answer: '不' },
+                            { question: '有什麼不「ㄊㄨㄥˊ」', answer: '同' },
+                            { question: '「ㄗㄠˇ」上晚上', answer: '早' },
+                            { question: '早上「ㄨㄢˇ」上', answer: '晚' },
+                            { question: '「ㄨㄤˊ」子的王', answer: '王' },
+                            { question: '「ㄓㄨˇ」人的主', answer: '主' },
+                            { question: '「ㄧㄡˋ」有什麼不同', answer: '又' }
+                        ],
+                        answers: ['比', '門', '裡', '外', '有', '什', '麼', '不', '同', '早', '晚', '王', '主', '又'],
+                        distractors: ['北', '們', '里', '多', '友', '十', '麻', '下', '洞', '草', '免', '玉', '住', '右']
+                    },
+                    6: {
+                        name: '第六課 小路',
+                        title: '康軒國語一上生字打地鼠｜第六課 小路',
+                        questions: [
+                            { question: '小「ㄌㄨˋ」', answer: '路' },
+                            { question: '「ㄔㄤˊ」長的小路', answer: '長' },
+                            { question: '小小的「ㄅㄞˊ」花', answer: '白' },
+                            { question: '小白「ㄏㄨㄚ」', answer: '花' },
+                            { question: '小「ㄏㄨㄥˊ」花', answer: '紅' },
+                            { question: '「ㄗㄡˇ」在小路上', answer: '走' },
+                            { question: '走「ㄗㄞˋ」小路上', answer: '在' },
+                            { question: '我「ㄒㄧㄤˋ」小紅花說你好', answer: '向' },
+                            { question: '向小白花「ㄕㄨㄛ」你早', answer: '說' },
+                            { question: '一「ㄉㄨㄛˇ」朵小紅花', answer: '朵' },
+                            { question: '「ㄘㄨㄥˊ」這一頭', answer: '從' },
+                            { question: '從這一「ㄊㄡˊ」', answer: '頭' },
+                            { question: '開到「ㄋㄚˋ」一頭', answer: '那' }
+                        ],
+                        answers: ['路', '長', '白', '花', '紅', '走', '在', '向', '說', '朵', '從', '頭', '那'],
+                        distractors: ['足', '張', '百', '草', '江', '起', '左', '同', '課', '木', '人', '豆', '哪']
+                    }
+                };
+
+                this.holes = document.querySelectorAll('.hole');
+                this.moles = document.querySelectorAll('.mole');
+                this.scoreElement = document.getElementById('score');
+                this.questionElement = document.getElementById('question');
+                this.questionNumberElement = document.getElementById('questionNumber');
+                this.timerElement = document.getElementById('timer');
+                this.pauseButton = document.getElementById('pauseButton');
+                this.restartButton = document.getElementById('restartButton');
+                this.startOverlay = document.getElementById('startOverlay');
+                this.overlayLessonMsg = document.getElementById('overlayLessonMsg');
+                this.startButton = document.getElementById('startButton');
+                this.soundToggleBtn = document.getElementById('soundToggleBtn');
+                this.lessonTitle = document.getElementById('lessonTitle');
+
+                this.activeMoles = new Set();
+                this.moleTimers = new Map();
+                this.spawnTimer = null;
+                this.gameEnded = false;
+
+                this.init();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            init() {
+                this.holes.forEach((hole, index) => {
+                    hole.addEventListener('click', () => this.hitMole(index));
+                });
+
+                this.startButton.addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                this.pauseButton.addEventListener('click', () => {
+                    this.togglePause();
+                });
+
+                this.restartButton.addEventListener('click', () => {
+                    this.prepareLesson(this.currentLesson);
+                    this.startGame();
+                });
+
+                document.querySelectorAll('.lesson-button').forEach(button => {
+                    button.addEventListener('click', () => {
+                        const lesson = parseInt(button.dataset.lesson, 10);
+                        this.prepareLesson(lesson);
+                    });
+                });
+
+                document.querySelectorAll('.speed-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        this.setSpeed(button.dataset.speed);
+                    });
+                });
+
+                this.soundToggleBtn.addEventListener('click', () => {
+                    this.sound.muted = !this.sound.muted;
+                    this.soundToggleBtn.textContent = this.sound.muted ? '🔇 靜音' : '🔊 音效開';
+                    this.soundToggleBtn.classList.toggle('muted', this.sound.muted);
+                });
+
+                // 初始進入準備畫面，不自動開始遊戲
+                this.prepareLesson(this.currentLesson);
+            }
+
+            setSpeed(speed) {
+                this.currentSpeed = speed;
+                document.querySelectorAll('.speed-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.speed === speed);
+                });
+                if (this.isStarted && !this.isPaused && !this.gameEnded) {
+                    clearTimeout(this.spawnTimer);
+                    this.scheduleNextSpawn();
+                }
+            }
+
+            clearAllMoles() {
+                clearTimeout(this.spawnTimer);
+                this.spawnTimer = null;
+                this.moleTimers.forEach(t => clearTimeout(t));
+                this.moleTimers.clear();
+                this.moles.forEach(mole => {
+                    mole.classList.remove('active');
+                    mole.textContent = '';
+                });
+                this.activeMoles.clear();
+            }
+
+            prepareLesson(lesson) {
+                this.isStarted = false;
+                this.gameEnded = false;
+                this.isPaused = false;
+                this.isTransitioning = false;
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+                this.clearAllMoles();
+
+                document.querySelectorAll('.lesson-button').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.lesson, 10) === lesson);
+                });
+
+                this.currentLesson = lesson;
+                const data = this.lessonData[lesson];
+                this.allQuestions = data.questions;
+                this.questions = this.shuffleArray([...this.allQuestions]);
+                this.answerCharacters = data.answers;
+                this.distractorCharacters = data.distractors;
+
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.pausedTime = 0;
+                this.startTime = null;
+
+                this.lessonTitle.textContent = data.title;
+                this.scoreElement.textContent = '0';
+                this.questionElement.textContent = '請按「開始遊戲」挑戰！';
+                this.questionNumberElement.textContent = `0/${this.questions.length}`;
+                this.timerElement.textContent = '00:00';
+                this.pauseButton.textContent = '暫停';
+                this.pauseButton.classList.remove('paused');
+                this.pauseButton.disabled = true;
+                this.restartButton.style.display = 'none';
+
+                this.overlayLessonMsg.textContent = `${data.name}（共 ${this.questions.length} 題）`;
+                this.startOverlay.classList.remove('hidden');
+            }
+
+            startGame() {
+                if (this.isStarted && !this.gameEnded) return;
+                this.sound.playStart();
+
+                this.isStarted = true;
+                this.gameEnded = false;
+                this.isPaused = false;
+                this.isTransitioning = false;
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.pausedTime = 0;
+                this.questions = this.shuffleArray([...this.allQuestions]);
+
+                this.startOverlay.classList.add('hidden');
+                this.restartButton.style.display = 'none';
+                this.pauseButton.disabled = false;
+                this.pauseButton.textContent = '暫停';
+                this.pauseButton.classList.remove('paused');
+
+                this.scoreElement.textContent = '0';
+                this.questionElement.textContent = this.questions[0].question;
+                this.questionNumberElement.textContent = `1/${this.questions.length}`;
+
+                this.startTime = Date.now();
+                clearInterval(this.timerInterval);
+                this.timerInterval = setInterval(() => this.updateTimer(), 100);
+
+                setTimeout(() => {
+                    if (this.isStarted && !this.isPaused && !this.gameEnded) {
+                        this.showRandomMole();
+                        this.scheduleNextSpawn();
+                    }
+                }, 250);
+            }
+
+            scheduleNextSpawn() {
+                if (!this.isStarted || this.isPaused || this.gameEnded) return;
+                const cfg = this.speedConfig[this.currentSpeed];
+                const delay = this.getRandomTime(cfg.spawnMin, cfg.spawnMax);
+                this.spawnTimer = setTimeout(() => {
+                    if (this.isStarted && !this.isPaused && !this.gameEnded) {
+                        this.showRandomMole();
+                        this.scheduleNextSpawn();
+                    }
+                }, delay);
+            }
+
+            togglePause() {
+                if (!this.isStarted || this.gameEnded) return;
+
+                this.isPaused = !this.isPaused;
+
+                if (this.isPaused) {
+                    this.pausedTime += Date.now() - this.startTime;
+                    this.clearAllMoles();
+                    this.pauseButton.textContent = '繼續';
+                    this.pauseButton.classList.add('paused');
+                } else {
+                    this.startTime = Date.now();
+                    this.pauseButton.textContent = '暫停';
+                    this.pauseButton.classList.remove('paused');
+                    this.scheduleNextSpawn();
+                }
+            }
+
+            updateTimer() {
+                if (this.startTime && this.isStarted && !this.gameEnded && !this.isPaused) {
+                    const elapsed = (Date.now() - this.startTime) + this.pausedTime;
+                    const seconds = Math.floor(elapsed / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    this.timerElement.textContent =
+                        `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }
+            }
+
+            showRandomMole() {
+                if (!this.isStarted || this.isPaused || this.gameEnded || this.isTransitioning) return;
+
+                const inactiveHoles = Array.from(this.holes).filter((_, index) => !this.activeMoles.has(index));
+                if (inactiveHoles.length === 0) return;
+
+                const randomHole = inactiveHoles[Math.floor(Math.random() * inactiveHoles.length)];
+                const holeIndex = parseInt(randomHole.dataset.hole, 10);
+                const mole = this.moles[holeIndex];
+
+                let randomCharacter;
+                const currentAnswer = this.questions[this.currentQuestionIndex].answer;
+                const r = Math.random();
+
+                if (r < 0.58) {
+                    randomCharacter = currentAnswer;
+                } else if (r < 0.8) {
+                    const otherAnswers = this.answerCharacters.filter(ch => ch !== currentAnswer);
+                    randomCharacter = otherAnswers[Math.floor(Math.random() * otherAnswers.length)];
+                } else {
+                    randomCharacter = this.distractorCharacters[Math.floor(Math.random() * this.distractorCharacters.length)];
+                }
+
+                mole.textContent = randomCharacter;
+                mole.classList.add('active');
+                this.activeMoles.add(holeIndex);
+
+                const cfg = this.speedConfig[this.currentSpeed];
+                const hideTime = this.getRandomTime(cfg.hideMin, cfg.hideMax);
+                const t = setTimeout(() => {
+                    mole.classList.remove('active');
+                    this.activeMoles.delete(holeIndex);
+                    this.moleTimers.delete(holeIndex);
+                }, hideTime);
+                this.moleTimers.set(holeIndex, t);
+            }
+
+            hitMole(holeIndex) {
+                if (!this.isStarted || this.gameEnded || this.isPaused || this.isTransitioning) return;
+                if (!this.activeMoles.has(holeIndex)) return;
+
+                const mole = this.moles[holeIndex];
+                const hole = this.holes[holeIndex];
+                const clickedCharacter = mole.textContent;
+                const correctAnswer = this.questions[this.currentQuestionIndex].answer;
+
+                if (this.moleTimers.has(holeIndex)) {
+                    clearTimeout(this.moleTimers.get(holeIndex));
+                    this.moleTimers.delete(holeIndex);
+                }
+                mole.classList.remove('active');
+                this.activeMoles.delete(holeIndex);
+
+                if (clickedCharacter === correctAnswer) {
+                    this.sound.playCorrect();
+                    this.score += 10;
+                    this.scoreElement.textContent = this.score;
+                    this.showHitEffect(hole, true);
+                    this.isTransitioning = true;
+
+                    setTimeout(() => {
+                        this.isTransitioning = false;
+                        if (this.isStarted && !this.gameEnded) {
+                            this.nextQuestion();
+                        }
+                    }, 650);
+                } else {
+                    this.sound.playWrong();
+                    this.showHitEffect(hole, false);
+                }
+            }
+
+            showHitEffect(hole, isCorrect) {
+                const effect = document.createElement('div');
+                effect.className = isCorrect ? 'hit-effect' : 'hit-effect wrong';
+                effect.textContent = isCorrect ? '✓' : '✗';
+                hole.appendChild(effect);
+
+                setTimeout(() => {
+                    if (effect.parentNode) {
+                        effect.parentNode.removeChild(effect);
+                    }
+                }, 600);
+            }
+
+            nextQuestion() {
+                this.currentQuestionIndex++;
+
+                if (this.currentQuestionIndex >= this.questions.length) {
+                    this.endGame();
+                } else {
+                    this.questionElement.textContent = this.questions[this.currentQuestionIndex].question;
+                    this.questionNumberElement.textContent = `${this.currentQuestionIndex + 1}/${this.questions.length}`;
+                }
+            }
+
+            endGame() {
+                this.gameEnded = true;
+                this.isStarted = false;
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+                this.clearAllMoles();
+                this.sound.playWin();
+
+                const totalPossibleScore = this.questions.length * 10;
+                this.questionElement.textContent = `🎉 恭喜完成！總分：${this.score}/${totalPossibleScore}`;
+                this.pauseButton.disabled = true;
+                this.restartButton.style.display = 'inline-block';
+            }
+
+            getRandomTime(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new WhackAMoleGame();
+        });
+    </script>
+ </body>
+</html>
