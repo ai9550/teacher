@@ -81,7 +81,10 @@ Minimum version required to store current data is: `+v+`.
       </div>
 
       <div class="card" style="margin-top:20px;">
-        <h2 class="section-title">🏆 Cloudflare D1 歷史高分榜 <button id="btn-clear-history" class="btn btn-danger btn-sm" type="button" title="管理功能尚未啟用">🗑️ 清除歷史高分</button></h2>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <h2 class="section-title">🏆 Cloudflare D1 歷史高分榜</h2>
+          <button id="btn-clear-history" class="btn btn-danger btn-sm" type="button">🗑️ 清除歷史高分</button>
+        </div>
         ${zt.length===0?'<div class="empty-hint">目前還沒有歷史戰績，快開第一局成為榜首吧！</div>':`<table class="rank-table">
                 <thead>
                   <tr><th>#</th><th>玩家</th><th>總分</th><th>資源數</th><th>數學答對</th></tr>
@@ -99,7 +102,7 @@ Minimum version required to store current data is: `+v+`.
               </table>`}
       </div>
     </div>
-  `,document.getElementById("btn-create-host")?.addEventListener("click",()=>{wn()});document.getElementById("btn-clear-history")?.addEventListener("click",()=>H("清除功能尚未啟用；Worker 清除端點部署後即可使用。","info"));const t=()=>{const r=document.getElementById("home-room-input");r&&qe(r.value)};document.getElementById("btn-join-code")?.addEventListener("click",t),document.getElementById("home-room-input")?.addEventListener("keydown",r=>{r.key==="Enter"&&t()})}function Bn(){m&&(V.innerHTML=`
+  `,document.getElementById("btn-create-host")?.addEventListener("click",()=>{wn()});document.getElementById("btn-clear-history")?.addEventListener("click",()=>H("清除功能尚未啟用；Worker 清除端點部署後即可使用。","info"));const t=()=>{const r=document.getElementById("home-room-input");r&&qe(r.value)};document.getElementById("btn-join-code")?.addEventListener("click",t),document.getElementById("home-room-input")?.addEventListener("keydown",r=>{r.key==="Enter"&&t()}),document.getElementById("btn-clear-history")?.addEventListener("click",async()=>{const token=window.prompt("請輸入 Cloudflare ADMIN_TOKEN 管理密碼");if(token===null||!token.trim())return;if(!window.confirm("確定永久刪除全部歷史排行榜紀錄？此動作無法復原。"))return;try{const response=await fetch(Ae("/api/leaderboard/clear"),{method:"POST",headers:{Authorization:"Bearer "+token.trim()}});if(!response.ok){if(response.status===401){H("管理密碼錯誤或尚未設定","err");return}throw new Error("清除失敗（HTTP "+response.status+"）")}await response.json();H("歷史排行榜已清除","ok");zt=[];K()}catch(error){H(error instanceof Error?error.message:"清除失敗，請稍後再試","err")}})}function Bn(){m&&(V.innerHTML=`
     <div class="page">
       <div class="topbar">
         <div class="brand-pill">
