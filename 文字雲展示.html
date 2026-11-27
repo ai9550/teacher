@@ -40,6 +40,39 @@
             margin-bottom: 30px;
         }
 
+        .teacher-tools {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: -12px 0 24px;
+        }
+
+        .teacher-tools button {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 16px;
+            color: white;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .teacher-tools button:disabled {
+            opacity: .55;
+            cursor: not-allowed;
+        }
+
+        #teacherLoginBtn { background: #4f46e5; }
+        #teacherLogoutBtn { background: #64748b; }
+        #clearWordsBtn { background: #dc2626; }
+
+        #teacherStatus {
+            color: #555;
+            font-size: .9em;
+        }
+
         .layout {
             display: flex;
             gap: 30px;
@@ -138,6 +171,12 @@
     <div class="container">
         <h1>☁️ 即時文字雲</h1>
         <div class="count" id="count">目前共 0 筆投稿</div>
+        <div class="teacher-tools" aria-label="教師管理工具">
+            <span id="teacherStatus" role="status">教師登入後可清除投稿</span>
+            <button id="teacherLoginBtn" type="button">🔐 Google 教師登入</button>
+            <button id="teacherLogoutBtn" type="button" hidden>登出教師帳號</button>
+            <button id="clearWordsBtn" type="button" disabled>🗑️ 清除全部投稿</button>
+        </div>
         <div class="layout">
             <div class="cloud-panel" id="cloud"></div>
             <div class="data-panel">
@@ -154,7 +193,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
         const firebaseConfig = {
             projectId: "mygame-1af09",
@@ -167,10 +207,81 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const teacherEmail = "happy690331@gmail.com";
+        const googleProvider = new GoogleAuthProvider();
 
         const cloudEl = document.getElementById("cloud");
         const countEl = document.getElementById("count");
         const dataBodyEl = document.getElementById("dataBody");
+        const teacherStatusEl = document.getElementById("teacherStatus");
+        const teacherLoginBtn = document.getElementById("teacherLoginBtn");
+        const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
+        const clearWordsBtn = document.getElementById("clearWordsBtn");
+
+        onAuthStateChanged(auth, (user) => {
+            const isTeacher = user?.email?.toLowerCase() === teacherEmail;
+            clearWordsBtn.disabled = !isTeacher;
+            teacherLoginBtn.hidden = !!user;
+            teacherLogoutBtn.hidden = !user;
+            teacherStatusEl.textContent = isTeacher
+                ? `教師已登入：${user.email}`
+                : user
+                    ? `目前帳號 ${user.email || "未提供電子郵件"} 沒有清除權限`
+                    : "教師登入後可清除投稿";
+        });
+
+        teacherLoginBtn.addEventListener("click", async () => {
+            teacherLoginBtn.disabled = true;
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                if (result.user.email?.toLowerCase() !== teacherEmail) {
+                    await signOut(auth);
+                    alert(`請使用教師帳號 ${teacherEmail} 登入。`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("教師登入失敗，請確認 Firebase Authentication 已啟用 Google 登入。" );
+            } finally {
+                teacherLoginBtn.disabled = false;
+            }
+        });
+
+        teacherLogoutBtn.addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+            } catch (err) {
+                console.error(err);
+                alert("登出失敗，請稍後再試。" );
+            }
+        });
+
+        clearWordsBtn.addEventListener("click", async () => {
+            if (auth.currentUser?.email?.toLowerCase() !== teacherEmail) {
+                alert("請先使用教師 Google 帳號登入。" );
+                return;
+            }
+            if (!confirm("確定要永久清除文字雲中的全部投稿嗎？這項操作無法復原。")) return;
+
+            clearWordsBtn.disabled = true;
+            teacherStatusEl.textContent = "正在清除投稿…";
+            try {
+                const snapshot = await getDocs(collection(db, "wordcloud_words"));
+                const docs = snapshot.docs;
+                for (let i = 0; i < docs.length; i += 450) {
+                    const batch = writeBatch(db);
+                    docs.slice(i, i + 450).forEach((item) => batch.delete(item.ref));
+                    await batch.commit();
+                }
+                teacherStatusEl.textContent = `已清除 ${docs.length} 筆投稿`;
+            } catch (err) {
+                console.error(err);
+                teacherStatusEl.textContent = "清除失敗";
+                alert("清除失敗。請確認 Firestore 規則已部署，且教師帳號有清除權限。" );
+            } finally {
+                clearWordsBtn.disabled = auth.currentUser?.email?.toLowerCase() !== teacherEmail;
+            }
+        });
 
         const colors = ["#667eea", "#764ba2", "#e07798", "#3c78d8", "#149e60", "#eaa041", "#cc3a21"];
 
@@ -235,3 +346,4 @@
     </script>
 </body>
 </html>
+
