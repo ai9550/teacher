@@ -968,7 +968,7 @@ class SnakeRoom extends DurableObject {
       const nextHead = { x: head.x + delta.x, y: head.y + delta.y };
       const hitWall = nextHead.x < 0 || nextHead.x >= GRID_WIDTH || nextHead.y < 0 || nextHead.y >= GRID_HEIGHT;
       const cellOwner = bodyCells.get(`${nextHead.x},${nextHead.y}`);
-      const hitBody = p.invulnerableTicks === 0 && cellOwner !== void 0;
+      const hitBody = p.invulnerableTicks === 0 && cellOwner !== void 0 && cellOwner !== p.id;
       if (hitWall || hitBody) {
         p.score = Math.max(0, p.score - 5);
         this.spawnSnake(p);
@@ -1287,4 +1287,3 @@ export {
   workerEntry as default
 };
 //# sourceMappingURL=index.js.map
-

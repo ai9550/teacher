@@ -109,9 +109,9 @@ function paintArena(ctx, width, height, state, view, playerId, time) {
   const bottom = offsetY + viewRows * cellSize;
 
   const background = ctx.createLinearGradient(0, 0, width, height);
-  background.addColorStop(0, "#081827");
-  background.addColorStop(0.52, "#0c1b2d");
-  background.addColorStop(1, "#071321");
+  background.addColorStop(0, "#050817");
+  background.addColorStop(0.52, "#070b1c");
+  background.addColorStop(1, "#050817");
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, width, height);
 
@@ -119,7 +119,7 @@ function paintArena(ctx, width, height, state, view, playerId, time) {
   ctx.beginPath();
   ctx.rect(offsetX, offsetY, viewColumns * cellSize, viewRows * cellSize);
   ctx.clip();
-  ctx.fillStyle = "rgba(26, 76, 88, 0.12)";
+  ctx.fillStyle = "rgba(8, 13, 34, 0.34)";
   ctx.fillRect(offsetX, offsetY, viewColumns * cellSize, viewRows * cellSize);
 
   const gridStep = Math.max(1, Math.ceil(viewColumns / 28));
@@ -134,7 +134,7 @@ function paintArena(ctx, width, height, state, view, playerId, time) {
     ctx.moveTo(offsetX, py);
     ctx.lineTo(right, py);
   }
-  ctx.strokeStyle = "rgba(116, 191, 211, 0.12)";
+  ctx.strokeStyle = "rgba(75, 103, 161, 0.12)";
   ctx.lineWidth = 1;
   ctx.stroke();
 
@@ -175,9 +175,9 @@ function interpolateSegments(snake, previousSnake, progress) {
 
 function drawArenaBorder(ctx, toX, toY, cellSize, worldWidth, worldHeight) {
   ctx.save();
-  ctx.shadowColor = "#2de2c5";
+  ctx.shadowColor = "#5267ff";
   ctx.shadowBlur = Math.min(18, cellSize * 0.8);
-  ctx.strokeStyle = "rgba(55, 230, 202, 0.82)";
+  ctx.strokeStyle = "rgba(75, 104, 255, 0.56)";
   ctx.lineWidth = Math.max(1.5, cellSize * 0.12);
   ctx.strokeRect(toX(0), toY(0), worldWidth * cellSize, worldHeight * cellSize);
   ctx.restore();
@@ -353,4 +353,3 @@ function shadeColor(hex, amount) {
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
-
