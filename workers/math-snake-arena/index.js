@@ -875,7 +875,6 @@ class SnakeRoom extends DurableObject {
     if (msg.type === "set_dir" && this.phase === "playing") {
       const dir = msg.dir;
       if (dir !== "up" && dir !== "down" && dir !== "left" && dir !== "right") return;
-      if (OPPOSITE_DIR[player.dir] === dir && player.segments.length > 1) return;
       player.nextDir = dir;
       return;
     }
