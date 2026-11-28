@@ -379,5 +379,119 @@ Minimum version required to store current data is: `+v+`.
   `,document.getElementById("btn-reset-lobby")?.addEventListener("click",()=>{x({type:"reset_lobby"})}),document.getElementById("btn-back-home")?.addEventListener("click",()=>{const e=new URL(window.location.href);e.search="",window.location.href=e.toString()})}function N(t){return t.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}function Mn(){const t=new URLSearchParams(window.location.search),r=t.get("room"),i=t.get("host");r?qe(r):i?(L=i.toUpperCase(),k="host",$e(L),at("host",L),K()):(k="home",K(),Ne())}Mn();
 
     </script>
+  
+    <script>
+      (() => {
+        const app = document.getElementById("app");
+        const buttonId = "d1-history-clear-control";
+        const backButtonId = "return-to-first-page";
+        let clearing = false;
+
+        function syncButtons() {
+          const leaderboardTitle = app.querySelector("#home-leaderboard-title");
+          let clearButton = document.getElementById(buttonId);
+
+          if (!leaderboardTitle) {
+            clearButton?.remove();
+          } else if (!clearButton) {
+            clearButton = document.createElement("button");
+            clearButton.id = buttonId;
+            clearButton.type = "button";
+            clearButton.textContent = "🧹 清除歷史紀錄";
+            clearButton.setAttribute("aria-label", "清除貪食蛇數學的 D1 歷史分數與場次紀錄");
+            clearButton.style.cssText = [
+              "min-height:42px",
+              "padding:8px 13px",
+              "border:2px solid #fecaca",
+              "border-radius:10px",
+              "background:linear-gradient(135deg,#ef4444,#b91c1c)",
+              "box-shadow:0 4px 12px #0006",
+              "color:#fff",
+              "font:700 .9rem Noto Sans TC,system-ui,sans-serif",
+              "cursor:pointer",
+              "touch-action:manipulation",
+              "white-space:nowrap"
+            ].join(";");
+            clearButton.addEventListener("click", clearHistory);
+            leaderboardTitle.appendChild(clearButton);
+          }
+
+          const page = app.querySelector(".page");
+          const existingBackButton = app.querySelector("#btn-back-home");
+          if (existingBackButton) existingBackButton.textContent = "← 回到第一頁";
+          const isSecondPage = page && !leaderboardTitle && !existingBackButton;
+          let backButton = document.getElementById(backButtonId);
+          if (!isSecondPage) {
+            backButton?.parentElement?.remove();
+            return;
+          }
+          if (backButton) return;
+
+          const backRow = document.createElement("div");
+          backRow.id = backButtonId + "-row";
+          backRow.style.cssText = "display:flex;justify-content:flex-end;margin:0 0 10px;";
+          backButton = document.createElement("button");
+          backButton.id = backButtonId;
+          backButton.type = "button";
+          backButton.textContent = "← 回到第一頁";
+          backButton.className = "btn btn-ghost btn-sm";
+          backButton.style.cssText = "min-height:42px;touch-action:manipulation;";
+          backButton.addEventListener("click", () => {
+            const params = new URLSearchParams(window.location.search);
+            if (
+              (params.has("host") || params.has("room")) &&
+              !window.confirm("返回第一頁會離開目前房間，確定要繼續嗎？")
+            ) return;
+            window.location.href = window.location.origin + window.location.pathname;
+          });
+          backRow.appendChild(backButton);
+          page.prepend(backRow);
+        }
+
+        async function clearHistory() {
+          if (clearing) return;
+          if (!window.confirm("確定要清除貪食蛇數學的所有 D1 歷史分數與場次紀錄嗎？此操作無法復原。")) return;
+
+          const token = window.prompt("請輸入教師清除授權碼（Cloudflare Worker Secret：ADMIN_TOKEN）：");
+          if (!token?.trim()) return;
+
+          const button = document.getElementById(buttonId);
+          clearing = true;
+          if (button) {
+            button.disabled = true;
+            button.textContent = "⏳ 正在清除…";
+          }
+
+          try {
+            const backend = (window.__SNAKE_BACKEND_ORIGIN__ || "").replace(/\/+$/, "");
+            const response = await fetch(`${backend}/api/leaderboard/clear`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${token.trim()}` }
+            });
+            if (response.status === 401) {
+              window.alert("授權失敗。請確認 Worker 已設定 ADMIN_TOKEN，並輸入正確授權碼。");
+              return;
+            }
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            window.alert("已清除所有 D1 歷史分數與場次紀錄。");
+            window.location.reload();
+          } catch (error) {
+            console.error("D1 leaderboard clear failed", error);
+            window.alert("清除失敗，請確認網路連線後再試一次。");
+          } finally {
+            clearing = false;
+            if (button?.isConnected) {
+              button.disabled = false;
+              button.textContent = "🧹 清除歷史紀錄";
+            }
+          }
+        }
+
+        new MutationObserver(syncButtons).observe(app, { childList: true, subtree: true });
+        window.addEventListener("popstate", syncButtons);
+        syncButtons();
+      })();
+    </script>
+  
   </body>
 </html>

@@ -78,7 +78,7 @@ function paintArena(ctx, width, height, state, view, playerId, time) {
   const offsetY = (height - viewRows * cellSize) / 2;
 
   const progress = Math.min(1, Math.max(0, (time - view.receivedAt) / view.transitionMs));
-  const easedProgress = progress * progress * (3 - 2 * progress);
+  const easedProgress = progress;
   const activeSnake = isPlayerView ? state.players.find((snake) => snake.id === playerId) : null;
   const activeHead = activeSnake?.segments?.[0];
   const targetX = activeHead ? activeHead.x + 0.5 : worldWidth / 2;
