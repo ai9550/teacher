@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "math-snake-arena",
+  "main": "index.js",
+  "account_id": "d40d3b9821e7021a23274f02046ab5fb",
+  "compatibility_date": "2026-11-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "keep_vars": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "elementary-school-game",
+      "database_id": "e10c9d0d-9708-474b-9013-7983158a774b"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SNAKE_ROOMS",
+        "class_name": "SnakeRoom"
+      }
+    ]
+  },
+  "exports": {
+    "SnakeRoom": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
+  }
+}
