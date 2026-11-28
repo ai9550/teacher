@@ -388,7 +388,7 @@ Minimum version required to store current data is: `+v+`.
         let clearing = false;
 
         function syncButtons() {
-          const leaderboardTitle = app.querySelector("#home-leaderboard-title");
+          const leaderboardTitle = [...app.querySelectorAll(".section-title")].find((element) => element.textContent.includes("Cloudflare D1 歷史高分榜"));
           let clearButton = document.getElementById(buttonId);
 
           if (!leaderboardTitle) {
